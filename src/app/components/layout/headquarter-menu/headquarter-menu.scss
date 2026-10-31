@@ -1,0 +1,135 @@
+.hq-button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: 280px;
+  padding: 0.4rem 0.75rem;
+  border: 1.5px solid var(--uc-line);
+  border-radius: 0.7rem;
+  background: #fff;
+  color: var(--uc-navy);
+
+  &.is-open,
+  &:focus-visible {
+    border-color: var(--uc-blue);
+    box-shadow: 0 0 0 4px rgba(47, 107, 240, 0.09);
+  }
+}
+
+.hq-mark,
+.hq-item-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  font-weight: 800;
+}
+
+.hq-mark {
+  width: 26px;
+  height: 26px;
+  font-size: 0.7rem;
+  color: #fff;
+  background: var(--uc-grad);
+}
+
+.hq-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+  line-height: 1.2;
+
+  b {
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  small {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--uc-ink);
+  }
+}
+
+.hq-menu {
+  width: 340px;
+  padding: 0.5rem;
+}
+
+.hq-menu-title {
+  padding: 0.55rem 0.7rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #9ba0bf;
+}
+
+.hq-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.hq-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.7rem;
+
+  b,
+  small {
+    display: block;
+  }
+
+  b {
+    font-size: 0.85rem;
+  }
+
+  small {
+    font-size: 0.72rem;
+    color: var(--uc-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hq-check {
+    visibility: hidden;
+    color: var(--uc-blue);
+  }
+
+  &.is-on {
+    background: #edf3ff;
+
+    .hq-item-mark {
+      color: #fff;
+      background: var(--uc-grad);
+    }
+
+    .hq-check {
+      visibility: visible;
+    }
+  }
+}
+
+.hq-item-mark {
+  width: 32px;
+  height: 32px;
+  font-size: 0.72rem;
+  color: var(--uc-blue);
+  background: #edf3ff;
+}
+
+.hq-foot {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.7rem 0.3rem;
+  border-top: 1px solid var(--uc-line);
+  font-size: 0.75rem;
+  color: var(--uc-ink);
+}

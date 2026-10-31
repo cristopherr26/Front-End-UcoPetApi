@@ -1,0 +1,80 @@
+@if (info(); as module) {
+  <app-page-header
+    [eyebrow]="'Procesador ' + processor()"
+    [title]="module.label"
+    [subtitle]="module.description"
+  >
+    <span class="uc-tag is-warn align-self-center"><i class="bi bi-cone-striped"></i>Borrador</span>
+  </app-page-header>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card h-100">
+        <app-empty-state
+          icon="bi-cone-striped"
+          title="Este módulo todavía no está construido"
+          text="La ruta, el menú y el permiso por rol ya existen. Falta la pantalla."
+        >
+          <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+            <button type="button" class="btn btn-primary btn-sm" (click)="openExample()">
+              <i class="bi bi-window-plus me-1"></i>Ver un modal de ejemplo
+            </button>
+            <button type="button" class="btn btn-light btn-sm" (click)="openConfirm()">
+              <i class="bi bi-trash3 me-1"></i>Ver una confirmación
+            </button>
+          </div>
+        </app-empty-state>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card mb-4">
+        <div class="card-header py-3 fw-bold">
+          <i class="bi bi-plug me-2 text-primary"></i>Rutas de la API
+        </div>
+        <ul class="list-group list-group-flush">
+          @for (route of module.api; track route.base) {
+            <li class="list-group-item">
+              <code class="small">{{ route.base }}</code>
+              <div class="small text-body-secondary">{{ route.rule }}</div>
+            </li>
+          }
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header py-3 fw-bold">
+          <i class="bi bi-signpost-split me-2 text-primary"></i>Para empezar
+        </div>
+        <div class="card-body small">
+          <ol class="ps-3 mb-0 d-grid gap-2">
+            <li>
+              Tu entidad es <code>{{ module.entity }}</code
+              >, como el paquete de la API. Tus carpetas ya existen, una por capa:
+              <code>components/{{ module.entity }}/</code>,
+              <code>services/{{ module.entity }}/</code> y <code>models/{{ module.entity }}/</code>.
+            </li>
+            <li>
+              Tus rutas están en
+              <code>routes/{{ module.entity }}/{{ module.entity }}.routes.ts</code>. Cambia
+              <code>ModulePlaceholder</code> por tus pantallas; el permiso y el menú ya están.
+            </li>
+            <li>
+              Cuando esté lista, ponle <code>ready: true</code> a <b>{{ module.label }}</b> en
+              <code>config/navigation/navigation.ts</code> para quitarle la marca de borrador.
+            </li>
+            <li>
+              Lo común está en la carpeta <code>shared</code> de cada capa: <code>PageHeader</code>,
+              <code>ModalFrame</code>, <code>KpiCard</code> y <code>EmptyState</code> en
+              <code>components/shared</code>; <code>ToastService</code> e
+              <code>injectConfirm</code> en <code>services/shared</code>.
+            </li>
+            <li>
+              El catálogo (entidad <code>product</code>) es el ejemplo completo: listado, filtros,
+              modales y stock.
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+}

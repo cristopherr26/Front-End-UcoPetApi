@@ -1,0 +1,167 @@
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+  <div>
+    <div
+      class="text-uppercase small fw-bold text-body-secondary mb-1"
+      style="letter-spacing: 0.12em; font-size: 0.7rem"
+    >
+      Inicio
+    </div>
+    <h1 class="h3 mb-1">Hola, {{ firstName() }}</h1>
+    <p class="text-body-secondary mb-0">
+      {{
+        session.isAdmin()
+          ? 'El estado de la clínica, en una sola vista.'
+          : 'Lo que necesitas para tu día.'
+      }}
+    </p>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Sedes activas"
+      [value]="activeHeadquarters()"
+      hint="abiertas para operar"
+      scope="Toda la clínica"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Productos"
+      [value]="productCount()"
+      hint="activos en el catálogo"
+      scope="Toda la clínica"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Servicios"
+      [value]="serviceCount()"
+      hint="activos en el catálogo"
+      scope="Toda la clínica"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    @if (session.headquarterId()) {
+      <app-kpi-card
+        label="Poco stock"
+        [value]="lowStock()?.length ?? null"
+        [hint]="'productos con ' + lowStockLimit + ' u. o menos'"
+        scope="Sede activa"
+        [tone]="(lowStock()?.length ?? 0) > 0 ? 'warn' : 'default'"
+      />
+    } @else {
+      <app-kpi-card
+        label="Poco stock"
+        hint="elige una sede arriba para verlo"
+        scope="Sede activa"
+      />
+    }
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header py-3">
+        <div class="fw-bold">Módulos de la plataforma</div>
+        <div class="small text-body-secondary">
+          Agrupados por el procesador que los escribe. Los que dicen borrador esperan a su dueño.
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          @for (group of modules(); track group.processor) {
+            <div class="col-sm-6">
+              <div
+                class="small text-uppercase fw-bold text-body-secondary mb-2"
+                style="letter-spacing: 0.1em; font-size: 0.68rem"
+              >
+                {{ group.processor }}
+              </div>
+              <div class="d-grid gap-1">
+                @for (module of group.modules; track module.path) {
+                  <a
+                    class="d-flex align-items-center gap-2 text-decoration-none text-body rounded-3 px-2 py-1 module-link"
+                    [routerLink]="['/', module.path]"
+                  >
+                    <i class="bi text-primary" [class]="module.icon"></i>
+                    <span class="flex-grow-1 fw-semibold small">{{ module.label }}</span>
+                    @if (isReady(module)) {
+                      <span class="uc-tag is-ok">Listo</span>
+                    } @else {
+                      <span class="uc-tag is-neutral">Borrador</span>
+                    }
+                  </a>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header py-3">
+        <div class="fw-bold">Requiere tu atención</div>
+        <div class="small text-body-secondary">
+          Lo que se puede saber hoy con los módulos que ya existen.
+        </div>
+      </div>
+      <ul class="list-group list-group-flush">
+        @if (!session.headquarterId()) {
+          <li class="list-group-item d-flex gap-3 py-3">
+            <span class="uc-mark"><i class="bi bi-geo-alt"></i></span>
+            <div class="small">
+              <b class="d-block">Elige una sede</b>Con una sede activa, aquí aparecen los productos
+              que se están acabando.
+            </div>
+          </li>
+        } @else {
+          @for (item of (lowStock() ?? []).slice(0, 5); track item.id) {
+            <li class="list-group-item d-flex align-items-center gap-3 py-3">
+              <span
+                class="uc-mark"
+                [class.is-danger]="(item.stockAtLocation ?? 0) === 0"
+                [class.is-warn]="(item.stockAtLocation ?? 0) > 0"
+              >
+                <i class="bi bi-box-seam"></i>
+              </span>
+              <div class="small flex-grow-1">
+                <b class="d-block">{{ item.name }}</b>
+                {{
+                  (item.stockAtLocation ?? 0) === 0
+                    ? 'Sin unidades en esta sede'
+                    : 'Quedan ' + item.stockAtLocation + ' unidades'
+                }}
+              </div>
+              <a
+                class="btn btn-light btn-sm"
+                [routerLink]="['/catalogo/productos', item.id, 'stock']"
+                >Ver</a
+              >
+            </li>
+          } @empty {
+            <li class="list-group-item d-flex gap-3 py-3">
+              <span class="uc-mark is-teal"><i class="bi bi-check2-circle"></i></span>
+              <div class="small">
+                <b class="d-block">Nada urgente</b>Ningún producto de esta sede tiene
+                {{ lowStockLimit }} unidades o menos.
+              </div>
+            </li>
+          }
+        }
+        <li class="list-group-item d-flex gap-3 py-3">
+          <span class="uc-mark is-warn"><i class="bi bi-calendar3"></i></span>
+          <div class="small">
+            <b class="d-block">Citas e historias sin cerrar</b>Aparecerán aquí cuando el módulo de
+            Agenda esté construido.
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
