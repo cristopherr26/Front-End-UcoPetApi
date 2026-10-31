@@ -15,7 +15,7 @@ import {
 } from '../../../models/product/catalog-enums';
 import { ServiceService } from '../../../services/product/service.service';
 import { apiErrorMessage } from '../../../utils/shared/api-error';
-import { bindPriceToSellable, blankToNull } from '../../../utils/product/form-rules';
+import { NAME_RULES, bindPriceToSellable, blankToNull } from '../../../utils/product/form-rules';
 
 @Component({
   selector: 'app-service-form',
@@ -32,7 +32,7 @@ export class ServiceForm implements OnInit {
   protected readonly categories = SERVICE_CATEGORIES;
   protected readonly taxCategories = TAX_CATEGORIES;
   protected readonly form = this.fb.group({
-    name: ['', [Validators.required, Validators.maxLength(100)]],
+    name: ['', NAME_RULES],
     description: ['', Validators.maxLength(255)],
     imageUrl: ['', Validators.maxLength(500)],
     category: this.fb.control<ServiceCategory | null>(null, Validators.required),

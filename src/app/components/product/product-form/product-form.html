@@ -88,14 +88,14 @@
               id="product-price"
               type="number"
               class="form-control"
-              min="1"
-              step="1"
+              min="0.01"
+              step="any"
               formControlName="price"
               [class.is-invalid]="invalid('price')"
               [placeholder]="form.controls.sellable.value ? '' : 'No aplica'"
             />
             <div class="invalid-feedback">
-              Un producto que se vende necesita precio mayor a cero
+              Un producto que se vende necesita precio mayor a cero, con hasta 2 decimales
             </div>
           </div>
         </div>

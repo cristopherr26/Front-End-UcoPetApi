@@ -1,5 +1,17 @@
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl, ValidatorFn, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
+
+export const NAME_RULES: ValidatorFn[] = [
+  Validators.required,
+  Validators.maxLength(100),
+  Validators.pattern(/\S/),
+];
+
+export const PRICE_RULES: ValidatorFn[] = [
+  Validators.required,
+  Validators.min(0.01),
+  Validators.pattern(/^\d{1,13}(\.\d{1,2})?$/),
+];
 
 export function bindPriceToSellable(
   sellable: FormControl<boolean>,
@@ -7,7 +19,7 @@ export function bindPriceToSellable(
 ): Subscription {
   const apply = (isSellable: boolean) => {
     if (isSellable) {
-      price.setValidators([Validators.required, Validators.min(1)]);
+      price.setValidators(PRICE_RULES);
       price.enable({ emitEvent: false });
     } else {
       price.clearValidators();

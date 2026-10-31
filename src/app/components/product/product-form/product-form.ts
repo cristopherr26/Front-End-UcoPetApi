@@ -13,7 +13,7 @@ import {
 } from '../../../models/product/catalog-enums';
 import { ProductService } from '../../../services/product/product.service';
 import { apiErrorMessage } from '../../../utils/shared/api-error';
-import { bindPriceToSellable, blankToNull } from '../../../utils/product/form-rules';
+import { NAME_RULES, bindPriceToSellable, blankToNull } from '../../../utils/product/form-rules';
 
 @Component({
   selector: 'app-product-form',
@@ -28,7 +28,7 @@ export class ProductForm {
   protected readonly categories = PRODUCT_CATEGORIES;
   protected readonly taxCategories = TAX_CATEGORIES;
   protected readonly form = this.fb.group({
-    name: ['', [Validators.required, Validators.maxLength(100)]],
+    name: ['', NAME_RULES],
     description: ['', Validators.maxLength(255)],
     imageUrl: ['', Validators.maxLength(500)],
     category: this.fb.control<ProductCategory | null>(null, Validators.required),
