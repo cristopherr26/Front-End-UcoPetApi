@@ -1,1 +1,214 @@
-/* You can add global styles to this file, and also import other style files */
+$navy: #152046;
+$navy-2: #243059;
+$ink: #6c7396;
+$teal: #25d0a3;
+$cyan: #1ec8de;
+$blue: #2f6bf0;
+$app-bg: #f4f7fb;
+$line: #e4e8f2;
+$grad: linear-gradient(200deg, $cyan 0%, $blue 100%);
+
+$primary: $blue;
+$secondary: $ink;
+$success: #12a97c;
+$danger: #e2445c;
+$warning: #e08a0b;
+$info: $cyan;
+$dark: $navy;
+$body-color: $navy;
+$body-secondary-color: $ink;
+$border-color: $line;
+$headings-color: $navy;
+$headings-font-weight: 800;
+$font-family-sans-serif:
+  'Urbanist',
+  -apple-system,
+  system-ui,
+  'Segoe UI',
+  Roboto,
+  sans-serif;
+$font-size-base: 0.9375rem;
+$font-weight-base: 500;
+$border-radius: 0.6875rem;
+$border-radius-sm: 0.5rem;
+$border-radius-lg: 0.875rem;
+$btn-font-weight: 700;
+$btn-padding-y: 0.55rem;
+$btn-padding-x: 1.1rem;
+$input-padding-y: 0.6rem;
+$input-padding-x: 0.85rem;
+$input-border-color: $line;
+$input-focus-border-color: $blue;
+$input-focus-box-shadow: 0 0 0 4px rgba($blue, 0.09);
+$form-label-font-weight: 700;
+$form-label-color: $navy-2;
+$card-border-color: $line;
+$card-border-radius: 1.125rem;
+$card-cap-bg: #fff;
+$table-cell-padding-y: 0.8rem;
+$table-cell-padding-x: 1rem;
+$table-border-color: $line;
+$modal-content-border-width: 0;
+$modal-content-border-radius: 1.25rem;
+$modal-header-border-color: $line;
+$modal-footer-border-color: $line;
+$modal-header-padding: 1.375rem 1.625rem 1rem;
+$modal-inner-padding: 1.5rem;
+$modal-footer-bg: #fafbfe;
+$dropdown-border-color: $line;
+$dropdown-border-radius: 0.9375rem;
+$dropdown-link-hover-bg: #f3f6fd;
+$dropdown-link-active-bg: #edf3ff;
+$dropdown-link-active-color: $navy;
+$nav-pills-link-active-bg: $blue;
+$toast-border-radius: 0.875rem;
+
+@import 'bootstrap/scss/bootstrap';
+
+:root {
+  --uc-navy: #{$navy};
+  --uc-navy-2: #{$navy-2};
+  --uc-ink: #{$ink};
+  --uc-teal: #{$teal};
+  --uc-cyan: #{$cyan};
+  --uc-blue: #{$blue};
+  --uc-line: #{$line};
+  --uc-bg: #{$app-bg};
+  --uc-grad: #{$grad};
+  --uc-shadow: 0 18px 50px -22px rgba(21, 32, 70, 0.35);
+}
+
+body {
+  background-color: $app-bg;
+}
+
+.btn-primary {
+  background: $grad;
+  border: 0;
+  box-shadow: 0 10px 22px -12px rgba($blue, 0.7);
+
+  &:hover,
+  &:focus-visible {
+    background: linear-gradient(200deg, darken($cyan, 6%) 0%, darken($blue, 6%) 100%);
+  }
+}
+
+.btn-light {
+  color: $navy;
+  background: #fff;
+  border: 1.5px solid $line;
+
+  &:hover {
+    background: #fff;
+    border-color: #c6cce0;
+  }
+}
+
+.card {
+  box-shadow: 0 1px 2px rgba(21, 32, 70, 0.04);
+}
+
+.modal-content {
+  box-shadow: 0 30px 70px -20px rgba(21, 32, 70, 0.6);
+  overflow: hidden;
+}
+
+.modal-backdrop.show {
+  opacity: 0.45;
+  background-color: $navy;
+}
+
+.table-card {
+  margin-bottom: 0;
+
+  > thead th {
+    color: #9ba0bf;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: #fafbfe;
+  }
+
+  > tbody > tr:last-child > * {
+    border-bottom: 0;
+  }
+}
+
+.uc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+
+  &.is-neutral {
+    color: $navy-2;
+    background: #f1f4fb;
+  }
+  &.is-ok {
+    color: #0b6e4f;
+    background: #e6faf3;
+  }
+  &.is-warn {
+    color: #8a5a00;
+    background: #fff6e7;
+  }
+  &.is-danger {
+    color: #a22334;
+    background: #fdeef0;
+  }
+  &.is-info {
+    color: #20418f;
+    background: #edf3ff;
+  }
+}
+
+.uc-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.8rem;
+  font-size: 1.15rem;
+  color: $blue;
+  background: #edf3ff;
+
+  &.is-grad {
+    color: #fff;
+    background: $grad;
+  }
+  &.is-teal {
+    color: #0b6e4f;
+    background: #e6faf3;
+  }
+  &.is-warn {
+    color: #8a5a00;
+    background: #fff6e7;
+  }
+  &.is-danger {
+    color: #a22334;
+    background: #fdeef0;
+  }
+  &.is-lg {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    font-size: 1.6rem;
+  }
+}
+
+.item-description {
+  max-width: 340px;
+}
+
+.module-link:hover {
+  background: #f3f6fd;
+}

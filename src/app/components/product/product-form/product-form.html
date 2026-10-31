@@ -1,0 +1,126 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="productId() ? 'Editar producto' : 'Nuevo producto'"
+    [subtitle]="'Los campos con * son obligatorios'"
+    icon="bi-box-seam"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (loading()) {
+      <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+    } @else {
+      @if (error()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+        </div>
+      }
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label" for="product-name">Nombre *</label>
+          <input
+            id="product-name"
+            class="form-control"
+            formControlName="name"
+            maxlength="100"
+            [class.is-invalid]="invalid('name')"
+          />
+          <div class="invalid-feedback">El nombre es obligatorio (hasta 100 caracteres)</div>
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="product-description">Descripción</label>
+          <textarea
+            id="product-description"
+            class="form-control"
+            rows="2"
+            maxlength="255"
+            formControlName="description"
+          ></textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="product-category">Categoría *</label>
+          <select
+            id="product-category"
+            class="form-select"
+            formControlName="category"
+            [class.is-invalid]="invalid('category')"
+          >
+            <option [ngValue]="null" disabled>Elige una</option>
+            @for (option of categories; track option.value) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          <div class="invalid-feedback">La categoría es obligatoria</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="product-tax">IVA *</label>
+          <select
+            id="product-tax"
+            class="form-select"
+            formControlName="taxCategory"
+            [class.is-invalid]="invalid('taxCategory')"
+          >
+            <option [ngValue]="null" disabled>Elige uno</option>
+            @for (option of taxCategories; track option.value) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          <div class="invalid-feedback">La categoría de IVA es obligatoria</div>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+          <div class="form-check form-switch mb-2">
+            <input
+              id="product-sellable"
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              formControlName="sellable"
+            />
+            <label class="form-check-label" for="product-sellable">Se vende al público</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="product-price"
+            >Precio{{ form.controls.sellable.value ? ' *' : '' }}</label
+          >
+          <div class="input-group has-validation">
+            <span class="input-group-text">$</span>
+            <input
+              id="product-price"
+              type="number"
+              class="form-control"
+              min="1"
+              step="1"
+              formControlName="price"
+              [class.is-invalid]="invalid('price')"
+              [placeholder]="form.controls.sellable.value ? '' : 'No aplica'"
+            />
+            <div class="invalid-feedback">
+              Un producto que se vende necesita precio mayor a cero
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="product-image">URL de la imagen</label>
+          <input
+            id="product-image"
+            type="url"
+            class="form-control"
+            maxlength="500"
+            formControlName="imageUrl"
+            placeholder="https://..."
+          />
+        </div>
+      </div>
+    }
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving() || loading()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Guardar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

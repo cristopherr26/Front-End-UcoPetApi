@@ -1,0 +1,91 @@
+<div class="login">
+  <section class="login-hero">
+    <app-brand [inverse]="true" />
+    <div class="login-hero-copy">
+      <span class="login-pill">Clínica veterinaria multisede</span>
+      <h1>Toda la clínica, en un solo lugar.</h1>
+      <p>
+        Agenda, pacientes, catálogo, stock y caja de cada sede, con el permiso que te corresponde.
+      </p>
+    </div>
+    <div class="login-hero-foot">app.ucopet.co</div>
+  </section>
+
+  <section class="login-panel">
+    <div class="login-form">
+      <div class="d-lg-none mb-4"><app-brand /></div>
+      <h2 class="h3 mb-1">Iniciar sesión</h2>
+      <p class="text-body-secondary mb-4">
+        Ingresa con el correo donde recibiste tu invitación a UcoPet.
+      </p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="mb-3">
+          <label class="form-label" for="email">Correo electrónico</label>
+          <div class="input-group has-validation">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input
+              id="email"
+              type="email"
+              class="form-control"
+              formControlName="email"
+              placeholder="nombre@correo.com"
+              autocomplete="username"
+              [class.is-invalid]="invalid('email')"
+            />
+            <div class="invalid-feedback">Escribe un correo válido</div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="password">Contraseña</label>
+          <div class="input-group has-validation">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input
+              id="password"
+              class="form-control"
+              formControlName="password"
+              placeholder="Tu contraseña"
+              autocomplete="current-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              [class.is-invalid]="invalid('password')"
+            />
+            <button
+              type="button"
+              class="btn btn-light"
+              (click)="showPassword.set(!showPassword())"
+              [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            >
+              <i
+                class="bi"
+                [class.bi-eye]="!showPassword()"
+                [class.bi-eye-slash]="showPassword()"
+              ></i>
+            </button>
+            <div class="invalid-feedback">La contraseña es obligatoria</div>
+          </div>
+        </div>
+
+        @if (error()) {
+          <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        <button type="submit" class="btn btn-primary btn-lg w-100 mt-2" [disabled]="sending()">
+          @if (sending()) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span
+            >Entrando...
+          } @else {
+            Entrar<i class="bi bi-arrow-right ms-2"></i>
+          }
+        </button>
+      </form>
+
+      <p class="text-body-secondary small mt-4 mb-0">
+        <i class="bi bi-info-circle me-1"></i>Acceso provisional, mientras llega el módulo de login.
+      </p>
+    </div>
+  </section>
+</div>

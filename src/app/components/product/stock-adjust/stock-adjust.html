@@ -1,0 +1,97 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="'Registrar movimiento'"
+    [subtitle]="product()?.name ?? null"
+    icon="bi-arrow-left-right"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="btn-group w-100" role="group" aria-label="Tipo de movimiento">
+          <input
+            type="radio"
+            class="btn-check"
+            id="direction-in"
+            [checked]="form.controls.direction.value === 'IN'"
+            (change)="setDirection('IN')"
+          />
+          <label class="btn btn-outline-success" for="direction-in"
+            ><i class="bi bi-box-arrow-in-down me-1"></i>Entrada</label
+          >
+          <input
+            type="radio"
+            class="btn-check"
+            id="direction-out"
+            [checked]="form.controls.direction.value === 'OUT'"
+            (change)="setDirection('OUT')"
+          />
+          <label class="btn btn-outline-danger" for="direction-out"
+            ><i class="bi bi-box-arrow-up me-1"></i>Salida</label
+          >
+        </div>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="adjust-headquarter">Sede *</label>
+        <select
+          id="adjust-headquarter"
+          class="form-select"
+          formControlName="headquarterId"
+          [class.is-invalid]="invalid('headquarterId')"
+        >
+          <option [ngValue]="null" disabled>Elige una</option>
+          @for (headquarter of headquarters(); track headquarter.id) {
+            <option [ngValue]="headquarter.id">{{ headquarter.name }}</option>
+          }
+        </select>
+        <div class="invalid-feedback">Elige la sede</div>
+      </div>
+      <div class="col-sm-5">
+        <label class="form-label" for="adjust-quantity">Cantidad *</label>
+        <input
+          id="adjust-quantity"
+          type="number"
+          class="form-control"
+          min="1"
+          step="1"
+          formControlName="quantity"
+          [class.is-invalid]="invalid('quantity')"
+        />
+        <div class="invalid-feedback">Un número entero mayor a cero</div>
+      </div>
+      <div class="col-sm-7">
+        <label class="form-label" for="adjust-reason">Motivo *</label>
+        <select id="adjust-reason" class="form-select" formControlName="reason">
+          @for (option of reasons(); track option.value) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="adjust-note">Nota</label>
+        <input
+          id="adjust-note"
+          class="form-control"
+          maxlength="255"
+          formControlName="note"
+          placeholder="Opcional"
+        />
+      </div>
+    </div>
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Registrando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Registrar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

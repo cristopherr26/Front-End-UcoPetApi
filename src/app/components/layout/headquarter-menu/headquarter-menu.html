@@ -1,0 +1,56 @@
+<div ngbDropdown #menu="ngbDropdown" (openChange)="search.set('')">
+  <button type="button" class="hq-button" ngbDropdownToggle [class.is-open]="menu.isOpen()">
+    <span class="hq-mark">{{ initials(current()?.name ?? null) }}</span>
+    <span class="hq-text">
+      <b>{{ current()?.name ?? 'Todas las sedes' }}</b>
+      <small>Sede activa</small>
+    </span>
+  </button>
+  <div ngbDropdownMenu class="hq-menu shadow">
+    <div class="hq-menu-title">Trabajar en</div>
+    <div class="px-2 pb-2">
+      <input
+        type="search"
+        class="form-control form-control-sm"
+        placeholder="Buscar sede"
+        aria-label="Buscar sede"
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+      />
+    </div>
+    <div class="hq-list">
+      <button
+        type="button"
+        ngbDropdownItem
+        class="hq-item"
+        [class.is-on]="session.headquarterId() === null"
+        (click)="select(null); menu.close()"
+      >
+        <span class="hq-item-mark">TS</span>
+        <span class="flex-grow-1 text-start"
+          ><b>Todas las sedes</b><small>Vista de toda la clínica</small></span
+        >
+        <i class="bi bi-check2 hq-check"></i>
+      </button>
+      @for (headquarter of visible(); track headquarter.id) {
+        <button
+          type="button"
+          ngbDropdownItem
+          class="hq-item"
+          [class.is-on]="session.headquarterId() === headquarter.id"
+          (click)="select(headquarter.id); menu.close()"
+        >
+          <span class="hq-item-mark">{{ initials(headquarter.name) }}</span>
+          <span class="flex-grow-1 text-start text-truncate"
+            ><b>{{ headquarter.name }}</b
+            ><small>{{ headquarter.address }}</small></span
+          >
+          <i class="bi bi-check2 hq-check"></i>
+        </button>
+      } @empty {
+        <div class="small text-body-secondary px-3 py-2">No hay sedes con ese nombre</div>
+      }
+    </div>
+    <div class="hq-foot">El catálogo y el stock se filtran por la sede que elijas aquí.</div>
+  </div>
+</div>

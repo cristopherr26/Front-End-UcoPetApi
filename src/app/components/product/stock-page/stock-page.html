@@ -1,0 +1,164 @@
+<a routerLink="/catalogo/productos" class="btn btn-link text-decoration-none px-0 mb-3">
+  <i class="bi bi-arrow-left me-1"></i>Volver a productos
+</a>
+
+@if (error()) {
+  <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}</div>
+}
+
+<div class="card mb-4">
+  <div class="card-body d-flex flex-wrap align-items-center gap-3">
+    <span class="uc-mark is-lg"><i class="bi bi-box-seam"></i></span>
+    <div class="flex-grow-1">
+      <h2 class="h4 mb-1">{{ product()?.name ?? 'Cargando...' }}</h2>
+      @if (product(); as current) {
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{
+            categoryLabel(current.category)
+          }}</span>
+          @if (current.sellable) {
+            <span class="fw-semibold">{{ current.price | price }}</span>
+          }
+          @if (current.active) {
+            <span class="badge rounded-pill bg-success-subtle text-success-emphasis">Activo</span>
+          } @else {
+            <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis"
+              >Dado de baja</span
+            >
+          }
+        </div>
+      }
+    </div>
+    <div class="text-end">
+      <div class="text-body-secondary small">Total en la clínica</div>
+      <div class="fs-3 fw-bold">
+        {{ total() }} <span class="fs-6 fw-normal text-body-secondary">u.</span>
+      </div>
+    </div>
+    @if (session.isAdmin() && product()?.active) {
+      <button type="button" class="btn btn-primary" (click)="adjust()">
+        <i class="bi bi-plus-slash-minus me-1"></i>Registrar movimiento
+      </button>
+    }
+  </div>
+  @if (session.isAdmin() && product() && !product()?.active) {
+    <div class="card-footer bg-warning-subtle text-warning-emphasis small">
+      <i class="bi bi-info-circle me-1"></i>El producto está dado de baja: no se le puede mover
+      stock.
+    </div>
+  }
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header py-3 fw-semibold">
+        <i class="bi bi-geo-alt me-2 text-primary"></i>Unidades por sede
+      </div>
+      <ul class="list-group list-group-flush">
+        @for (stock of stocks(); track stock.headquarterId) {
+          <li class="list-group-item py-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span>{{ headquarterName(stock.headquarterId) }}</span>
+              <span class="fw-semibold">{{ stock.quantity }} u.</span>
+            </div>
+            <div
+              class="progress"
+              style="height: 6px"
+              role="progressbar"
+              [attr.aria-valuenow]="stock.quantity"
+            >
+              <div
+                class="progress-bar"
+                [class.bg-danger]="stock.quantity === 0"
+                [style.width.%]="share(stock.quantity)"
+              ></div>
+            </div>
+          </li>
+        } @empty {
+          <li class="list-group-item text-center text-body-secondary py-5">
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>Todavía no tiene stock en ninguna sede
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header py-3 d-flex align-items-center justify-content-between gap-2">
+        <span class="fw-semibold"
+          ><i class="bi bi-clock-history me-2 text-primary"></i>Historial</span
+        >
+        <select
+          class="form-select form-select-sm w-auto"
+          aria-label="Sede del historial"
+          (change)="setMovementsHeadquarter($any($event.target).value)"
+        >
+          <option value="" [selected]="movementsHeadquarterId() === null">Todas las sedes</option>
+          @for (headquarter of headquarters(); track headquarter.id) {
+            <option
+              [value]="headquarter.id"
+              [selected]="movementsHeadquarterId() === headquarter.id"
+            >
+              {{ headquarter.name }}
+            </option>
+          }
+        </select>
+      </div>
+      @if (movementsError()) {
+        <div class="alert alert-danger m-3">{{ movementsError() }}</div>
+      }
+      <div class="table-responsive">
+        <table class="table align-middle table-card">
+          <thead>
+            <tr>
+              <th appSortHeader="date" [table]="history">Fecha</th>
+              <th appSortHeader="headquarter" [table]="history">Sede</th>
+              <th appSortHeader="reason" [table]="history">Motivo</th>
+              <th class="text-end" appSortHeader="quantity" [table]="history" [end]="true">
+                Cantidad
+              </th>
+              <th class="text-end" appSortHeader="balance" [table]="history" [end]="true">Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (movement of history.rows(); track movement.id) {
+              <tr>
+                <td class="small text-nowrap">
+                  {{ movement.occurredAt | date: 'dd/MM/yyyy HH:mm' }}
+                </td>
+                <td class="small">{{ headquarterName(movement.headquarterId) }}</td>
+                <td>
+                  <div>{{ reasonLabel(movement.reason) }}</div>
+                  @if (movement.note) {
+                    <div class="small text-body-secondary">{{ movement.note }}</div>
+                  }
+                </td>
+                <td
+                  class="text-end fw-semibold"
+                  [class.text-success]="movement.quantity > 0"
+                  [class.text-danger]="movement.quantity < 0"
+                >
+                  {{ movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }}
+                </td>
+                <td class="text-end">{{ movement.balanceAfter }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="text-center text-body-secondary py-5">
+                  <i class="bi bi-clock fs-2 d-block mb-2"></i>Sin movimientos
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-table-pager
+        [total]="history.total()"
+        [(page)]="history.page"
+        [(pageSize)]="history.pageSize"
+      />
+    </div>
+  </div>
+</div>
