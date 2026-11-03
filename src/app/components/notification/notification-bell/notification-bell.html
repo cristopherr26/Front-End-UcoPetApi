@@ -1,0 +1,13 @@
+<a
+  class="btn btn-light btn-sm position-relative"
+  routerLink="/notificaciones"
+  title="Notificaciones"
+  [attr.aria-label]="count() + ' notificaciones sin leer'"
+>
+  <i class="bi bi-bell fs-6"></i>
+  @if (count() > 0) {
+    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{
+      label()
+    }}</span>
+  }
+</a>

@@ -89,7 +89,7 @@ export const NAVIGATION: NavGroup[] = [
         icon: 'bi-bell',
         roles: BOTH,
         description: 'Avisos del sistema para cada persona.',
-        api: [{ base: '/api/notifications', rule: 'cualquiera con rol' }],
+        api: [{ base: '/api/v1/notifications', rule: 'cualquiera con rol' }],
       },
     ],
   },
