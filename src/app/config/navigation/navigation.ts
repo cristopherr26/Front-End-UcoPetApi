@@ -278,6 +278,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'facturas',
         entity: 'invoice',
         label: 'Facturas',
+        ready: true,
         loadChildren: () =>
           import('../../routes/invoice/invoice.routes').then((m) => m.INVOICE_ROUTES),
         icon: 'bi-receipt',

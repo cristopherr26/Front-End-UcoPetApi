@@ -1,0 +1,208 @@
+<app-page-header
+  eyebrow="Procesador Pagos"
+  title="Facturas"
+  subtitle="Facturación de las órdenes de venta, sus pagos y anulaciones"
+>
+  <button type="button" class="btn btn-light btn-sm" (click)="reload()">
+    <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+  </button>
+  @if (session.isAdmin()) {
+    <button type="button" class="btn btn-primary btn-sm" (click)="create()">
+      <i class="bi bi-plus-lg me-1"></i>Nueva factura
+    </button>
+  }
+</app-page-header>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Facturado"
+      [value]="billed() | price"
+      hint="sin contar anuladas"
+      [scope]="scope()"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Recaudado"
+      [value]="collected() | price"
+      hint="pagos registrados"
+      tone="ok"
+      [scope]="scope()"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Por cobrar"
+      [value]="receivable() | price"
+      hint="saldo pendiente"
+      [tone]="receivable() > 0 ? 'warn' : 'default'"
+      [scope]="scope()"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Facturas abiertas"
+      [value]="openCount()"
+      hint="con saldo pendiente"
+      [scope]="scope()"
+    />
+  </div>
+</div>
+
+<div class="card">
+  <form class="card-header py-3" [formGroup]="form" novalidate>
+    <div class="row g-2 align-items-start">
+      <div class="col-12 col-lg-4">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar por número o cliente"
+            aria-label="Buscar por número o cliente"
+            formControlName="text"
+            [attr.maxlength]="textMax"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <select class="form-select form-select-sm" aria-label="Estado" formControlName="state">
+          <option [ngValue]="null">Todos los estados</option>
+          @for (option of states; track option.value) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white">Desde</span>
+          <input
+            type="date"
+            class="form-control date-input"
+            aria-label="Fecha desde"
+            formControlName="dateFrom"
+            [class.is-invalid]="rangeInvalid()"
+          />
+          <span class="input-group-text bg-white">Hasta</span>
+          <input
+            type="date"
+            class="form-control date-input"
+            aria-label="Fecha hasta"
+            formControlName="dateTo"
+            [class.is-invalid]="rangeInvalid()"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <button type="button" class="btn btn-light btn-sm" (click)="clearFilters()">Limpiar</button>
+      </div>
+      @if (rangeInvalid()) {
+        <div class="col-12 small text-danger">
+          La fecha "desde" no puede ser posterior a "hasta"
+        </div>
+      }
+    </div>
+  </form>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="number" [table]="table">Factura</th>
+          <th appSortHeader="issueDate" [table]="table">Fecha</th>
+          <th appSortHeader="client" [table]="table">Cliente</th>
+          <th class="text-end" appSortHeader="total" [table]="table" [end]="true">Total</th>
+          <th class="text-end" appSortHeader="balance" [table]="table" [end]="true">Saldo</th>
+          <th appSortHeader="state" [table]="table">Estado</th>
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </td>
+          </tr>
+        } @else {
+          @for (invoice of table.rows(); track invoice.id) {
+            <tr>
+              <td>
+                <a class="fw-semibold text-decoration-none" [routerLink]="[invoice.id]">{{
+                  invoice.invoiceNumber | uppercase
+                }}</a>
+                @if (!session.headquarterId()) {
+                  <div class="small text-body-secondary">
+                    {{ headquarterName(invoice.headquarterId) }}
+                  </div>
+                }
+              </td>
+              <td class="small text-nowrap">{{ invoice.issueDate | date: 'dd/MM/yyyy' }}</td>
+              <td>
+                @if (clientName(invoice); as name) {
+                  {{ name }}
+                } @else {
+                  <span class="text-body-secondary">Cliente {{ shortId(invoice.clientID) }}…</span>
+                }
+              </td>
+              <td class="text-end fw-semibold text-nowrap">{{ invoice.total | price }}</td>
+              <td class="text-end text-nowrap" [class.text-body-secondary]="invoice.balance === 0">
+                {{ invoice.balance | price }}
+              </td>
+              <td>
+                <span class="uc-tag" [class]="tones[invoice.state]">{{
+                  invoice.state | invoiceState
+                }}</span>
+              </td>
+              <td class="text-end text-nowrap">
+                <a
+                  class="btn btn-sm btn-outline-secondary"
+                  title="Ver detalle"
+                  [routerLink]="[invoice.id]"
+                >
+                  <i class="bi bi-eye"></i>
+                </a>
+                @if (session.isAdmin()) {
+                  @if (canRegisterPayment(invoice)) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-success ms-1"
+                      title="Registrar pago"
+                      (click)="registerPayment(invoice)"
+                    >
+                      <i class="bi bi-cash-coin"></i>
+                    </button>
+                  }
+                  @if (canCancel(invoice)) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger ms-1"
+                      title="Anular"
+                      (click)="cancel(invoice)"
+                    >
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  }
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center text-body-secondary py-5">
+                <i class="bi bi-receipt fs-2 d-block mb-2"></i>No hay facturas con estos filtros
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>
