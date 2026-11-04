@@ -72,6 +72,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'mascotas',
         entity: 'pet',
         label: 'Pacientes',
+        ready: true,
         loadChildren: () => import('../../routes/pet/pet.routes').then((m) => m.PET_ROUTES),
         icon: 'bi-heart',
         roles: BOTH,
