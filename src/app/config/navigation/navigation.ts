@@ -50,6 +50,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'medicos',
         entity: 'doctor',
         label: 'Médicos',
+         ready: true,
         loadChildren: () =>
           import('../../routes/doctor/doctor.routes').then((m) => m.DOCTOR_ROUTES),
         icon: 'bi-person-badge',
