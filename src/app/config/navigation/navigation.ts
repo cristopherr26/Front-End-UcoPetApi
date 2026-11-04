@@ -1,6 +1,7 @@
 import { LoadChildrenCallback } from '@angular/router';
 
 import { Role } from '../../models/session/session.model';
+import { TmplAstRecursiveVisitor } from '@angular/compiler';
 
 export interface ApiRoute {
   base: string;
@@ -247,7 +248,7 @@ export const NAVIGATION: NavGroup[] = [
       {
         path: 'sedes',
         entity: 'headquarter',
-        label: 'Sedes',
+        label: 'Sedes', ready: true,
         loadChildren: () =>
           import('../../routes/headquarter/headquarter.routes').then((m) => m.HEADQUARTER_ROUTES),
         icon: 'bi-buildings',

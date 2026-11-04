@@ -1,0 +1,61 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="headquarterId() ? 'Editar sede' : 'Nueva sede'"
+    subtitle="Los campos con * son obligatorios"
+    icon="bi-buildings"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (loading()) {
+      <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+    } @else {
+      @if (error()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+        </div>
+      }
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label" for="headquarter-name">Nombre *</label>
+          <input
+            id="headquarter-name"
+            class="form-control"
+            formControlName="name"
+            maxlength="50"
+            placeholder="Sede Centro"
+            [class.is-invalid]="invalid('name')"
+          />
+          <div class="invalid-feedback">El nombre debe tener entre 3 y 50 caracteres</div>
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="headquarter-address">Dirección *</label>
+          <input
+            id="headquarter-address"
+            class="form-control"
+            formControlName="address"
+            maxlength="100"
+            placeholder="Calle 10 # 20-30"
+            [class.is-invalid]="invalid('address')"
+          />
+          <div class="invalid-feedback">La dirección debe tener entre 3 y 100 caracteres</div>
+        </div>
+        <div class="col-12">
+          <div class="alert alert-info d-flex align-items-center gap-2 mb-0 py-2 small">
+            <i class="bi bi-clock-history"></i>
+            El procesador de inventario aplica el cambio en unos segundos.
+          </div>
+        </div>
+      </div>
+    }
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving() || loading()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Guardar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>
