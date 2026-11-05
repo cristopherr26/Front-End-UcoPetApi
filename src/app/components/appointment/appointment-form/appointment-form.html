@@ -1,0 +1,197 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="editing() ? 'Editar cita' : 'Nueva cita'"
+    [subtitle]="
+      editing()
+        ? 'Estado actual: ' + statusLabel(editing()!.status)
+        : 'Los campos con * son obligatorios'
+    "
+    [icon]="editing() ? 'bi-calendar-check' : 'bi-calendar-plus'"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (loadingOptions()) {
+      <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+    } @else {
+      @if (error()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+        </div>
+      }
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="appointment-tutor">Tutor *</label>
+          <select
+            id="appointment-tutor"
+            class="form-select"
+            formControlName="tutorId"
+            [class.is-invalid]="invalid('tutorId')"
+            (change)="onTutorChange()"
+          >
+            <option [ngValue]="null" disabled>Elige un tutor</option>
+            @for (tutor of tutors(); track tutor.id) {
+              <option [ngValue]="tutor.id">
+                {{ tutor.label }}{{ tutor.hint ? ' · ' + tutor.hint : '' }}
+              </option>
+            }
+          </select>
+          <div class="invalid-feedback">El tutor es obligatorio</div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="appointment-pet">Mascota *</label>
+          <select
+            id="appointment-pet"
+            class="form-select"
+            formControlName="petId"
+            [class.is-invalid]="invalid('petId')"
+          >
+            <option [ngValue]="null" disabled>
+              @if (loadingPets()) {
+                Cargando mascotas...
+              } @else if (!form.controls.tutorId.value) {
+                Primero elige el tutor
+              } @else if (pets().length === 0) {
+                Este tutor no tiene mascotas en la sede
+              } @else {
+                Elige una mascota
+              }
+            </option>
+            @for (pet of pets(); track pet.id) {
+              <option [ngValue]="pet.id">
+                {{ pet.label }}{{ pet.hint ? ' · ' + pet.hint : '' }}
+              </option>
+            }
+          </select>
+          <div class="invalid-feedback">La mascota es obligatoria</div>
+          @if (!hasHeadquarter() && !editing()) {
+            <div class="form-text text-warning-emphasis">
+              <i class="bi bi-info-circle me-1"></i>Elige una sede en la barra superior para ver las
+              mascotas del tutor.
+            </div>
+          }
+        </div>
+
+        @if (tutorPending().length > 0) {
+          <div class="col-12">
+            <div class="alert alert-warning py-2 mb-0 small">
+              <i class="bi bi-info-circle me-1"></i>Este tutor ya tiene
+              {{ tutorPending().length }}
+              {{ tutorPending().length === 1 ? 'cita pendiente' : 'citas pendientes' }}:
+              @for (item of tutorPending(); track item.id; let last = $last) {
+                <strong>{{ item.petName ?? 'Mascota' }}</strong>
+                ({{ dateLabel(item.appointmentDate) }} {{ timeLabel(item.appointmentTime) }}){{
+                  last ? '.' : ','
+                }}
+              }
+            </div>
+          </div>
+        }
+
+        <div class="col-md-6">
+          <label class="form-label" for="appointment-doctor">Médico *</label>
+          <select
+            id="appointment-doctor"
+            class="form-select"
+            formControlName="doctorId"
+            [class.is-invalid]="invalid('doctorId')"
+          >
+            <option [ngValue]="null" disabled>Elige un médico</option>
+            @for (doctor of doctors(); track doctor.id) {
+              <option [ngValue]="doctor.id">
+                {{ doctor.label }}{{ doctor.hint ? ' · ' + doctor.hint : '' }}
+              </option>
+            }
+          </select>
+          <div class="invalid-feedback">El médico es obligatorio</div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="appointment-type">Tipo de cita *</label>
+          <select
+            id="appointment-type"
+            class="form-select"
+            formControlName="appointmentTypeId"
+            [class.is-invalid]="invalid('appointmentTypeId')"
+          >
+            <option [ngValue]="null" disabled>Elige un tipo</option>
+            @for (type of types(); track type.id) {
+              <option [ngValue]="type.id">{{ type.label }}</option>
+            }
+          </select>
+          <div class="invalid-feedback">El tipo de cita es obligatorio</div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="appointment-date">Fecha *</label>
+          <input
+            id="appointment-date"
+            type="date"
+            class="form-control"
+            formControlName="appointmentDate"
+            [min]="minDate"
+            [class.is-invalid]="invalid('appointmentDate')"
+          />
+          <div class="invalid-feedback">
+            @if (form.controls.appointmentDate.errors?.['pastDate']) {
+              La fecha no puede estar en el pasado
+            } @else {
+              La fecha es obligatoria
+            }
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="appointment-time">Hora *</label>
+          <input
+            id="appointment-time"
+            type="time"
+            class="form-control"
+            formControlName="appointmentTime"
+            [class.is-invalid]="invalid('appointmentTime') || clash() || pastTime()"
+          />
+          <div class="invalid-feedback">
+            @if (pastTime()) {
+              La hora no puede estar en el pasado
+            } @else if (clash()) {
+              El médico ya tiene una cita a esa hora
+            } @else {
+              La hora es obligatoria
+            }
+          </div>
+        </div>
+
+        @if (busy().length > 0) {
+          <div class="col-12">
+            <div
+              class="d-flex flex-wrap align-items-center gap-2 small"
+              [class.text-danger]="clash()"
+              [class.text-body-secondary]="!clash()"
+            >
+              <i class="bi bi-clock-history"></i>
+              <span>Horas ocupadas del médico ese día:</span>
+              @for (time of busy(); track time) {
+                <span
+                  class="uc-tag"
+                  [class.is-danger]="time === form.controls.appointmentTime.value"
+                  [class.is-neutral]="time !== form.controls.appointmentTime.value"
+                  >{{ time }}</span
+                >
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving() || loadingOptions()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Enviando...
+        } @else {
+          <i class="bi bi-send-check me-1"></i>{{ editing() ? 'Guardar cambios' : 'Agendar cita' }}
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>
