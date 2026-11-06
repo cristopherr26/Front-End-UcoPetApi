@@ -6,6 +6,7 @@ import { NAVIGATION, NavModule } from './config/navigation/navigation';
 import { Dashboard } from './components/dashboard/dashboard';
 import { Login } from './components/session/login/login';
 import { guestGuard, sessionGuard } from './guards/session/session.guards';
+import { MyAccount } from './components/person/my-account/my-account';
 
 function moduleRoute(module: NavModule): Route {
   return {
@@ -25,6 +26,7 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'inicio' },
       { path: 'inicio', component: Dashboard, title: 'Inicio · UcoPet' },
+      { path: 'mi-cuenta', component: MyAccount, title: 'Mi cuenta · UcoPet' },
       ...NAVIGATION.flatMap((group) => group.modules).map(moduleRoute),
     ],
   },

@@ -1,0 +1,177 @@
+<app-page-header
+  eyebrow="Procesador Usuarios"
+  title="Usuarios"
+  subtitle="Personas de la clínica, su acceso y su estado"
+>
+  <button type="button" class="btn btn-light" title="Volver a cargar" (click)="reload()">
+    <i class="bi bi-arrow-clockwise"></i>
+  </button>
+  <button type="button" class="btn btn-primary" (click)="create()">
+    <i class="bi bi-plus-lg me-1"></i>Nuevo usuario
+  </button>
+</app-page-header>
+
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar por nombre, documento o correo"
+            aria-label="Buscar usuario"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Estado"
+          [value]="status()"
+          (change)="setStatus($any($event.target).value)"
+        >
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+          <option value="all">Todos los estados</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Rol"
+          [value]="role()"
+          (change)="setRole($any($event.target).value)"
+        >
+          <option value="all">Todos los roles</option>
+          <option value="admin">Administradores</option>
+          <option value="staff">No administradores</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="name" [table]="table">Persona</th>
+          <th appSortHeader="document" [table]="table">Documento</th>
+          <th appSortHeader="email" [table]="table">Correo</th>
+          <th appSortHeader="admin" [table]="table">Rol</th>
+          <th appSortHeader="active" [table]="table">Estado</th>
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="6" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </td>
+          </tr>
+        } @else {
+          @for (person of table.rows(); track person.id) {
+            <tr>
+              <td>
+                <div class="fw-semibold">
+                  {{ fullName(person) }}
+                  @if (person.id === myId()) {
+                    <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis ms-1"
+                      >Tú</span
+                    >
+                  }
+                </div>
+                @if (person.phone) {
+                  <div class="small text-body-secondary">{{ person.phone }}</div>
+                }
+              </td>
+              <td class="text-nowrap">
+                <span class="text-body-secondary small">{{ person.documentType }}</span>
+                {{ person.documentNumber }}
+              </td>
+              <td>{{ person.email ?? '—' }}</td>
+              <td>
+                @if (person.admin) {
+                  <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis"
+                    ><i class="bi bi-shield-lock me-1"></i>Administrador</span
+                  >
+                } @else {
+                  <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis"
+                    >Personal</span
+                  >
+                }
+              </td>
+              <td>
+                @if (person.active) {
+                  <span class="badge rounded-pill bg-success-subtle text-success-emphasis"
+                    >Activo</span
+                  >
+                } @else {
+                  <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis"
+                    >Inactivo</span
+                  >
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  title="Editar"
+                  (click)="edit(person)"
+                >
+                  <i class="bi bi-pencil"></i>
+                </button>
+                @if (person.id !== myId()) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary ms-1"
+                    title="Asignar contraseña"
+                    (click)="setPassword(person)"
+                  >
+                    <i class="bi bi-key"></i>
+                  </button>
+                  @if (person.active) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger ms-1"
+                      title="Desactivar"
+                      (click)="deactivate(person)"
+                    >
+                      <i class="bi bi-person-x"></i>
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-success ms-1"
+                      title="Reactivar"
+                      (click)="reactivate(person)"
+                    >
+                      <i class="bi bi-person-check"></i>
+                    </button>
+                  }
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center text-body-secondary py-5">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>No hay usuarios con estos filtros
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>

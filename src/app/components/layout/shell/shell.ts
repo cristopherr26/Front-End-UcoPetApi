@@ -55,7 +55,7 @@ export class Shell {
 
   protected readonly section = computed(() => {
     const segment = this.url().split('?')[0].split('/').filter(Boolean)[0] ?? 'inicio';
-    return findModule(segment)?.label ?? 'Inicio';
+    return findModule(segment)?.label ?? (segment === 'mi-cuenta' ? 'Mi cuenta' : 'Inicio');
   });
 
   protected readonly initials = computed(() =>

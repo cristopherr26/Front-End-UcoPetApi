@@ -37,6 +37,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'usuarios',
         entity: 'person',
         label: 'Usuarios',
+        ready: true,
         loadChildren: () =>
           import('../../routes/person/person.routes').then((m) => m.PERSON_ROUTES),
         icon: 'bi-shield-lock',

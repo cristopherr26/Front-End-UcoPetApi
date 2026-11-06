@@ -15,7 +15,7 @@ describe('NotificationService', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     clearCookies();
-    setSessionCookies('t', ['ADMIN']);
+    setSessionCookies(['ADMIN']);
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
