@@ -20,7 +20,7 @@ function canEnter(module: string): boolean | UrlTree {
 describe('moduleRoleGuard', () => {
   function asRole(role: string): void {
     clearCookies();
-    setSessionCookies('t', [role]);
+    setSessionCookies([role]);
     TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient()] });
   }
 

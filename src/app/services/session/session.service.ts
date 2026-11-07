@@ -5,41 +5,39 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoginResponse, SessionProfile } from '../../models/session/session.model';
 
-const TOKEN_COOKIE = 'ucopet_token';
 const PROFILE_COOKIE = 'ucopet_profile';
 const HEADQUARTER_COOKIE = 'ucopet_headquarter';
+const LEGACY_TOKEN_COOKIE = 'ucopet_token';
 const MAX_AGE_SECONDS = 12 * 60 * 60;
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
   private readonly http = inject(HttpClient);
 
-  private readonly tokenState = signal<string | null>(readCookie(TOKEN_COOKIE));
   private readonly profileState = signal<SessionProfile | null>(
     parseProfile(readCookie(PROFILE_COOKIE)),
   );
   private readonly headquarterState = signal<string | null>(readCookie(HEADQUARTER_COOKIE));
 
-  readonly token = this.tokenState.asReadonly();
   readonly profile = this.profileState.asReadonly();
   readonly headquarterId = this.headquarterState.asReadonly();
-  readonly isLoggedIn = computed(() => this.tokenState() !== null);
+  readonly isLoggedIn = computed(() => this.profileState() !== null);
   readonly isAdmin = computed(() => this.profileState()?.roles.includes('ADMIN') ?? false);
+
+  constructor() {
+    deleteCookie(LEGACY_TOKEN_COOKIE);
+  }
 
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/persons/login`, { email, password })
       .pipe(
         tap((response) => {
-          const profile: SessionProfile = {
+          this.saveProfile({
             personId: response.personId,
             fullName: response.fullName,
             roles: response.roles,
-          };
-          writeCookie(TOKEN_COOKIE, response.token);
-          writeCookie(PROFILE_COOKIE, JSON.stringify(profile));
-          this.tokenState.set(response.token);
-          this.profileState.set(profile);
+          });
         }),
       );
   }
@@ -54,12 +52,17 @@ export class SessionService {
   }
 
   clear(): void {
-    deleteCookie(TOKEN_COOKIE);
     deleteCookie(PROFILE_COOKIE);
     deleteCookie(HEADQUARTER_COOKIE);
-    this.tokenState.set(null);
     this.profileState.set(null);
     this.headquarterState.set(null);
+  }
+
+  updateFullName(fullName: string): void {
+    const current = this.profileState();
+    if (current !== null) {
+      this.saveProfile({ ...current, fullName });
+    }
   }
 
   selectHeadquarter(headquarterId: string | null): void {
@@ -69,6 +72,11 @@ export class SessionService {
       writeCookie(HEADQUARTER_COOKIE, headquarterId);
     }
     this.headquarterState.set(headquarterId);
+  }
+
+  private saveProfile(profile: SessionProfile): void {
+    writeCookie(PROFILE_COOKIE, JSON.stringify(profile));
+    this.profileState.set(profile);
   }
 }
 
@@ -92,7 +100,8 @@ function parseProfile(raw: string | null): SessionProfile | null {
     return null;
   }
   try {
-    return JSON.parse(raw) as SessionProfile;
+    const profile = JSON.parse(raw) as SessionProfile;
+    return typeof profile?.personId === 'string' && Array.isArray(profile.roles) ? profile : null;
   } catch {
     return null;
   }
