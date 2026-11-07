@@ -1,0 +1,114 @@
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-auto">
+        <a class="btn btn-outline-secondary btn-sm" routerLink="/medicos">
+          <i class="bi bi-arrow-left me-1"></i>Médicos
+        </a>
+      </div>
+      <div class="col-md">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Médico"
+          (change)="setDoctor($any($event.target).value)"
+        >
+          <option value="" [selected]="doctorFilter() === null">Todos los médicos</option>
+          @for (option of doctorOptions(); track option.id) {
+            <option [value]="option.id" [selected]="option.id === doctorFilter()">
+              {{ option.label }}
+            </option>
+          }
+        </select>
+      </div>
+      @if (specialtieOptions().length > 0) {
+        <div class="col-md">
+          <select
+            class="form-select form-select-sm"
+            aria-label="Especialidad"
+            (change)="setSpecialtie($any($event.target).value)"
+          >
+            <option value="">Todas las especialidades</option>
+            @for (option of specialtieOptions(); track option.id) {
+              <option [value]="option.id">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      }
+      @if (session.isAdmin()) {
+        <div class="col-auto">
+          <button type="button" class="btn btn-primary btn-sm" (click)="create()">
+            <i class="bi bi-plus-lg me-1"></i>Asignar especialidad
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="doctor" [table]="table">Médico</th>
+          <th appSortHeader="specialtie" [table]="table">Especialidad</th>
+          @if (session.isAdmin()) {
+            <th class="text-end"></th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="3" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </td>
+          </tr>
+        } @else {
+          @for (relation of table.rows(); track relation.id) {
+            <tr>
+              <td class="fw-semibold">{{ doctorLabel(relation.doctor) }}</td>
+              <td>
+                <span class="badge rounded-pill bg-info-subtle text-info-emphasis">{{
+                  specialtieLabel(relation.specialtie)
+                }}</span>
+              </td>
+              @if (session.isAdmin()) {
+                <td class="text-end text-nowrap">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    title="Editar"
+                    (click)="edit(relation)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    title="Quitar"
+                    (click)="remove(relation)"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="text-center text-body-secondary py-5">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>No hay especialidades asignadas con
+                estos filtros
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>

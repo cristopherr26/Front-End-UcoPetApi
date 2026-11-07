@@ -51,6 +51,7 @@
         ><b>{{ section() }}</b> · {{ today }}</span
       >
       <span class="flex-grow-1"></span>
+      <app-notification-bell />
       <div ngbDropdown placement="bottom-end">
         <button type="button" class="user-chip" ngbDropdownToggle>
           <span class="user-avatar">{{ initials() }}</span>
@@ -64,6 +65,9 @@
             {{ session.isAdmin() ? 'Administrador de la clínica' : 'Médico' }}
           </div>
           <div class="dropdown-divider"></div>
+          <a ngbDropdownItem routerLink="/mi-cuenta">
+            <i class="bi bi-person-gear me-2"></i>Mi cuenta
+          </a>
           <button type="button" ngbDropdownItem class="text-danger" (click)="logout()">
             <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
           </button>

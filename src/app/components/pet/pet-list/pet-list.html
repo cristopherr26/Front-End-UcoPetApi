@@ -1,0 +1,243 @@
+<div class="card">
+  <div class="card-header py-3">
+    @if (tutorId()) {
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="mb-1">Mascotas del tutor</h6>
+          <span class="small text-body-secondary">
+            Tutor: {{ tutorId() }}
+          </span>
+        </div>
+
+        <a routerLink="/mascotas" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i>
+          Ver todas las mascotas
+        </a>
+      </div>
+    } @else {
+      <div class="row g-2 align-items-center">
+        <div class="col-md">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-search"></i>
+            </span>
+
+            <input
+              type="search"
+              class="form-control"
+              placeholder="Buscar mascota por nombre"
+              aria-label="Buscar mascota por nombre"
+              [value]="name()"
+              (input)="name.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="col-md">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-search"></i>
+            </span>
+
+            <input
+              type="search"
+              class="form-control"
+              placeholder="Buscar por raza"
+              aria-label="Buscar por raza"
+              [value]="breed()"
+              (input)="breed.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="col-auto">
+          <select
+            class="form-select form-select-sm"
+            aria-label="Estado de la mascota"
+            [value]="isActive() === null ? '' : (isActive() ? 'true' : 'false')"
+            (change)="setStatus($any($event.target).value)"
+          >
+            <option value="true">Activas</option>
+            <option value="false">Desactivadas</option>
+            <option value="">Todos los estados</option>
+          </select>
+        </div>
+
+        @if (session.isAdmin()) {
+          <div class="col-auto">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              (click)="create()"
+            >
+              <i class="bi bi-plus-lg me-1"></i>
+              Nueva mascota
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ error() }}
+    </div>
+  }
+
+  @if (!session.headquarterId()) {
+    <div class="alert alert-info m-3 mb-0">
+      <i class="bi bi-info-circle me-2"></i>
+      Selecciona una sede para consultar sus mascotas.
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="name" [table]="table">
+            Mascota
+          </th>
+
+          <th appSortHeader="breed" [table]="table">
+            Raza
+          </th>
+
+          <th appSortHeader="species" [table]="table">
+            Especie
+          </th>
+
+          <th appSortHeader="birthDate" [table]="table">
+            Fecha de nacimiento
+          </th>
+
+          <th appSortHeader="gender" [table]="table">
+            Sexo
+          </th>
+
+          <th appSortHeader="active" [table]="table">
+            Estado
+          </th>
+
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+              <div class="small text-body-secondary mt-2">
+                Cargando mascotas...
+              </div>
+            </td>
+          </tr>
+        } @else if (!session.headquarterId()) {
+          <tr>
+            <td colspan="7" class="text-center text-body-secondary py-4">
+              Selecciona una sede para mostrar las mascotas.
+            </td>
+          </tr>
+        } @else {
+          @for (pet of table.rows(); track pet.id) {
+            <tr>
+              <td>
+                <div class="fw-semibold">
+                  {{ pet.name }}
+                </div>
+
+                @if (tutorId() !== pet.tutorId) {
+                  <a
+                    class="small"
+                    [routerLink]="['/mascotas/tutor', pet.tutorId]"
+                  >
+                    Ver mascotas del tutor
+                  </a>
+                }
+              </td>
+
+              <td>
+                {{ pet.breed }}
+              </td>
+
+              <td>
+                {{ pet.species }}
+              </td>
+
+              <td class="text-nowrap">
+                {{ pet.birthDate }}
+              </td>
+
+              <td>
+                {{ pet.gender === 'F' ? 'Hembra' : 'Macho' }}
+              </td>
+
+              <td>
+                @if (pet.active) {
+                  <span
+                    class="badge rounded-pill bg-success-subtle text-success-emphasis"
+                  >
+                    Activa
+                  </span>
+                } @else {
+                  <span
+                    class="badge rounded-pill bg-danger-subtle text-danger-emphasis"
+                  >
+                    Desactivada
+                  </span>
+                }
+              </td>
+
+              <td class="text-end text-nowrap">
+                @if (session.isAdmin()) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    title="Editar mascota"
+                    (click)="edit(pet)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+
+                  @if (pet.active) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger ms-1"
+                      title="Desactivar mascota"
+                      (click)="deactivate(pet)"
+                    >
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  }
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center text-body-secondary py-5">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+
+                @if (tutorId()) {
+                  No se encontraron mascotas para este tutor.
+                } @else {
+                  No hay mascotas registradas con estos filtros.
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (session.headquarterId()) {
+    <app-table-pager
+      [total]="table.total()"
+      [(page)]="table.page"
+      [(pageSize)]="table.pageSize"
+    />
+  }
+</div>
