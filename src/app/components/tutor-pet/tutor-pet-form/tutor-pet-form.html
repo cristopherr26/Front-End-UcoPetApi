@@ -1,0 +1,69 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="tutorPetId() ? 'Editar tutor' : 'Nuevo tutor'"
+    subtitle="Selecciona una persona existente para asociarla como tutor."
+    icon="bi-people"
+    tone="teal"
+    (closed)="modal.dismiss()"
+  >
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+
+    <div class="mb-3">
+      <label class="form-label" for="tutor-pet-person">Persona *</label>
+      @if (loading()) {
+        <div class="form-control-plaintext text-body-secondary">
+          <span class="spinner-border spinner-border-sm me-2"></span>Cargando personas...
+        </div>
+      } @else if (persons().length > 0) {
+        <select
+          id="tutor-pet-person"
+          class="form-select"
+          formControlName="person"
+          [class.is-invalid]="invalid()"
+          [attr.aria-describedby]="invalid() ? 'tutor-pet-person-error' : null"
+        >
+          <option value="" disabled>Elige una persona activa</option>
+          @for (option of options(); track option.id) {
+            <option [value]="option.id">{{ option.label }}</option>
+          }
+        </select>
+        @if (invalid()) {
+          <div id="tutor-pet-person-error" class="invalid-feedback">
+            Selecciona una persona para asociarla como tutor.
+          </div>
+        }
+        <div class="form-text">
+          Los datos personales y su estado se consultan desde Personas; aquí solo se guarda su ID.
+        </div>
+      } @else if (error()) {
+        <div class="form-text text-body-secondary">
+          No se pudo consultar la lista de personas. Revisa el mensaje de error e inténtalo de nuevo.
+        </div>
+      } @else {
+        <div class="alert alert-warning mb-0">
+          <i class="bi bi-info-circle me-2"></i>
+          No hay personas disponibles. Revisa que existan personas activas y que la API responda.
+        </div>
+      }
+    </div>
+
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="saving() || loading() || persons().length === 0"
+      >
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Guardar tutor
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>
