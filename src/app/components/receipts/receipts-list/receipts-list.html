@@ -1,0 +1,229 @@
+<app-page-header
+  eyebrow="Procesador Pagos"
+  title="Recibos de caja"
+  subtitle="Ingresos registrados en caja. Los recibos no se eliminan: se anulan."
+>
+  <button type="button" class="btn btn-primary" (click)="create()">
+    <i class="bi bi-plus-lg me-1"></i>Nuevo recibo
+  </button>
+</app-page-header>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Recaudado hoy"
+      [value]="todayTotal() | price"
+      [hint]="todayCount() + (todayCount() === 1 ? ' recibo activo' : ' recibos activos')"
+      scope="Hoy"
+      tone="ok"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Recibos activos"
+      [value]="activeCount()"
+      hint="Suman en la caja"
+      scope="Toda la lista"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Anulados"
+      [value]="cancelledCount()"
+      hint="No se pueden modificar"
+      scope="Toda la lista"
+      [tone]="cancelledCount() > 0 ? 'warn' : 'default'"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Último recibo"
+      [value]="last()?.receiptNumber || '—'"
+      [hint]="last() ? (last()!.date | date: 'dd/MM/yyyy HH:mm') : null"
+      scope="Más reciente"
+    />
+  </div>
+</div>
+
+<div class="alert alert-info d-flex align-items-center gap-2 py-2">
+  <i class="bi bi-hourglass-split"></i>Los recibos se registran en segundo plano: al crear, editar o
+  anular puede pasar un instante antes de verlos reflejados.
+</div>
+
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar por número o concepto"
+            aria-label="Buscar recibo"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Estado"
+          (change)="setState($any($event.target).value)"
+        >
+          <option value="" [selected]="state() === null">Todos los estados</option>
+          @for (option of states; track option.value) {
+          <option [value]="option.value" [selected]="state() === option.value">
+            {{ option.label }}
+          </option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Método de pago"
+          (change)="setPayMethod($any($event.target).value)"
+        >
+          <option value="" [selected]="payMethodId() === null">Todos los métodos</option>
+          @for (method of payMethods; track method.id) {
+          <option [value]="method.id" [selected]="payMethodId() === method.id">
+            {{ method.name }}
+          </option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <div class="input-group input-group-sm date-range">
+          <span class="input-group-text bg-white">Del</span>
+          <input
+            type="date"
+            class="form-control"
+            aria-label="Desde"
+            [value]="dateFrom()"
+            (input)="dateFrom.set($any($event.target).value)"
+          />
+          <span class="input-group-text bg-white">al</span>
+          <input
+            type="date"
+            class="form-control"
+            aria-label="Hasta"
+            [value]="dateTo()"
+            (input)="dateTo.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      @if (hasFilters()) {
+      <div class="col-auto">
+        <button type="button" class="btn btn-light btn-sm" (click)="clearFilters()">
+          <i class="bi bi-x-lg me-1"></i>Limpiar
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+
+  @if (error()) {
+  <div class="alert alert-danger m-3">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}
+  </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+      <tr>
+        <th appSortHeader="number" [table]="table">Recibo</th>
+        <th appSortHeader="concept" [table]="table">Concepto</th>
+        <th appSortHeader="payMethod" [table]="table">Método de pago</th>
+        <th appSortHeader="date" [table]="table">Fecha</th>
+        <th class="text-end" appSortHeader="amount" [table]="table" [end]="true">Valor</th>
+        <th appSortHeader="state" [table]="table">Estado</th>
+        <th class="text-end"></th>
+      </tr>
+      </thead>
+      <tbody>
+      @if (loading()) {
+      <tr>
+        <td colspan="7" class="text-center py-5">
+          <span class="spinner-border text-primary"></span>
+        </td>
+      </tr>
+      } @else {
+      @for (receipt of table.rows(); track receipt.id) {
+      <tr [class.is-cancelled]="receipt.state === 'CANCELLED'" [class.is-pending]="receipt.pending">
+        <td class="text-nowrap">
+          @if (receipt.receiptNumber) {
+          <span class="receipt-number fw-semibold">{{ receipt.receiptNumber }}</span>
+          } @else {
+          <span class="text-body-secondary fst-italic">Asignando número…</span>
+          }
+        </td>
+        <td>
+          <div class="fw-semibold">{{ receipt.concept }}</div>
+          <div class="small text-body-secondary text-truncate item-description">
+            Tutor <span class="id-chip" [title]="receipt.tutorId">{{ receipt.tutorId.slice(0, 8) }}</span>
+            @if (receipt.petId) {
+            · Mascota
+            <span class="id-chip" [title]="receipt.petId">{{ receipt.petId.slice(0, 8) }}</span>
+            }
+          </div>
+        </td>
+        <td>
+                <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{
+                  receipt.payMethodName
+                }}</span>
+        </td>
+        <td class="small text-nowrap">{{ receipt.date | date: 'dd/MM/yyyy HH:mm' }}</td>
+        <td class="text-end fw-semibold receipt-amount">{{ receipt.amount | price }}</td>
+        <td>
+          @if (receipt.pending) {
+          <span class="uc-tag is-warn">
+                    <span class="spinner-border spinner-border-sm"></span>Procesando
+                  </span>
+          } @else if (receipt.state === 'ACTIVE') {
+          <span class="uc-tag is-ok"><i class="bi bi-check-circle"></i>Activo</span>
+          } @else {
+          <span class="uc-tag is-danger"><i class="bi bi-slash-circle"></i>Anulado</span>
+          }
+        </td>
+        <td class="text-end text-nowrap">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary"
+            title="Editar"
+            [disabled]="receipt.state === 'CANCELLED' || receipt.pending"
+            (click)="edit(receipt)"
+          >
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger ms-1"
+            title="Anular"
+            [disabled]="receipt.state === 'CANCELLED' || receipt.pending"
+            (click)="cancel(receipt)"
+          >
+            <i class="bi bi-slash-circle"></i>
+          </button>
+        </td>
+      </tr>
+      } @empty {
+      <tr>
+        <td colspan="7" class="text-center text-body-secondary py-5">
+          <i class="bi bi-inbox fs-2 d-block mb-2"></i>No hay recibos con estos filtros
+        </td>
+      </tr>
+      }
+      }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="receipts-summary">
+    <span class="text-body-secondary small">Total de los recibos activos que se ven</span>
+    <span class="receipts-summary-value">{{ visibleTotal() | price }}</span>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>

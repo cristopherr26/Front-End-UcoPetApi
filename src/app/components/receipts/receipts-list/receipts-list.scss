@@ -1,0 +1,56 @@
+.date-range {
+  .form-control {
+    min-width: 8.5rem;
+  }
+}
+
+.receipt-number,
+.receipt-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.receipt-number {
+  letter-spacing: 0.02em;
+}
+
+.id-chip {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.4rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  color: var(--uc-ink);
+  background: #f1f4fb;
+}
+
+tr.is-cancelled {
+  td {
+    color: var(--uc-ink);
+  }
+
+  .receipt-amount {
+    text-decoration: line-through;
+  }
+}
+
+tr.is-pending > td {
+  background: #f8fbff;
+}
+
+.receipts-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--uc-line);
+  background: #fff;
+}
+
+.receipts-summary-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+}

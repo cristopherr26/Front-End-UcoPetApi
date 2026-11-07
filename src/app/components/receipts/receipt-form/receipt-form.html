@@ -1,0 +1,92 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="receipt() ? 'Editar ' + receipt()!.receiptNumber : 'Nuevo recibo'"
+    subtitle="Los campos con * son obligatorios"
+    icon="bi-cash-coin"
+    tone="teal"
+    (closed)="modal.dismiss()"
+  >
+    <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+      <i class="bi bi-info-circle"></i>El número y el estado del recibo los asigna el procesador de
+      pagos.
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="receipt-tutor">Tutor (ID) *</label>
+        <input
+          id="receipt-tutor"
+          class="form-control id-input"
+          formControlName="tutorId"
+          placeholder="00000000-0000-0000-0000-000000000000"
+          [class.is-invalid]="invalid('tutorId')"
+        />
+        <div class="invalid-feedback">El tutor es obligatorio (ID con formato UUID)</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="receipt-pet">Mascota (ID)</label>
+        <input
+          id="receipt-pet"
+          class="form-control id-input"
+          formControlName="petId"
+          placeholder="Opcional"
+          [class.is-invalid]="invalid('petId')"
+        />
+        <div class="invalid-feedback">El ID de la mascota no tiene formato UUID</div>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="receipt-concept">Concepto *</label>
+        <input
+          id="receipt-concept"
+          class="form-control"
+          formControlName="concept"
+          maxlength="255"
+          placeholder="Ej. Consulta veterinaria general"
+          [class.is-invalid]="invalid('concept')"
+        />
+        <div class="invalid-feedback">El concepto es obligatorio (hasta 255 caracteres)</div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="receipt-amount">Valor *</label>
+        <div class="input-group has-validation">
+          <span class="input-group-text">$</span>
+          <input
+            id="receipt-amount"
+            type="number"
+            class="form-control"
+            min="0.01"
+            step="any"
+            formControlName="amount"
+            [class.is-invalid]="invalid('amount')"
+          />
+          <div class="invalid-feedback">El valor debe ser mayor a cero</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="receipt-method">Método de pago *</label>
+        <select
+          id="receipt-method"
+          class="form-select"
+          formControlName="payMethodId"
+          [class.is-invalid]="invalid('payMethodId')"
+        >
+          <option [ngValue]="null" disabled>Elige uno</option>
+          @for (method of payMethods(); track method.id) {
+          <option [ngValue]="method.id">{{ method.name }}</option>
+          }
+        </select>
+        <div class="invalid-feedback">El método de pago es obligatorio</div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="receipt-date">Fecha y hora</label>
+        <input id="receipt-date" type="datetime-local" class="form-control" formControlName="date" />
+        <div class="form-text">Si la dejas vacía se usa el momento actual.</div>
+      </div>
+    </div>
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check2 me-1"></i>{{ receipt() ? 'Guardar cambios' : 'Registrar recibo' }}
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

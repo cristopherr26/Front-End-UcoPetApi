@@ -294,7 +294,7 @@ export const NAVIGATION: NavGroup[] = [
         description: 'Recibos de caja y métodos de pago.',
         api: [
           { base: '/api/v1/receipts', rule: 'ADMIN' },
-          { base: '/api/v1/metodosDePago', rule: 'ADMIN' },
+          { base: '/api/v1/PayMethods', rule: 'ADMIN' },
         ],
       },
       {
