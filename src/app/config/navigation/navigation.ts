@@ -147,10 +147,11 @@ export const NAVIGATION: NavGroup[] = [
         description: 'Órdenes médicas y de medicación.',
         api: [{ base: '/api/v1/orders', rule: 'ADMIN y DOCTOR' }],
       },
-      {
+           {
         path: 'espacios',
         entity: 'space',
         label: 'Espacios',
+        ready: true,
         loadChildren: () => import('../../routes/space/space.routes').then((m) => m.SPACE_ROUTES),
         icon: 'bi-door-open',
         roles: BOTH,

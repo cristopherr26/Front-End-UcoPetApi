@@ -1,0 +1,98 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="editing() ? 'Editar espacio' : 'Nuevo espacio'"
+    [subtitle]="'Los campos con * son obligatorios'"
+    icon="bi-door-open"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label" for="space-code">Código *</label>
+        <input
+          id="space-code"
+          class="form-control"
+          formControlName="code"
+          maxlength="10"
+          placeholder="CON-101"
+          [class.is-invalid]="invalid('code')"
+        />
+        <div class="invalid-feedback">
+          Tres letras mayúsculas, un guion y números (ej. CON-101), máximo 10 caracteres
+        </div>
+        @if (editing()) {
+          <div class="form-text">El código no se puede cambiar.</div>
+        }
+      </div>
+      <div class="col-md-8">
+        <label class="form-label" for="space-type">Tipo *</label>
+        <input
+          id="space-type"
+          class="form-control"
+          formControlName="type"
+          maxlength="50"
+          list="space-type-options"
+          placeholder="Consultorio, quirófano..."
+          [class.is-invalid]="invalid('type')"
+        />
+        <datalist id="space-type-options">
+          @for (suggestion of typeSuggestions; track suggestion) {
+            <option [value]="suggestion"></option>
+          }
+        </datalist>
+        <div class="invalid-feedback">El tipo debe tener entre 5 y 50 caracteres</div>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="space-description">Descripción *</label>
+        <textarea
+          id="space-description"
+          class="form-control"
+          rows="3"
+          maxlength="255"
+          formControlName="description"
+          [class.is-invalid]="invalid('description')"
+        ></textarea>
+        <div class="invalid-feedback">La descripción debe tener entre 10 y 255 caracteres</div>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="space-headquarter">Sede *</label>
+        <select
+          id="space-headquarter"
+          class="form-select"
+          formControlName="headquarterId"
+          [class.is-invalid]="invalid('headquarterId')"
+        >
+          <option [ngValue]="null" disabled>Elige una sede</option>
+          @for (option of headquarterOptions(); track option.id) {
+            <option [ngValue]="option.id">{{ option.name }}</option>
+          }
+        </select>
+        <div class="invalid-feedback">La sede es obligatoria</div>
+        @if (editing()) {
+          <div class="form-text">
+            @if (editing()?.headquarterId) {
+              Un espacio no cambia de sede.
+            } @else {
+              Este espacio se creó antes de las sedes y no tiene una asignada.
+            }
+          </div>
+        }
+      </div>
+    </div>
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Guardar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>
