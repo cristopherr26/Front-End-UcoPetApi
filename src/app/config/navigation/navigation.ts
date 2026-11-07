@@ -297,6 +297,7 @@ export const NAVIGATION: NavGroup[] = [
         icon: 'bi-cash-coin',
         roles: ADMIN,
         description: 'Recibos de caja y métodos de pago.',
+        ready : true,
         api: [
           { base: '/api/v1/receipts', rule: 'ADMIN' },
           { base: '/api/v1/PayMethods', rule: 'ADMIN' },

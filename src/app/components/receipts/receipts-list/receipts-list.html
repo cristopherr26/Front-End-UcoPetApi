@@ -59,7 +59,7 @@
           <input
             type="search"
             class="form-control"
-            placeholder="Buscar por número o concepto"
+            placeholder="Buscar por número, concepto, tutor o mascota"
             aria-label="Buscar recibo"
             [value]="search()"
             (input)="search.set($any($event.target).value)"
@@ -87,7 +87,7 @@
           (change)="setPayMethod($any($event.target).value)"
         >
           <option value="" [selected]="payMethodId() === null">Todos los métodos</option>
-          @for (method of payMethods; track method.id) {
+          @for (method of payMethods(); track method.id) {
           <option [value]="method.id" [selected]="payMethodId() === method.id">
             {{ method.name }}
           </option>
@@ -152,21 +152,16 @@
       </tr>
       } @else {
       @for (receipt of table.rows(); track receipt.id) {
-      <tr [class.is-cancelled]="receipt.state === 'CANCELLED'" [class.is-pending]="receipt.pending">
+      <tr [class.is-cancelled]="receipt.state === 'CANCELLED'" [class.is-pending]="isPending(receipt)">
         <td class="text-nowrap">
-          @if (receipt.receiptNumber) {
           <span class="receipt-number fw-semibold">{{ receipt.receiptNumber }}</span>
-          } @else {
-          <span class="text-body-secondary fst-italic">Asignando número…</span>
-          }
         </td>
         <td>
           <div class="fw-semibold">{{ receipt.concept }}</div>
           <div class="small text-body-secondary text-truncate item-description">
-            Tutor <span class="id-chip" [title]="receipt.tutorId">{{ receipt.tutorId.slice(0, 8) }}</span>
-            @if (receipt.petId) {
-            · Mascota
-            <span class="id-chip" [title]="receipt.petId">{{ receipt.petId.slice(0, 8) }}</span>
+            <i class="bi bi-person me-1"></i>{{ tutorName(receipt) }}
+            @if (petName(receipt); as pet) {
+            · <i class="bi bi-heart me-1"></i>{{ pet }}
             }
           </div>
         </td>
@@ -178,7 +173,7 @@
         <td class="small text-nowrap">{{ receipt.date | date: 'dd/MM/yyyy HH:mm' }}</td>
         <td class="text-end fw-semibold receipt-amount">{{ receipt.amount | price }}</td>
         <td>
-          @if (receipt.pending) {
+          @if (isPending(receipt)) {
           <span class="uc-tag is-warn">
                     <span class="spinner-border spinner-border-sm"></span>Procesando
                   </span>
@@ -193,7 +188,7 @@
             type="button"
             class="btn btn-sm btn-outline-primary"
             title="Editar"
-            [disabled]="receipt.state === 'CANCELLED' || receipt.pending"
+            [disabled]="receipt.state === 'CANCELLED' || isPending(receipt)"
             (click)="edit(receipt)"
           >
             <i class="bi bi-pencil"></i>
@@ -202,7 +197,7 @@
             type="button"
             class="btn btn-sm btn-outline-danger ms-1"
             title="Anular"
-            [disabled]="receipt.state === 'CANCELLED' || receipt.pending"
+            [disabled]="receipt.state === 'CANCELLED' || isPending(receipt)"
             (click)="cancel(receipt)"
           >
             <i class="bi bi-slash-circle"></i>

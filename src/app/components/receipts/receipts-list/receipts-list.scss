@@ -13,16 +13,7 @@
   letter-spacing: 0.02em;
 }
 
-.id-chip {
-  display: inline-block;
-  padding: 0.05rem 0.4rem;
-  border-radius: 0.4rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.72rem;
-  color: var(--uc-ink);
-  background: #f1f4fb;
-}
-
+// Un recibo anulado se ve apagado y con el valor tachado: ya no suma en la caja.
 tr.is-cancelled {
   td {
     color: var(--uc-ink);
@@ -33,6 +24,7 @@ tr.is-cancelled {
   }
 }
 
+// Mientras el processor termina de guardar.
 tr.is-pending > td {
   background: #f8fbff;
 }

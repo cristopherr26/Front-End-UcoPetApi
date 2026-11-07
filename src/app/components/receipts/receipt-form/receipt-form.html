@@ -12,26 +12,33 @@
     </div>
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label" for="receipt-tutor">Tutor (ID) *</label>
-        <input
+        <label class="form-label" for="receipt-tutor">Tutor *</label>
+        <select
           id="receipt-tutor"
-          class="form-control id-input"
+          class="form-select"
           formControlName="tutorId"
-          placeholder="00000000-0000-0000-0000-000000000000"
           [class.is-invalid]="invalid('tutorId')"
-        />
-        <div class="invalid-feedback">El tutor es obligatorio (ID con formato UUID)</div>
+        >
+          <option value="" disabled>Elige un tutor</option>
+          @for (tutor of sortedTutors(); track tutor.id) {
+          <option [value]="tutor.id">{{ tutor.name }}</option>
+          }
+        </select>
+        <div class="invalid-feedback">El tutor es obligatorio</div>
       </div>
       <div class="col-md-6">
-        <label class="form-label" for="receipt-pet">Mascota (ID)</label>
-        <input
-          id="receipt-pet"
-          class="form-control id-input"
-          formControlName="petId"
-          placeholder="Opcional"
-          [class.is-invalid]="invalid('petId')"
-        />
-        <div class="invalid-feedback">El ID de la mascota no tiene formato UUID</div>
+        <label class="form-label" for="receipt-pet">Mascota</label>
+        <select id="receipt-pet" class="form-select" formControlName="petId">
+          <option value="">
+            {{ form.controls.tutorId.value === '' ? 'Primero elige un tutor' : 'Sin mascota' }}
+          </option>
+          @for (pet of pets(); track pet.id) {
+          <option [value]="pet.id">{{ pet.name }}</option>
+          }
+        </select>
+        @if (form.controls.tutorId.value !== '' && pets().length === 0) {
+        <div class="form-text">Este tutor no tiene mascotas registradas.</div>
+        }
       </div>
       <div class="col-12">
         <label class="form-label" for="receipt-concept">Concepto *</label>
