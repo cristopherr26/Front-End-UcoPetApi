@@ -52,9 +52,15 @@
               >
                 <option value="">-- Seleccionar procedimiento --</option>
                 <option *ngFor="let p of proceduresCatalog" [value]="p.id">
-                  {{ p.name }}
+                  {{ p.type }}
                 </option>
               </select>
+
+              <!-- Recuadro informativo dinámico con el código y la descripción -->
+              <div *ngIf="getSelectedProcedure() as proc" class="mt-2 p-2 bg-white border rounded-3 small text-muted shadow-sm">
+                <span class="fw-bold text-dark">[{{ proc.code }}]</span> {{ proc.description }}
+              </div>
+
               <div class="invalid-feedback d-block" *ngIf="coverageForm.get('procedureId')?.touched && coverageForm.get('procedureId')?.invalid">
                 Debe seleccionar un procedimiento.
               </div>

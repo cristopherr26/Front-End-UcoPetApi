@@ -1,9 +1,11 @@
-import { Component, Output, EventEmitter, OnInit, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { HealthPlanService } from '../../../services/health-plan/health-plan.service';
+import { ProcedureService } from '../../../services/procedure/procedure.service';
 import { HealthPlan } from '../../../models/health-plan/health-plan.model';
 import { HealthPlanCoverage } from '../../../models/health-plan/health-plan-coverage.model';
+import { Procedure } from '../../../models/procedure/procedure.model';
 import { HEALTH_PLAN_COVERAGE_RULES } from '../../../utils/health-plan/form-rules';
 
 @Component({
@@ -13,10 +15,9 @@ import { HEALTH_PLAN_COVERAGE_RULES } from '../../../utils/health-plan/form-rule
   templateUrl: './health-plan-coverage-modal.html'
 })
 export class HealthPlanCoverageModal implements OnInit {
-  
-  // Usamos un setter para asegurar que cargue las coberturas apenas llegue el plan
   private _plan!: HealthPlan;
-  @Input() 
+
+  @Input()
   set plan(value: HealthPlan) {
     this._plan = value;
     if (this._plan?.id) {
@@ -31,7 +32,7 @@ export class HealthPlanCoverageModal implements OnInit {
 
   coverages: HealthPlanCoverage[] = [];
   servicesCatalog: any[] = [];
-  proceduresCatalog: any[] = [];
+  proceduresCatalog: Procedure[] = [];
 
   coverageForm: FormGroup;
   isEditing = false;
@@ -40,7 +41,9 @@ export class HealthPlanCoverageModal implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private healthPlanService: HealthPlanService
+    private healthPlanService: HealthPlanService,
+    private procedureService: ProcedureService,
+    private cdr: ChangeDetectorRef
   ) {
     this.coverageForm = this.fb.group({
       serviceId: ['', HEALTH_PLAN_COVERAGE_RULES.serviceId],
@@ -53,54 +56,52 @@ export class HealthPlanCoverageModal implements OnInit {
   ngOnInit(): void {
     this.loadServicesCatalog();
     this.loadProceduresCatalog();
-    if (this.plan?.id) {
-      this.loadCoverages();
-    }
   }
 
   loadServicesCatalog(): void {
     this.healthPlanService.getServices().subscribe({
       next: (data: any) => {
-        const list = Array.isArray(data) ? data : (data?.data || []);
-        if (list.length > 0) {
-          this.servicesCatalog = list.filter(
-            (s: any) => s && s.id && s.name && s.active !== false && isNaN(Number(s.name))
-          );
-        } else {
-          this.servicesCatalog = this.getServicesFallback();
-        }
+        const list = Array.isArray(data) ? data : (data?.data || data?.content || []);
+        this.servicesCatalog = list.filter(
+          (s: any) => s && s.id && s.name && s.active !== false && isNaN(Number(s.name))
+        );
+        this.cdr.detectChanges();
       },
-      error: () => {
-        this.servicesCatalog = this.getServicesFallback();
+      error: (err: unknown) => {
+        console.error('Error al cargar el catálogo de servicios desde la BD:', err);
+        this.servicesCatalog = [];
+        this.cdr.detectChanges();
       }
     });
   }
 
-  private getServicesFallback(): any[] {
-    return [
-      { id: '11111111-1111-1111-1111-111111111111', name: 'Consulta veterinaria', price: 50000 },
-      { id: '4fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'Vacunación', price: 50000 }
-    ];
-  }
-
   loadProceduresCatalog(): void {
-    this.proceduresCatalog = [
-      { id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', name: 'Consulta Médica General' },
-      { id: 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Vacunación Completa Canina/Felina' },
-      { id: 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', name: 'Procedimiento Profiláctico / Limpieza' }
-    ];
+    this.procedureService.getActive().subscribe({
+      next: (data: Procedure[]) => {
+        this.proceduresCatalog = Array.isArray(data) ? data : [];
+        this.cdr.detectChanges();
+      },
+      error: (err: unknown) => {
+        console.error('Error al cargar procedimientos desde la API:', err);
+        this.proceduresCatalog = [];
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   loadCoverages(): void {
     if (!this.plan?.id) return;
-    
+
     this.healthPlanService.getCoverages(this.plan.id).subscribe({
       next: (response: any) => {
-        const list = Array.isArray(response) ? response : (response?.data || response?.body || []);
-        this.coverages = list;
+        this.coverages = Array.isArray(response)
+          ? response
+          : (response?.data || response?.content || response?.body || []);
+        this.cdr.detectChanges();
       },
       error: (err: unknown) => {
         console.error('Error al cargar coberturas:', err);
+        this.cdr.detectChanges();
       }
     });
   }
@@ -113,7 +114,21 @@ export class HealthPlanCoverageModal implements OnInit {
   getProcedureName(procedureId?: string): string {
     if (!procedureId) return 'N/A';
     const procedure = this.proceduresCatalog.find((p) => p.id === procedureId);
-    return procedure ? procedure.name : procedureId;
+    if (!procedure) return procedureId;
+
+    // Formato limpio para la tabla: Tipo (Código - Descripción)
+    const typePart = procedure.type ? `${procedure.type}` : '';
+    const codePart = procedure.code ? `[${procedure.code}]` : '';
+    const descPart = procedure.description ? ` - ${procedure.description}` : '';
+
+    return `${typePart} ${codePart}${descPart}`;
+  }
+
+  // Método auxiliar para obtener el procedimiento seleccionado actualmente en el formulario
+  getSelectedProcedure(): Procedure | undefined {
+    const procedureId = this.coverageForm.get('procedureId')?.value;
+    if (!procedureId) return undefined;
+    return this.proceduresCatalog.find((p) => p.id === procedureId);
   }
 
   saveCoverage(): void {
@@ -122,12 +137,13 @@ export class HealthPlanCoverageModal implements OnInit {
       return;
     }
 
-    const formValue = this.coverageForm.value;
+    const formValue = this.coverageForm.getRawValue();
 
     const isDuplicate = this.coverages.some(
-      (c) => c.serviceId === formValue.serviceId && 
-             c.procedureId === formValue.procedureId && 
-             c.id !== this.editingCoverageId
+      (c) =>
+        c.serviceId === formValue.serviceId &&
+        c.procedureId === formValue.procedureId &&
+        c.id !== this.editingCoverageId
     );
 
     if (isDuplicate) {
@@ -151,15 +167,21 @@ export class HealthPlanCoverageModal implements OnInit {
           this.resetForm();
           this.loadCoverages();
         },
-        error: (err: any) => (this.errorMessage = err?.error?.message || 'Error al actualizar la cobertura.')
+        error: (err: any) => {
+          this.errorMessage = err?.error?.message || 'Error al actualizar la cobertura.';
+          this.cdr.detectChanges();
+        }
       });
     } else {
       this.healthPlanService.createCoverage(this.plan.id, payload).subscribe({
         next: () => {
           this.resetForm();
-          this.loadCoverages(); // Refresca la tabla automáticamente
+          this.loadCoverages();
         },
-        error: (err: any) => (this.errorMessage = err?.error?.message || 'Error al asociar la cobertura.')
+        error: (err: any) => {
+          this.errorMessage = err?.error?.message || 'Error al asociar la cobertura.';
+          this.cdr.detectChanges();
+        }
       });
     }
   }
@@ -167,12 +189,16 @@ export class HealthPlanCoverageModal implements OnInit {
   editCoverage(cov: HealthPlanCoverage): void {
     this.isEditing = true;
     this.editingCoverageId = cov.id || null;
+    
     this.coverageForm.patchValue({
       serviceId: cov.serviceId,
       procedureId: cov.procedureId,
       coveragePercentage: cov.coveragePercentage,
       coverageLimit: cov.coverageLimit
     });
+
+    this.coverageForm.get('serviceId')?.disable();
+    this.cdr.detectChanges();
   }
 
   deleteCoverage(coverageId?: string): void {
@@ -180,19 +206,26 @@ export class HealthPlanCoverageModal implements OnInit {
 
     this.healthPlanService.deleteCoverage(this.plan.id, coverageId).subscribe({
       next: () => this.loadCoverages(),
-      error: (err: unknown) => console.error('Error al desactivar cobertura:', err)
+      error: (err: unknown) => {
+        console.error('Error al desactivar cobertura:', err);
+        this.cdr.detectChanges();
+      }
     });
   }
 
   resetForm(): void {
     this.isEditing = false;
     this.editingCoverageId = null;
+    
     this.coverageForm.reset({
       serviceId: '',
       procedureId: '',
       coveragePercentage: 80,
       coverageLimit: 100000
     });
+
+    this.coverageForm.get('serviceId')?.enable();
+    this.cdr.detectChanges();
   }
 
   close(): void {
