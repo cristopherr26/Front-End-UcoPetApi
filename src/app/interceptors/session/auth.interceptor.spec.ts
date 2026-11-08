@@ -13,7 +13,7 @@ describe('authInterceptor', () => {
 
   beforeEach(() => {
     clearCookies();
-    setSessionCookies('abc', ['ADMIN']);
+    setSessionCookies(['ADMIN']);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -27,20 +27,22 @@ describe('authInterceptor', () => {
 
   afterEach(() => backend.verify());
 
-  it('sends the token to every API route, with or without v1', () => {
+  it('never puts the token in a header: it travels in the HttpOnly cookie', () => {
     ['/api/v1/products', '/api/invoices', '/api/transfers/1', '/api/notifications'].forEach(
       (url) => {
         http.get(url).subscribe();
-        expect(backend.expectOne(url).request.headers.get('Authorization')).toBe('Bearer abc');
+        const request = backend.expectOne(url).request;
+        expect(request.headers.has('Authorization')).toBe(false);
+        expect(request.withCredentials).toBe(true);
       },
     );
   });
 
-  it('does not send the token outside the API', () => {
+  it('does not send credentials outside the API', () => {
     http.get('https://fonts.googleapis.com/css2').subscribe();
-    expect(
-      backend.expectOne('https://fonts.googleapis.com/css2').request.headers.has('Authorization'),
-    ).toBe(false);
+    expect(backend.expectOne('https://fonts.googleapis.com/css2').request.withCredentials).toBe(
+      false,
+    );
   });
 
   it('closes the session and goes to login on a 401', () => {
@@ -54,6 +56,14 @@ describe('authInterceptor', () => {
   it('keeps the session on a 403, which is a missing permission', () => {
     http.get('/api/invoices').subscribe({ error: () => undefined });
     backend.expectOne('/api/invoices').flush(null, { status: 403, statusText: 'Forbidden' });
+    expect(TestBed.inject(SessionService).isLoggedIn()).toBe(true);
+  });
+
+  it('keeps the session when the current password is wrong (401 from me/password)', () => {
+    http.put('/api/v1/persons/me/password', {}).subscribe({ error: () => undefined });
+    backend
+      .expectOne('/api/v1/persons/me/password')
+      .flush({ message: 'La contrasena actual no coincide' }, { status: 401, statusText: 'x' });
     expect(TestBed.inject(SessionService).isLoggedIn()).toBe(true);
   });
 });

@@ -7,7 +7,6 @@ export function clearCookies(): void {
     });
 }
 
-export function setSessionCookies(token: string, roles: string[]): void {
-  document.cookie = `ucopet_token=${encodeURIComponent(token)}; Path=/`;
+export function setSessionCookies(roles: string[]): void {
   document.cookie = `ucopet_profile=${encodeURIComponent(JSON.stringify({ personId: 'p1', fullName: 'Ana Prueba', roles }))}; Path=/`;
 }

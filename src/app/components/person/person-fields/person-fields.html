@@ -1,0 +1,97 @@
+<div class="row g-3" [formGroup]="form()">
+  <div class="col-md-5">
+    <label class="form-label" [for]="idPrefix() + '-document-type'">Tipo de documento *</label>
+    <select
+      class="form-select"
+      formControlName="documentType"
+      [id]="idPrefix() + '-document-type'"
+      [class.is-invalid]="invalid('documentType')"
+    >
+      <option [ngValue]="null" disabled>Elige uno</option>
+      @for (option of documentTypes(); track option.value) {
+        <option [ngValue]="option.value">{{ option.label }}</option>
+      }
+    </select>
+    <div class="invalid-feedback">El tipo de documento es obligatorio</div>
+  </div>
+  <div class="col-md-7">
+    <label class="form-label" [for]="idPrefix() + '-document-number'">Número de documento *</label>
+    <input
+      class="form-control"
+      formControlName="documentNumber"
+      maxlength="20"
+      autocomplete="off"
+      [id]="idPrefix() + '-document-number'"
+      [class.is-invalid]="invalid('documentNumber')"
+    />
+    <div class="invalid-feedback">Entre 4 y 20 caracteres: letras, números y guiones</div>
+  </div>
+
+  <div class="col-md-6">
+    <label class="form-label" [for]="idPrefix() + '-first-name'">Nombres *</label>
+    <input
+      class="form-control"
+      formControlName="firstName"
+      maxlength="60"
+      autocomplete="given-name"
+      [id]="idPrefix() + '-first-name'"
+      [class.is-invalid]="invalid('firstName')"
+    />
+    <div class="invalid-feedback">El nombre es obligatorio (hasta 60 caracteres)</div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label" [for]="idPrefix() + '-last-name'">Apellidos *</label>
+    <input
+      class="form-control"
+      formControlName="lastName"
+      maxlength="60"
+      autocomplete="family-name"
+      [id]="idPrefix() + '-last-name'"
+      [class.is-invalid]="invalid('lastName')"
+    />
+    <div class="invalid-feedback">El apellido es obligatorio (hasta 60 caracteres)</div>
+  </div>
+
+  <div class="col-md-6">
+    <label class="form-label" [for]="idPrefix() + '-email'">Correo electrónico</label>
+    <input
+      type="email"
+      class="form-control"
+      formControlName="email"
+      maxlength="120"
+      autocomplete="email"
+      placeholder="nombre@correo.com"
+      [id]="idPrefix() + '-email'"
+      [class.is-invalid]="invalid('email')"
+    />
+    <div class="invalid-feedback">Escribe un correo válido (hasta 120 caracteres)</div>
+    <div class="form-text">Con este correo inicia sesión.</div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label" [for]="idPrefix() + '-phone'">Teléfono</label>
+    <input
+      type="tel"
+      class="form-control"
+      formControlName="phone"
+      maxlength="20"
+      autocomplete="tel"
+      placeholder="+57 300 123 4567"
+      [id]="idPrefix() + '-phone'"
+      [class.is-invalid]="invalid('phone')"
+    />
+    <div class="invalid-feedback">Entre 7 y 20: números, espacios, guiones y un + al inicio</div>
+  </div>
+
+  <div class="col-12">
+    <label class="form-label" [for]="idPrefix() + '-address'">Dirección</label>
+    <input
+      class="form-control"
+      formControlName="address"
+      maxlength="200"
+      autocomplete="street-address"
+      [id]="idPrefix() + '-address'"
+      [class.is-invalid]="invalid('address')"
+    />
+    <div class="invalid-feedback">Hasta 200 caracteres</div>
+  </div>
+</div>

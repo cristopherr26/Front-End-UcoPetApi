@@ -37,6 +37,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'usuarios',
         entity: 'person',
         label: 'Usuarios',
+        ready: true,
         loadChildren: () =>
           import('../../routes/person/person.routes').then((m) => m.PERSON_ROUTES),
         icon: 'bi-shield-lock',
@@ -147,10 +148,11 @@ export const NAVIGATION: NavGroup[] = [
         description: 'Órdenes médicas y de medicación.',
         api: [{ base: '/api/v1/orders', rule: 'ADMIN y DOCTOR' }],
       },
-      {
+           {
         path: 'espacios',
         entity: 'space',
         label: 'Espacios',
+        ready: true,
         loadChildren: () => import('../../routes/space/space.routes').then((m) => m.SPACE_ROUTES),
         icon: 'bi-door-open',
         roles: BOTH,
@@ -278,6 +280,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'facturas',
         entity: 'invoice',
         label: 'Facturas',
+        ready: true,
         loadChildren: () =>
           import('../../routes/invoice/invoice.routes').then((m) => m.INVOICE_ROUTES),
         icon: 'bi-receipt',
@@ -294,9 +297,10 @@ export const NAVIGATION: NavGroup[] = [
         icon: 'bi-cash-coin',
         roles: ADMIN,
         description: 'Recibos de caja y métodos de pago.',
+        ready : true,
         api: [
           { base: '/api/v1/receipts', rule: 'ADMIN' },
-          { base: '/api/v1/metodosDePago', rule: 'ADMIN' },
+          { base: '/api/v1/PayMethods', rule: 'ADMIN' },
         ],
       },
       {
