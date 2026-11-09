@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { Notification } from '../../models/notification/notification.model';
 import { SessionService } from '../session/session.service';
 
-const REFRESH_EVERY_MS = 60_000;
+const REFRESH_EVERY_MS = 30_000;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
