@@ -215,6 +215,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'polizas',
         entity: 'health-plan',
         label: 'Pólizas',
+        ready: true,
         loadChildren: () =>
           import('../../routes/health-plan/health-plan.routes').then((m) => m.HEALTH_PLAN_ROUTES),
         icon: 'bi-shield-plus',
