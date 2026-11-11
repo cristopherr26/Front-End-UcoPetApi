@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
 
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+import { EgressShell } from '../../components/egress/egress-shell/egress-shell';
+import { EgressList } from '../../components/egress/egress-list/egress-list';
 
 export const EGRESS_ROUTES: Routes = [
   {
     path: '',
-    component: ModulePlaceholder,
-    data: { module: 'egresos' },
-    title: 'Egresos · UcoPet',
+    component: EgressShell,
+    children: [{ path: '', component: EgressList, title: 'Egresos · UcoPet' }],
   },
 ];
