@@ -1,0 +1,96 @@
+<div class="card">
+
+<div class="card-header py-3 d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">Detalle del procedimiento</h6>
+
+    <a routerLink=".." class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>
+    Volver a la lista
+    </a>
+</div>
+
+<div class="card-body">
+
+    @if (loading()) {
+
+    <div class="text-center py-5">
+        <span class="spinner-border text-primary"></span>
+        <div class="small text-body-secondary mt-2">
+        Cargando procedimiento...
+        </div>
+    </div>
+
+    } @else if (error()) {
+
+    <div class="alert alert-danger mb-0">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ error() }}
+    </div>
+
+    } @else if (procedure(); as p) {
+
+    <div class="row g-3">
+
+        <div class="col-md-4">
+        <div class="small text-body-secondary">Código</div>
+        <div class="fw-semibold">{{ p.code }}</div>
+        </div>
+
+        <div class="col-md-4">
+        <div class="small text-body-secondary">Tipo</div>
+        <div class="fw-semibold">{{ p.type }}</div>
+        </div>
+
+        <div class="col-md-4">
+        <div class="small text-body-secondary">Estado</div>
+
+        @if (p.active) {
+            <span class="badge rounded-pill bg-success-subtle text-success-emphasis">
+            Activo
+            </span>
+        } @else {
+            <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">
+            Desactivado
+            </span>
+        }
+        </div>
+
+        <div class="col-md-12">
+        <div class="small text-body-secondary">Descripción</div>
+        <div>{{ p.description }}</div>
+        </div>
+
+        <div class="col-md-4">
+        <div class="small text-body-secondary">Duración</div>
+        <div>{{ p.durationMinutes | duration }}</div>
+        </div>
+
+        <div class="col-md-8">
+        <div class="small text-body-secondary">Espacio</div>
+        <div>{{ spaceLabel(p.spaceId) }}</div>
+        </div>
+
+        <div class="col-md-12">
+        <div class="small text-body-secondary mb-2">Insumos por defecto</div>
+
+        <ul class="list-group">
+            @for (item of p.defaultItems; track item.itemId) {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ itemLabel(item.itemId) }}
+                <span class="badge text-bg-light">x {{ item.quantity }}</span>
+            </li>
+            } @empty {
+            <li class="list-group-item text-body-secondary">
+                Sin insumos asignados.
+            </li>
+            }
+        </ul>
+        </div>
+
+    </div>
+
+    }
+
+</div>
+
+</div>
