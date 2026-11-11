@@ -85,4 +85,11 @@ export const EMPTY_FILTERS: EgressFilters = {
   payMethodId: null,
   dateFrom: '',
   dateTo: '',
+}
+
+export const PURCHASE_STATUS_LABELS: Record<PurchaseStatus, string> = {
+  PENDING: 'Pendiente',
+  RECEIVED: 'Recibida',
+  LINKED: 'Vinculada',
+  CANCELLED: 'Cancelada',
 };

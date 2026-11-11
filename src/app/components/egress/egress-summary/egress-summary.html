@@ -1,0 +1,175 @@
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+  <span class="small fw-bold text-body-secondary">Periodo</span>
+  <div class="input-group input-group-sm date-range">
+    <span class="input-group-text bg-white">Del</span>
+    <input
+      type="date"
+      class="form-control"
+      aria-label="Desde"
+      [class.is-invalid]="badRange()"
+      [value]="dateFrom()"
+      (input)="dateFrom.set($any($event.target).value)"
+    />
+    <span class="input-group-text bg-white">al</span>
+    <input
+      type="date"
+      class="form-control"
+      aria-label="Hasta"
+      [class.is-invalid]="badRange()"
+      [value]="dateTo()"
+      (input)="dateTo.set($any($event.target).value)"
+    />
+  </div>
+  @if (dateFrom() || dateTo()) {
+  <button type="button" class="btn btn-light btn-sm" (click)="clearRange()">
+    <i class="bi bi-x-lg me-1"></i>Todo el tiempo
+  </button>
+  }
+  @if (badRange()) {
+  <span class="small text-danger">La fecha "desde" es posterior a "hasta".</span>
+  }
+</div>
+
+@if (loading()) {
+<div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+} @else if (error()) {
+<div class="alert alert-danger d-flex align-items-center justify-content-between gap-2">
+  <span><i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}</span>
+  <button type="button" class="btn btn-sm btn-outline-danger" (click)="load()">Reintentar</button>
+</div>
+} @else {
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Gastado"
+      [value]="summary().total | price"
+      [hint]="summary().count + (summary().count === 1 ? ' egreso' : ' egresos')"
+      [scope]="dateFrom() || dateTo() ? 'Periodo elegido' : 'Todo el tiempo'"
+      tone="danger"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Promedio por egreso"
+      [value]="summary().average | price"
+      [scope]="dateFrom() || dateTo() ? 'Periodo elegido' : 'Todo el tiempo'"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Proveedores pagados"
+      [value]="summary().byProvider.length"
+      [scope]="dateFrom() || dateTo() ? 'Periodo elegido' : 'Todo el tiempo'"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Por pagar"
+      [value]="totalOwed() | price"
+      hint="Saldo de las órdenes con pagos"
+      scope="Hoy"
+      [tone]="totalOwed() > 0 ? 'warn' : 'ok'"
+    />
+  </div>
+</div>
+
+@if (summary().count === 0) {
+<div class="card mb-4">
+  <app-empty-state
+    icon="bi-pie-chart"
+    title="No hay egresos en este periodo"
+    text="Cambia las fechas o registra un egreso."
+  />
+</div>
+} @else {
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header py-3 fw-bold">Gasto por proveedor</div>
+      <div class="card-body">
+        @for (group of summary().byProvider; track group.key) {
+        <div class="bar-row">
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="fw-semibold">{{ group.label }}</span>
+            <span>{{ group.total | price }} · {{ group.share }}%</span>
+          </div>
+          <div class="progress" role="progressbar" [attr.aria-label]="group.label"
+               [attr.aria-valuenow]="group.share" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" [style.width.%]="group.share"></div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header py-3 fw-bold">Gasto por método de pago</div>
+      <div class="card-body">
+        @for (group of summary().byPayMethod; track group.key) {
+        <div class="bar-row">
+          <div class="d-flex justify-content-between small mb-1">
+                  <span class="fw-semibold">
+                    <i class="bi me-1" [class]="group.label | payMethodIcon"></i>{{ group.label }}
+                  </span>
+            <span>{{ group.count }} · {{ group.total | price }} · {{ group.share }}%</span>
+          </div>
+          <div class="progress" role="progressbar" [attr.aria-label]="group.label"
+               [attr.aria-valuenow]="group.share" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar is-alt" [style.width.%]="group.share"></div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+<div class="card">
+  <div class="card-header py-3 fw-bold">Saldo de las órdenes con pagos</div>
+  <div class="table-responsive">
+    <table class="table align-middle table-card mb-0">
+      <thead>
+      <tr>
+        <th>Orden</th>
+        <th>Proveedor</th>
+        <th class="text-end">Total</th>
+        <th class="text-end">Pagado</th>
+        <th class="text-end">Pendiente</th>
+        <th class="progress-col">Avance</th>
+      </tr>
+      </thead>
+      <tbody>
+      @for (order of orders(); track order.id) {
+      <tr>
+        <td class="fw-semibold text-nowrap">{{ order.number }}</td>
+        <td>{{ order.providerName }}</td>
+        <td class="text-end">{{ order.total | price }}</td>
+        <td class="text-end text-success">{{ order.paid | price }}</td>
+        <td class="text-end fw-semibold" [class.text-danger]="order.pending > 0">
+          {{ order.pending | price }}
+        </td>
+        <td>
+          <div class="d-flex align-items-center gap-2">
+            <div class="progress flex-grow-1" role="progressbar" [attr.aria-valuenow]="order.percent"
+                 aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Avance de ' + order.number">
+              <div class="progress-bar" [style.width.%]="order.percent"></div>
+            </div>
+            <span class="small text-body-secondary">{{ order.percent }}%</span>
+          </div>
+        </td>
+      </tr>
+      } @empty {
+      <tr>
+        <td colspan="6" class="text-center text-body-secondary py-4">
+          Ninguna orden tiene pagos todavía.
+          <a routerLink="/egresos">Registrar un egreso</a>
+        </td>
+      </tr>
+      }
+      </tbody>
+    </table>
+  </div>
+</div>
+}

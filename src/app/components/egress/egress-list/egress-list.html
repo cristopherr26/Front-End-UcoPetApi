@@ -158,11 +158,15 @@
       <tr [class.is-pending]="isPending(egress)">
         <td class="small text-nowrap">{{ egress.date | date: 'dd/MM/yyyy' }}</td>
         <td>
-          <div class="fw-semibold">{{ egress.concept }}</div>
+          <a class="fw-semibold text-decoration-none" [routerLink]="['/egresos', egress.id]">{{
+            egress.concept
+            }}</a>
           @if (isPending(egress)) {
-          <span class="uc-tag is-warn mt-1">
-                    <span class="spinner-border spinner-border-sm"></span>Procesando
-                  </span>
+          <div>
+      <span class="uc-tag is-warn mt-1">
+        <span class="spinner-border spinner-border-sm"></span>Procesando
+      </span>
+          </div>
           }
         </td>
         <td>{{ egress.providerName }}</td>

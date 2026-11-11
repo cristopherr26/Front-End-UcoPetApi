@@ -3,6 +3,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 import { KpiCard } from '../../shared/kpi-card';
 import { TablePager } from '../../shared/table-pager';
@@ -31,7 +32,7 @@ import { REFRESH_DELAYS_MS } from '../../../utils/egress/form-rules';
 
 @Component({
   selector: 'app-egress-list',
-  imports: [DatePipe, KpiCard, TablePager, SortHeader, PricePipe, PayMethodIconPipe],
+  imports: [DatePipe, RouterLink, KpiCard, TablePager, SortHeader, PricePipe, PayMethodIconPipe],
   templateUrl: './egress-list.html',
   styleUrl: './egress-list.scss',
 })
