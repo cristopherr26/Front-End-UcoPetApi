@@ -1,3 +1,4 @@
+
 export type ReceiptState = 'ACTIVE' | 'CANCELLED';
 
 export const RECEIPT_STATES: { value: ReceiptState; label: string }[] = [
@@ -5,7 +6,7 @@ export const RECEIPT_STATES: { value: ReceiptState; label: string }[] = [
   { value: 'CANCELLED', label: 'Anulados' },
 ];
 
-/** Lo que responde GET /api/v1/receipts (ReceiptResponseDTO de la API). */
+/** Respuesta de GET /api/v1/receipts. */
 export interface Receipt {
   id: string;
   receiptNumber: string;
@@ -19,7 +20,7 @@ export interface Receipt {
   state: ReceiptState;
 }
 
-/** Lo que se envía en POST y PUT /api/v1/receipts (ReceiptRequestDTO de la API). */
+/** Datos enviados en POST y PUT /api/v1/receipts. */
 export interface ReceiptRequest {
   tutorId: string;
   petId: string | null;
@@ -29,25 +30,25 @@ export interface ReceiptRequest {
   date: string | null;
 }
 
-/** Lo que responde la API (202) al crear, editar o anular: el recibo lo guarda el processor después. */
+/** Respuesta HTTP 202 al crear, editar o anular un recibo. */
 export interface ReceiptAccepted {
   receiptId: string;
-  idMensaje: string;
+  idMessage: string;
 }
 
-/** GET /api/v1/PayMethods */
+/** Métodos de pago disponibles. */
 export interface PayMethod {
   id: string;
   name: string;
 }
 
-/** Tutor listo para mostrar: `id` es el que guarda el recibo en `tutorId`. */
+/** Tutor asociado a un recibo. */
 export interface TutorOption {
   id: string;
   name: string;
 }
 
-/** Mascota lista para mostrar y para filtrar por tutor. */
+/** Mascota asociada a un tutor. */
 export interface PetOption {
   id: string;
   name: string;
