@@ -1,0 +1,39 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+<app-modal-frame
+  title="Vincular egreso"
+  subtitle="El módulo de Egresos aún no está construido: ingresa el id manualmente"
+  icon="bi-link-45deg"
+  tone="primary"
+  (closed)="modal.dismiss()"
+>
+  @if (error()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+    </div>
+  }
+
+  <label class="form-label" for="expense-id">Id del egreso *</label>
+  <input
+    id="expense-id"
+    type="text"
+    class="form-control"
+    formControlName="expenseId"
+    [class.is-invalid]="invalid()"
+    placeholder="UUID del egreso ya registrado"
+  />
+  @if (invalid()) {
+    <div class="invalid-feedback">Ingresa un UUID válido.</div>
+  }
+
+  <ng-container modalFooter>
+    <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+    <button type="submit" class="btn btn-primary" [disabled]="saving() || form.invalid">
+      @if (saving()) {
+        <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+      } @else {
+        <i class="bi bi-check2 me-1"></i>Vincular
+      }
+    </button>
+  </ng-container>
+</app-modal-frame>
+</form>
