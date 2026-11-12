@@ -1,6 +1,11 @@
+
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { ModalFrame } from '../../shared/modal-frame';
@@ -12,15 +17,30 @@ import {
   TutorOption,
 } from '../../../models/receipts/receipt.model';
 
-/** `datetime-local` entrega "2026-11-07T14:30"; la API espera segundos: "2026-11-07T14:30:00". */
-function toApiDate(value: string): string | null {
-  if (value === '') {
-    return null;
-  }
-  return value.length === 16 ? `${value}:00` : value.slice(0, 19);
+/**
+ * Obtiene la fecha y hora local para el input datetime-local.
+ * No utiliza UTC para evitar cambios de hora al enviar los datos.
+ */
+function currentLocalDateTime(): string {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
-/** La API devuelve "2026-11-07T14:30:00(.123)"; el input solo acepta hasta los minutos. */
+/**
+ * Convierte la fecha del formulario al formato LocalDateTime
+ * esperado por el backend.
+ */
+function toApiDate(value: string): string {
+  const date = value || currentLocalDateTime();
+
+  return date.length === 16 ? `${date}:00` : date.slice(0, 19);
+}
+
+/**
+ * Convierte la fecha recibida de la API al formato del input.
+ */
 function toInputDate(value: string): string {
   return value.slice(0, 16);
 }
@@ -38,6 +58,7 @@ export class ReceiptForm {
   protected readonly payMethods = signal<PayMethod[]>([]);
   protected readonly tutors = signal<TutorOption[]>([]);
   protected readonly receipt = signal<Receipt | null>(null);
+
   private readonly allPets = signal<PetOption[]>([]);
   private readonly tutorId = signal('');
 
@@ -45,21 +66,36 @@ export class ReceiptForm {
     tutorId: ['', Validators.required],
     petId: [''],
     concept: ['', [Validators.required, Validators.maxLength(255)]],
-    amount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
-    payMethodId: this.fb.control<string | null>(null, Validators.required),
-    date: [''],
+    amount: this.fb.control<number | null>(
+      null,
+      [Validators.required, Validators.min(0.01)],
+    ),
+    payMethodId: this.fb.control<string | null>(
+      null,
+      Validators.required,
+    ),
+    date: [currentLocalDateTime(), Validators.required],
   });
 
   protected readonly sortedTutors = computed(() =>
     [...this.tutors()].sort((a, b) => a.name.localeCompare(b.name)),
   );
 
-  /** Solo las mascotas del tutor elegido; las dadas de baja salen únicamente si ya eran del recibo. */
+  /**
+   * Solo muestra las mascotas pertenecientes al tutor seleccionado.
+   * También conserva una mascota inactiva si ya estaba asociada
+   * al recibo que se está editando.
+   */
   protected readonly pets = computed(() => {
-    const tutorId = this.tutorId();
-    const current = this.receipt()?.petId ?? null;
+    const selectedTutorId = this.tutorId();
+    const currentPetId = this.receipt()?.petId ?? null;
+
     return this.allPets()
-      .filter((pet) => pet.tutorId === tutorId && (pet.active || pet.id === current))
+      .filter(
+        (pet) =>
+          pet.tutorId === selectedTutorId &&
+          (pet.active || pet.id === currentPetId),
+      )
       .sort((a, b) => a.name.localeCompare(b.name));
   });
 
@@ -68,11 +104,16 @@ export class ReceiptForm {
       .pipe(takeUntilDestroyed(inject(DestroyRef)))
       .subscribe((tutorId) => {
         this.tutorId.set(tutorId);
+
+        // Al cambiar de tutor se limpia la mascota seleccionada.
         this.form.controls.petId.setValue('');
       });
   }
 
-  /** Lo llama la lista justo después de abrir el modal. `receipt` es null al crear. */
+  /**
+   * Inicializa el formulario al abrir el modal.
+   * Recibe null cuando se está creando un recibo.
+   */
   start(
     payMethods: PayMethod[],
     tutors: TutorOption[],
@@ -83,25 +124,39 @@ export class ReceiptForm {
     this.tutors.set(tutors);
     this.allPets.set(pets);
     this.receipt.set(receipt);
-    if (receipt) {
-      this.form.patchValue({
-        tutorId: receipt.tutorId,
-        concept: receipt.concept,
-        amount: receipt.amount,
-        payMethodId: receipt.payMethodId,
-        date: toInputDate(receipt.date),
-      });
-      // patchValue de tutorId borra la mascota; se vuelve a poner cuando ya hay lista filtrada.
-      this.form.controls.petId.setValue(receipt.petId ?? '');
-    }
+
+    this.tutorId.set(receipt?.tutorId ?? '');
+
+    this.form.reset({
+      tutorId: receipt?.tutorId ?? '',
+      petId: receipt?.petId ?? '',
+      concept: receipt?.concept ?? '',
+      amount: receipt?.amount ?? null,
+      payMethodId: receipt?.payMethodId ?? null,
+      date: receipt
+        ? toInputDate(receipt.date)
+        : currentLocalDateTime(),
+    });
   }
 
   protected save(): void {
+    // Un recibo anulado no puede modificarse.
+    if (this.receipt()?.state === 'CANCELLED') {
+      return;
+    }
+
+    // Si el usuario deja la fecha vacía, se utiliza la fecha actual.
+    if (this.form.controls.date.value === '') {
+      this.form.controls.date.setValue(currentLocalDateTime());
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+
     const value = this.form.getRawValue();
+
     const request: ReceiptRequest = {
       tutorId: value.tutorId,
       petId: value.petId === '' ? null : value.petId,
@@ -110,11 +165,13 @@ export class ReceiptForm {
       payMethodId: value.payMethodId as string,
       date: toApiDate(value.date),
     };
+
     this.modal.close(request);
   }
 
   protected invalid(field: keyof typeof this.form.controls): boolean {
     const control = this.form.controls[field];
+
     return control.touched && control.invalid;
   }
 }
