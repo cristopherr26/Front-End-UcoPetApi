@@ -1,0 +1,207 @@
+
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="existing() ? 'Editar orden de venta' : 'Nueva orden de venta'"
+    subtitle="Selecciona cliente y mascota; la póliza es opcional"
+    icon="bi-cart-plus"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (loading()) {
+      <div class="text-center py-5">
+        <span class="spinner-border text-primary"></span>
+      </div>
+    } @else {
+
+      @if (error()) {
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{ error() }}
+        </div>
+      }
+
+      <div class="row g-3">
+
+        <!-- Sede -->
+        <div class="col-12">
+          <label class="form-label">
+            Sede de la orden
+          </label>
+
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-building"></i>
+            </span>
+
+            <input
+              class="form-control"
+              [value]="headquarterName()"
+              disabled
+            />
+          </div>
+
+          <div class="form-text">
+            Se utiliza la sede seleccionada para registrar
+            la venta.
+          </div>
+        </div>
+
+        <!-- Cliente (tutor) -->
+        <div class="col-md-6">
+          <label class="form-label" for="sale-client">
+            Cliente (tutor) *
+          </label>
+
+          <select
+            id="sale-client"
+            class="form-select"
+            formControlName="clientID"
+            (change)="changeClient($any($event.target).value)"
+            [class.is-invalid]="
+              form.controls.clientID.touched &&
+              form.controls.clientID.invalid
+            "
+          >
+            <option value="">
+              Selecciona un cliente
+            </option>
+
+            @for (tutor of tutors(); track tutor.id) {
+              <option [value]="tutor.id">
+                {{ personLabel(tutor.person) }}
+              </option>
+            }
+          </select>
+
+          <div class="invalid-feedback">
+            Selecciona un cliente.
+          </div>
+
+          <div class="form-text">
+            El cliente corresponde al tutor de la mascota.
+          </div>
+        </div>
+
+        <!-- Mascota -->
+        <div class="col-md-6">
+          <label class="form-label" for="sale-pet">
+            Mascota *
+          </label>
+
+          <select
+            id="sale-pet"
+            class="form-select"
+            formControlName="petId"
+            [class.is-invalid]="
+              form.controls.petId.touched &&
+              form.controls.petId.invalid
+            "
+          >
+            <option value="">
+              Selecciona una mascota
+            </option>
+
+            @for (pet of availablePets(); track pet.id) {
+              <option [value]="pet.id">
+                {{ pet.name }} · {{ pet.species }}
+              </option>
+            }
+          </select>
+
+          <div class="invalid-feedback">
+            Selecciona una mascota.
+          </div>
+
+          @if (clientId() && availablePets().length === 0) {
+            <div class="form-text text-warning">
+              <i class="bi bi-exclamation-circle me-1"></i>
+              Este tutor no tiene mascotas activas
+              registradas en la sede.
+            </div>
+          }
+        </div>
+
+        <!-- Póliza -->
+        <div class="col-12">
+          <label
+            class="form-label"
+            for="sale-health-plan"
+          >
+            Póliza (opcional)
+          </label>
+
+          <select
+            id="sale-health-plan"
+            class="form-select"
+            formControlName="healthPlanId"
+          >
+            <option value="">
+              Sin póliza
+            </option>
+
+            @for (plan of plans(); track plan.id) {
+              <option [value]="plan.id">
+                {{ plan.name }} · {{ plan.insuranceCompany }}
+              </option>
+            }
+          </select>
+
+          <div class="form-text">
+            Solo se muestran las pólizas activas.
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="col-12">
+          <label
+            class="form-label"
+            for="sale-comment"
+          >
+            Observaciones
+          </label>
+
+          <textarea
+            id="sale-comment"
+            class="form-control"
+            rows="3"
+            maxlength="255"
+            formControlName="comment"
+            placeholder="Observaciones de la orden de venta"
+          ></textarea>
+
+          <div class="form-text">
+            Máximo 255 caracteres.
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <ng-container modalFooter>
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="modal.dismiss()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="saving() || loading() || form.invalid || !!error()"
+      >
+        @if (saving()) {
+          <span
+            class="spinner-border spinner-border-sm me-2"
+          ></span>
+          Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>
+          {{ existing() ? 'Guardar cambios' : 'Crear orden' }}
+        }
+      </button>
+    </ng-container>
+
+  </app-modal-frame>
+</form>
