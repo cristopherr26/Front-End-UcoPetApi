@@ -274,7 +274,6 @@
 
         <!-- Tutor -->
         <div class="col-md-12">
-
           <label class="form-label" for="pet-tutor">
             Tutor *
           </label>
@@ -285,17 +284,13 @@
             formControlName="tutorId"
             [class.is-invalid]="invalid('tutorId')"
           >
-
             <option value="">Selecciona un tutor</option>
 
             @for (tutor of tutors(); track tutor.id) {
-
               <option [value]="tutor.id">
-                {{ tutor.name }}
+                {{ tutorLabel(tutor) }}
               </option>
-
             }
-
           </select>
 
           @if (invalid('tutorId')) {
@@ -303,12 +298,10 @@
               Debes seleccionar un tutor.
             </div>
           }
-
         </div>
 
         <!-- Póliza -->
         <div class="col-md-6">
-
           <label class="form-label" for="pet-policy">
             Póliza *
           </label>
@@ -319,17 +312,13 @@
             formControlName="policyId"
             [class.is-invalid]="invalid('policyId')"
           >
-
             <option value="">Selecciona una póliza</option>
 
             @for (policy of policies(); track policy.id) {
-
-              <option [value]="policy.id">
+              <option [value]="policy.id ?? ''">
                 {{ policy.name }}
               </option>
-
             }
-
           </select>
 
           @if (invalid('policyId')) {
@@ -337,7 +326,6 @@
               Debes seleccionar una póliza.
             </div>
           }
-
         </div>
 
         <!-- Sede -->
