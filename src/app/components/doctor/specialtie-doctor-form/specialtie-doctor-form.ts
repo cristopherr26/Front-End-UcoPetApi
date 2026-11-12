@@ -10,6 +10,7 @@ import { SpecialtieDoctor } from '../../../models/doctor/specialtie-doctor.model
 import { Specialtie } from '../../../models/specialtie/specialtie.model';
 import { DoctorService } from '../../../services/doctor/doctor.service';
 import { PersonLookupService } from '../../../services/person/person-lookup.service';
+import { SessionService } from '../../../services/session/session.service';
 import { SpecialtieDoctorService } from '../../../services/doctor/specialtie-doctor.service';
 import { SpecialtieService } from '../../../services/specialtie/specialtie.service';
 import { apiErrorMessage } from '../../../utils/shared/api-error';
@@ -25,6 +26,7 @@ export class SpecialtieDoctorForm implements OnInit {
   private readonly doctorService = inject(DoctorService);
   private readonly specialtieService = inject(SpecialtieService);
   private readonly personLookup = inject(PersonLookupService);
+  private readonly session = inject(SessionService);
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly modal = inject(NgbActiveModal);
 
@@ -34,6 +36,8 @@ export class SpecialtieDoctorForm implements OnInit {
   });
   protected readonly relationId = signal<string | null>(null);
   protected readonly loading = signal(true);
+  // Solo médicos de la sede activa: la relación queda en la misma sede del médico.
+  private readonly doctors = signal<Doctor[]>([]);
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
   private readonly specialties = signal<Specialtie[]>([]);
@@ -51,13 +55,20 @@ export class SpecialtieDoctorForm implements OnInit {
   );
 
   ngOnInit(): void {
+    const headquarterId = this.session.headquarterId();
+    if (headquarterId === null) {
+      this.loading.set(false);
+      this.error.set('Elige una sede en el menú superior antes de asignar especialidades');
+      return;
+    }
     forkJoin({
-      doctors: this.doctorService.list(),
+      doctors: this.doctorService.list(headquarterId),
       persons: this.personLookup.byId(),
       specialties: this.specialtieService.list().pipe(catchError(() => of([] as Specialtie[]))),
     }).subscribe({
       next: ({ doctors, persons, specialties }) => {
         this.specialties.set(specialties);
+        this.doctors.set(doctors);
         this.doctorOptions.set(
           doctors
             .filter((doctor): doctor is Doctor & { id: string } => !!doctor.id)
@@ -92,9 +103,15 @@ export class SpecialtieDoctorForm implements OnInit {
       return;
     }
     const value = this.form.getRawValue();
+    const doctor = this.doctors().find((item) => item.id === value.doctor);
+    if (!doctor) {
+      this.error.set('El médico elegido no pertenece a la sede activa');
+      return;
+    }
     const relation: SpecialtieDoctor = {
       doctor: value.doctor,
       specialtie: value.specialtie.trim(),
+      headquarterId: doctor.headquarterId,
     };
     const id = this.relationId();
     this.saving.set(true);
