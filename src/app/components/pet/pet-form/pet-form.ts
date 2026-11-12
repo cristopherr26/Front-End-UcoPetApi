@@ -19,14 +19,22 @@ import {
   CreatePetRequest
 } from '../../../models/pet/pet.model';
 
-import { PetOption } from '../../../models/pet/pet-option.model';
 
 import { Headquarter } from '../../../models/headquarter/headquarter.model';
 
 import { PetService } from '../../../services/pet/pet.service';
-import { PetReferenceService } from '../../../services/pet/pet-reference.service';
 import { HeadquarterService } from '../../../services/headquarter/headquarter.service';
 import { SessionService } from '../../../services/session/session.service';
+
+import { TutorPet } from '../../../models/tutor-pet/tutor-pet.model';
+import { HealthPlan } from '../../../models/health-plan/health-plan.model';
+import { PersonSummary } from '../../../models/person/person.model';
+
+import { TutorPetService } from '../../../services/tutor-pet/tutor-pet.service';
+import { HealthPlanService } from '../../../services/health-plan/health-plan.service';
+import { PersonLookupService } from '../../../services/person/person-lookup.service';
+
+import { personName, shortId } from '../../../utils/doctor/form-rules';
 
 import { apiErrorMessage } from '../../../utils/shared/api-error';
 
@@ -52,7 +60,11 @@ export class PetForm implements OnInit {
 
   private readonly petService = inject(PetService);
 
-  private readonly referenceService = inject(PetReferenceService);
+  private readonly tutorPetService = inject(TutorPetService);
+
+  private readonly healthPlanService = inject(HealthPlanService);
+
+  private readonly personLookup = inject(PersonLookupService);
 
   private readonly headquarterService = inject(HeadquarterService);
 
@@ -63,9 +75,11 @@ export class PetForm implements OnInit {
   protected readonly modal = inject(NgbActiveModal);
 
   // Catálogos para los desplegables
-  protected readonly tutors = signal<PetOption[]>([]);
+  protected readonly tutors = signal<TutorPet[]>([]);
 
-  protected readonly policies = signal<PetOption[]>([]);
+  protected readonly policies = signal<HealthPlan[]>([]);
+
+  private readonly persons = signal<Map<string, PersonSummary>>(new Map());
 
   protected readonly headquarters = signal<Headquarter[]>([]);
 
@@ -110,44 +124,71 @@ export class PetForm implements OnInit {
 
 
 // Cargar tutores, pólizas y sedes
-  private loadCatalogs(): void {
+    private loadCatalogs(): void {
+    this.loading.set(true);
+
     forkJoin({
-      tutors: this.referenceService.getTutors().pipe(
+      tutors: this.tutorPetService.list().pipe(
         catchError(error => {
           console.error('Error cargando tutores:', error);
-          return of([]);
+          return of([] as TutorPet[]);
         })
       ),
 
-      policies: this.referenceService.getPolicies().pipe(
+      policies: this.healthPlanService.getHealthPlans().pipe(
         catchError(error => {
           console.error('Error cargando planes de salud:', error);
-          return of([]);
+          return of([] as HealthPlan[]);
         })
       ),
+
+      persons: this.personLookup.byId(),
 
       headquarters: this.headquarterService.list().pipe(
         catchError(error => {
           console.error('Error cargando sedes:', error);
-          return of([]);
+          return of([] as Headquarter[]);
         })
       )
-    }).subscribe(({ tutors, policies, headquarters }) => {
-      this.tutors.set(tutors);
-      this.policies.set(policies);
+    }).subscribe({
+      next: ({ tutors, policies, persons, headquarters }) => {
+        this.persons.set(persons);
 
-      const activeHeadquarters = headquarters.filter(
-        headquarters => headquarters.isActive
-      );
+        this.tutors.set(tutors);
 
-      this.headquarters.set(activeHeadquarters);
+        // Mostrar únicamente los planes activos
+        this.policies.set(
+          policies.filter(policy => policy.status === 'ACTIVA')
+        );
 
-      const selectedHeadquarter = this.session.headquarterId();
+        // Mostrar únicamente las sedes activas
+        const activeHeadquarters = headquarters.filter(
+          headquarters => headquarters.isActive
+        );
 
-      if (selectedHeadquarter) {
-        this.form.controls.headquarterId.setValue(selectedHeadquarter);
+        this.headquarters.set(activeHeadquarters);
+
+        // Seleccionar automáticamente la sede actual
+        const selectedHeadquarter = this.session.headquarterId();
+
+        if (selectedHeadquarter) {
+          this.form.controls.headquarterId.setValue(selectedHeadquarter);
+        }
+
+        this.loading.set(false);
+      },
+
+      error: error => {
+        console.error('Error cargando los catálogos:', error);
+        this.loading.set(false);
       }
     });
+  }
+
+  protected tutorLabel(tutor: TutorPet): string {
+    const person = this.persons().get(tutor.person);
+
+    return personName(person) ?? `Persona ${shortId(tutor.person)}`;
   }
 
 
