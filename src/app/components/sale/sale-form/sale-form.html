@@ -198,7 +198,11 @@
           Guardando...
         } @else {
           <i class="bi bi-check2 me-1"></i>
-          {{ existing() ? 'Guardar cambios' : 'Crear orden' }}
+          {{
+            existing()
+              ? 'Guardar cambios'
+              : 'Crear y agregar ítems'
+          }}
         }
       </button>
     </ng-container>

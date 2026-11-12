@@ -8,7 +8,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { forkJoin, map, of, Subscription } from 'rxjs';
 
@@ -54,6 +54,7 @@ export class SaleList {
   private readonly service = inject(SaleService);
   private readonly modal = inject(NgbModal);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
 
   private readonly tutorService = inject(TutorPetService);
   private readonly personService = inject(PersonLookupService);
@@ -63,7 +64,6 @@ export class SaleList {
 
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
-
   protected readonly sales = signal<SaleOrder[]>([]);
 
   protected readonly search = signal('');
@@ -71,7 +71,6 @@ export class SaleList {
 
   private readonly refresh = signal(0);
 
-  // Nombres relacionados con los UUID de las ventas.
   protected readonly clientNames = signal<Map<string, string>>(
     new Map(),
   );
@@ -83,7 +82,6 @@ export class SaleList {
   protected readonly namesLoading = signal(false);
   protected readonly namesError = signal<string | null>(null);
 
-  // Búsqueda local por número de orden, tutor o mascota.
   protected readonly visible = computed(() => {
     const term = this.normalize(this.search());
 
@@ -95,9 +93,11 @@ export class SaleList {
         !this.status() || sale.state === this.status();
 
       const orderNumber = this.normalize(sale.orderNumber);
+
       const clientName = this.normalize(
         clients.get(sale.clientID) ?? '',
       );
+
       const petName = this.normalize(
         pets.get(sale.petId) ?? '',
       );
@@ -128,15 +128,17 @@ export class SaleList {
   });
 
   protected readonly draftCount = computed(
-    () => this.sales().filter(
-      (sale) => sale.state === 'BORRADOR',
-    ).length,
+    () =>
+      this.sales().filter(
+        (sale) => sale.state === 'BORRADOR',
+      ).length,
   );
 
   protected readonly cancelledCount = computed(
-    () => this.sales().filter(
-      (sale) => sale.state === 'ANULADA',
-    ).length,
+    () =>
+      this.sales().filter(
+        (sale) => sale.state === 'ANULADA',
+      ).length,
   );
 
   protected readonly totalAmount = computed(() =>
@@ -156,7 +158,6 @@ export class SaleList {
       this.refresh();
 
       const headquarterId = this.session.headquarterId();
-
       const subscriptions = new Subscription();
 
       this.loading.set(true);
@@ -216,22 +217,20 @@ export class SaleList {
   }
 
   private loadNames(sales: SaleOrder[]) {
-    // Solo consultamos las sedes presentes en las ventas.
     const headquarterIds = [
       ...new Set(sales.map((sale) => sale.headquarterId)),
     ];
 
-    // Incluimos mascotas activas e inactivas para
-    // poder identificar las ventas históricas.
     const petRequests = headquarterIds.map((headquarterId) =>
       this.petService.getByHeadquarter({ headquarterId }),
     );
 
-    const petsRequest = petRequests.length > 0
-      ? forkJoin(petRequests).pipe(
-        map((groups) => groups.flat()),
-      )
-      : of([] as Pet[]);
+    const petsRequest =
+      petRequests.length > 0
+        ? forkJoin(petRequests).pipe(
+          map((groups) => groups.flat()),
+        )
+        : of([] as Pet[]);
 
     return forkJoin({
       tutors: this.tutorService.list(),
@@ -241,7 +240,6 @@ export class SaleList {
       map(({ tutors, persons, pets }) => {
         const clientNames = new Map<string, string>();
 
-        // clientID -> TutorPet.id -> Person
         for (const tutor of tutors) {
           const person = persons.get(tutor.person);
 
@@ -264,7 +262,6 @@ export class SaleList {
     );
   }
 
-  // Permite buscar sin importar mayúsculas o tildes.
   private normalize(value: string): string {
     return value
       .normalize('NFD')
@@ -292,7 +289,7 @@ export class SaleList {
   protected newSale(): void {
     if (!this.session.headquarterId()) {
       this.toast.info(
-        'Selecciona una sede en el menú superior antes de crear una venta.',
+        'Selecciona una sede antes de crear una venta.',
       );
       return;
     }
@@ -306,10 +303,17 @@ export class SaleList {
     ref.result.then(
       (sale: SaleOrder) => {
         this.toast.success(
-          `Orden ${sale.orderNumber} creada`,
+          `Orden ${sale.orderNumber} creada correctamente`,
         );
 
-        this.refresh.update((n) => n + 1);
+        // La orden ya existe en el backend.
+        // Vamos directamente al detalle para agregar ítems.
+        void this.router.navigate(
+          ['/ventas', sale.id],
+          {
+            queryParams: { addItem: '1' },
+          },
+        );
       },
       () => undefined,
     );
