@@ -11,20 +11,24 @@ interface DoctorApi {
   id?: string | null;
   licenseNumber: string;
   person?: string | null;
-  idPerson?: string | null;
+  headquarterId: string;
 }
 
 function fromApi(raw: DoctorApi): Doctor {
   return {
     id: raw.id ?? null,
-    idPerson: raw.person ?? raw.idPerson ?? '',
+    idPerson: raw.person ?? '',
     licenseNumber: raw.licenseNumber,
+    headquarterId: raw.headquarterId,
   };
 }
 
-
 function toApi(doctor: Doctor): DoctorApi {
-  return { person: doctor.idPerson, idPerson: doctor.idPerson, licenseNumber: doctor.licenseNumber };
+  return {
+    person: doctor.idPerson,
+    licenseNumber: doctor.licenseNumber,
+    headquarterId: doctor.headquarterId,
+  };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -32,12 +36,12 @@ export class DoctorService {
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/doctor`;
 
-  list(filters: DoctorFilters = {}): Observable<Doctor[]> {
+  list(headquarterId: string, filters: DoctorFilters = {}): Observable<Doctor[]> {
     const hasFilter = Object.values(filters).some((value) => value !== null && value !== '');
-    const request = hasFilter
-      ? this.http.get<DoctorApi[]>(`${this.url}/filter`, { params: toHttpParams(filters) })
-      : this.http.get<DoctorApi[]>(this.url);
-    return request.pipe(map((doctors) => doctors.map(fromApi)));
+    const params = toHttpParams({ headquarterId, ...filters });
+    return this.http
+      .get<DoctorApi[]>(hasFilter ? `${this.url}/filter` : this.url, { params })
+      .pipe(map((doctors) => doctors.map(fromApi)));
   }
 
   getById(id: string): Observable<Doctor> {
@@ -52,7 +56,6 @@ export class DoctorService {
     return this.http.put<DoctorApi>(this.url, toApi(doctor), { params: { id } }).pipe(map(fromApi));
   }
 
-  // El estado activo vive en Person: la API cambia la persona asociada.
   activate(id: string): Observable<void> {
     return this.http.patch<void>(`${this.url}/${id}/activate`, null);
   }

@@ -17,7 +17,8 @@ import { ToastService } from '../../../services/shared/toast.service';
 import { apiErrorMessage } from '../../../utils/shared/api-error';
 import { personName, shortId } from '../../../utils/doctor/form-rules';
 
-
+// El procesador aplica los cambios de forma asíncrona (RabbitMQ): tras guardar, la lista
+// se vuelve a pedir enseguida y una segunda vez un momento después.
 const PROCESSOR_DELAY_MS = 1500;
 
 @Component({
@@ -64,10 +65,18 @@ export class DoctorList {
   constructor() {
     effect((onCleanup) => {
       this.refresh();
+      const headquarterId = this.session.headquarterId();
+      // El backend exige la sede: sin sede elegida no hay nada que consultar.
+      if (headquarterId === null) {
+        this.doctors.set([]);
+        this.loading.set(false);
+        this.error.set(null);
+        return;
+      }
       this.loading.set(untracked(() => this.doctors().length === 0));
       this.error.set(null);
       const subscription = forkJoin({
-        doctors: this.doctorService.list(),
+        doctors: this.doctorService.list(headquarterId),
         persons: this.personLookup.byId(),
       }).subscribe({
         next: ({ doctors, persons }) => {
@@ -91,7 +100,7 @@ export class DoctorList {
 
   protected shortId = shortId;
 
-  
+  // Doctor no tiene `active`: el estado es el de su Person. Si no se pudo leer, es `null`.
   protected isActive(doctor: Doctor): boolean | null {
     return this.persons().get(doctor.idPerson)?.active ?? null;
   }

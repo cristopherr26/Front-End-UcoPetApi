@@ -40,7 +40,7 @@
         }
         <div class="invalid-feedback">Elige una persona o pega un UUID válido</div>
       </div>
-      <div class="col-12">
+      <div class="col-md-6">
         <label class="form-label" for="doctor-license">Tarjeta profesional *</label>
         <input
           id="doctor-license"
@@ -51,6 +51,21 @@
         />
         <div class="invalid-feedback">{{ licenseMessage() }}</div>
         <div class="form-text">De 4 a 30 caracteres: letras, números y guiones.</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="doctor-headquarter">Sede *</label>
+        <select
+          id="doctor-headquarter"
+          class="form-select"
+          formControlName="headquarterId"
+          [class.is-invalid]="invalid('headquarterId')"
+        >
+          <option value="" disabled>Elige una sede</option>
+          @for (headquarter of headquarters(); track headquarter.id) {
+            <option [value]="headquarter.id">{{ headquarter.name }}</option>
+          }
+        </select>
+        <div class="invalid-feedback">La sede es obligatoria</div>
       </div>
     </div>
     <ng-container modalFooter>

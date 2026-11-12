@@ -14,13 +14,15 @@ export class SpecialtieDoctorService {
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/specialtiedoctor`;
 
-  list(filters: SpecialtieDoctorFilters = {}): Observable<SpecialtieDoctor[]> {
+  list(
+    headquarterId: string,
+    filters: SpecialtieDoctorFilters = {},
+  ): Observable<SpecialtieDoctor[]> {
     const hasFilter = Object.values(filters).some((value) => value !== null && value !== '');
-    return hasFilter
-      ? this.http.get<SpecialtieDoctor[]>(`${this.url}/filter`, {
-          params: toHttpParams(filters),
-        })
-      : this.http.get<SpecialtieDoctor[]>(this.url);
+    const params = toHttpParams({ headquarterId, ...filters });
+    return this.http.get<SpecialtieDoctor[]>(hasFilter ? `${this.url}/filter` : this.url, {
+      params,
+    });
   }
 
   getById(id: string): Observable<SpecialtieDoctor> {
@@ -35,7 +37,6 @@ export class SpecialtieDoctorService {
     return this.http.put<SpecialtieDoctor>(this.url, relation, { params: { id } });
   }
 
-  // No hay `activate` ni campo `active`: "desactivar" borra la relación en el procesador.
   remove(id: string): Observable<void> {
     return this.http.patch<void>(`${this.url}/${id}/deactivate`, null);
   }

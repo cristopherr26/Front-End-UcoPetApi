@@ -85,11 +85,20 @@ export class SpecialtieDoctorList {
   constructor() {
     effect((onCleanup) => {
       this.refresh();
+      const headquarterId = this.session.headquarterId();
+      // El backend exige la sede: sin sede elegida no hay nada que consultar.
+      if (headquarterId === null) {
+        this.relations.set([]);
+        this.doctors.set([]);
+        this.loading.set(false);
+        this.error.set(null);
+        return;
+      }
       this.loading.set(untracked(() => this.relations().length === 0));
       this.error.set(null);
       const subscription = forkJoin({
-        relations: this.relationService.list(),
-        doctors: this.doctorService.list(),
+        relations: this.relationService.list(headquarterId),
+        doctors: this.doctorService.list(headquarterId),
         persons: this.personLookup.byId(),
         // Si la lista de especialidades no se puede leer, se muestra el id.
         specialties: this.specialtieService.list().pipe(catchError(() => of([] as Specialtie[]))),
