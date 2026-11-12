@@ -1,0 +1,147 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="egress() ? 'Editar egreso' : 'Nuevo egreso'"
+    subtitle="Los campos con * son obligatorios"
+    icon="bi-wallet2"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+      <i class="bi bi-hourglass-split"></i>El egreso se envía al procesador de pagos y se registra en
+      un instante.
+    </div>
+
+    @if (error()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
+      <i class="bi bi-exclamation-triangle"></i>{{ error() }}
+    </div>
+    }
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="egress-provider">Proveedor *</label>
+        <select
+          id="egress-provider"
+          class="form-select"
+          formControlName="provider"
+          [class.is-invalid]="invalid('provider')"
+        >
+          <option value="" disabled>Elige un proveedor</option>
+          @for (provider of providers(); track provider.id) {
+          <option [value]="provider.id">
+            {{ provider.name }}{{ provider.active ? '' : ' (inactivo)' }}
+          </option>
+          }
+        </select>
+        <div class="invalid-feedback">El proveedor es obligatorio</div>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label" for="egress-purchase">Orden de compra *</label>
+        <select
+          id="egress-purchase"
+          class="form-select"
+          formControlName="purchaseOrder"
+          [class.is-invalid]="invalid('purchaseOrder')"
+        >
+          <option value="" disabled>
+            {{ form.controls.provider.value === '' ? 'Primero elige un proveedor' : 'Elige una orden' }}
+          </option>
+          @for (purchase of purchases(); track purchase.id) {
+          <option [value]="purchase.id">
+            {{ purchase.number }} · {{ purchase.headquarterName }}
+          </option>
+          }
+        </select>
+        <div class="invalid-feedback">La orden de compra es obligatoria</div>
+        @if (form.controls.provider.value !== '' && purchases().length === 0) {
+        <div class="form-text text-warning-emphasis">
+          <i class="bi bi-info-circle me-1"></i>Este proveedor no tiene órdenes con saldo pendiente.
+        </div>
+        }
+      </div>
+
+      <div class="col-12">
+        <label class="form-label" for="egress-concept">Concepto *</label>
+        <input
+          id="egress-concept"
+          class="form-control"
+          formControlName="concept"
+          [attr.maxlength]="conceptMax"
+          placeholder="Ej. Pago de vacunas antirrábicas"
+          [class.is-invalid]="invalid('concept')"
+        />
+        <div class="invalid-feedback">El concepto es obligatorio (hasta {{ conceptMax }} caracteres)</div>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="egress-total">Total *</label>
+        <div class="input-group has-validation">
+          <span class="input-group-text">$</span>
+          <input
+            id="egress-total"
+            type="number"
+            class="form-control"
+            min="0.01"
+            step="any"
+            formControlName="total"
+            [class.is-invalid]="invalid('total')"
+          />
+          <div class="invalid-feedback">
+            @if (form.controls.total.hasError('maxTotal')) {
+            Supera el saldo pendiente de la orden
+            } @else {
+            Debe ser mayor a cero, con hasta 2 decimales
+            }
+          </div>
+        </div>
+        @if (selectedBalance(); as balance) {
+        <div class="form-text">
+          Saldo pendiente: <strong>{{ balance.pending | price }}</strong> de
+          {{ balance.purchase.total | price }}
+        </div>
+        }
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="egress-method">Método de pago *</label>
+        <select
+          id="egress-method"
+          class="form-select"
+          formControlName="payMethod"
+          [class.is-invalid]="invalid('payMethod')"
+        >
+          <option value="" disabled>Elige uno</option>
+          @for (method of payMethods(); track method.id) {
+          <option [value]="method.id">{{ method.name }}</option>
+          }
+        </select>
+        <div class="invalid-feedback">El método de pago es obligatorio</div>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="egress-date">Fecha *</label>
+        <input
+          id="egress-date"
+          type="date"
+          class="form-control"
+          formControlName="date"
+          [max]="today"
+          [class.is-invalid]="invalid('date')"
+        />
+        <div class="invalid-feedback">La fecha es obligatoria y no puede ser futura</div>
+      </div>
+    </div>
+
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        @if (saving()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>Enviando…
+        } @else {
+        <i class="bi bi-check2 me-1"></i>{{ egress() ? 'Guardar cambios' : 'Registrar egreso' }}
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

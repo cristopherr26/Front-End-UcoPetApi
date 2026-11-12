@@ -304,16 +304,21 @@ export const NAVIGATION: NavGroup[] = [
           { base: '/api/v1/PayMethods', rule: 'ADMIN' },
         ],
       },
-      {
-        path: 'egresos',
-        entity: 'egress',
-        label: 'Egresos',
-        loadChildren: () =>
-          import('../../routes/egress/egress.routes').then((m) => m.EGRESS_ROUTES),
-        icon: 'bi-wallet2',
-        roles: ADMIN,
-        description: 'Salidas de dinero de la clínica.',
-        api: [{ base: '/api/v1/Egresses', rule: 'ADMIN' }],
+        {
+          path: 'egresos',
+          entity: 'egress',
+          label: 'Egresos',
+          ready: true,
+          loadChildren: () =>
+            import('../../routes/egress/egress.routes').then((m) => m.EGRESS_ROUTES),
+          icon: 'bi-wallet2',
+          roles: ADMIN,
+          description: 'Pagos a proveedores por órdenes de compra.',
+          api: [
+            { base: '/api/v1/Egresses', rule: 'ADMIN' },
+            { base: '/api/v1/providers', rule: 'ADMIN · solo lectura' },
+            { base: '/api/v1/purchases', rule: 'ADMIN · solo lectura' },
+            { base: '/api/v1/PayMethods', rule: 'ADMIN · solo lectura' }],
       },
     ],
   },
