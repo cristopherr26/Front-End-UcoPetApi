@@ -187,7 +187,8 @@ export const NAVIGATION: NavGroup[] = [
         icon: 'bi-cart3',
         roles: ADMIN,
         description: 'Venta de productos y servicios del catálogo.',
-        api: [{ base: 'SaleController', rule: 'ADMIN · el controller todavía no tiene rutas' }],
+        api: [{ base: '/api/v1/sales', rule: 'ADMIN · órdenes e ítems' }],
+        ready: true
       },
       {
         path: 'compras',
