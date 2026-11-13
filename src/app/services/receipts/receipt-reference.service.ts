@@ -105,6 +105,7 @@ export class ReceiptReferenceService {
             groups.flat().map((pet) => ({
               id: pet.id,
               name: pet.name,
+              breed: pet.breed,
               tutorId: pet.tutorId,
               active: pet.active !== false,
             })),
