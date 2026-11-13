@@ -2,30 +2,27 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { PageHeader } from '../../shared/page-header';
+import { ModalFrame } from '../../shared/modal-frame';
 import { PROVIDER_ALLOWED_DOCUMENT_TYPES } from '../../../models/provider/provider-enums';
-import { DocumentTypeOption } from '../../../models/provider/provider.model';
+import { DocumentTypeOption, Provider } from '../../../models/provider/provider.model';
 import { ProviderService } from '../../../services/provider/provider.service';
-import { ToastService } from '../../../services/shared/toast.service';
 import { PROVIDER_RULES } from '../../../utils/provider/form-rules';
 import { providerErrorMessage } from '../../../utils/provider/provider-error';
 import { toProviderPayload } from '../../../utils/provider/provider-payload';
 
-// Una sola pantalla sirve para crear (/proveedores/new) y para editar (/proveedores/edit/:id),
-// igual que el formulario de pólizas.
+// Modal que sirve para crear y para editar. ProviderDialogs lo abre; si se edita, llama a edit()
+// con el proveedor de la fila. Al guardar se cierra devolviendo el proveedor enviado.
 @Component({
   selector: 'app-provider-form',
-  imports: [ReactiveFormsModule, RouterLink, PageHeader],
+  imports: [ReactiveFormsModule, ModalFrame],
   templateUrl: './provider-form.html',
 })
 export class ProviderForm {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly providerService = inject(ProviderService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly toast = inject(ToastService);
+  protected readonly modal = inject(NgbActiveModal);
 
   protected readonly form = this.fb.group({
     providerName: ['', PROVIDER_RULES.providerName],
@@ -37,10 +34,9 @@ export class ProviderForm {
     email: ['', PROVIDER_RULES.email],
   });
 
-  protected readonly providerId = this.route.snapshot.paramMap.get('id');
-  protected readonly isEdit = this.providerId !== null;
+  // Id del proveedor en edición; null cuando se está creando.
+  protected readonly providerId = signal<string | null>(null);
 
-  protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly inactive = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -65,8 +61,25 @@ export class ProviderForm {
       .subscribe(() => this.form.controls.documentNumber.updateValueAndValidity());
 
     this.loadDocumentTypes();
-    if (this.providerId) {
-      this.loadProvider(this.providerId);
+  }
+
+  // Precarga los datos de la fila para editar (la lista ya los tiene, no hace falta otro GET).
+  edit(provider: Provider): void {
+    this.providerId.set(provider.id);
+    this.currentIdType.set(provider.idType);
+    this.form.patchValue({
+      providerName: provider.providerName,
+      representName: provider.representName,
+      idType: provider.idType,
+      documentNumber: provider.documentNumber,
+      mobileNumber: provider.mobileNumber ?? '',
+      address: provider.address ?? '',
+      email: provider.email ?? '',
+    });
+    if (!provider.active) {
+      // El backend rechaza editar un proveedor inactivo: se bloquea el formulario.
+      this.inactive.set(true);
+      this.form.disable();
     }
   }
 
@@ -82,19 +95,13 @@ export class ProviderForm {
     this.saving.set(true);
     this.error.set(null);
 
-    const request = this.providerId
-      ? this.providerService.updateProvider(this.providerId, payload)
+    const id = this.providerId();
+    const request = id
+      ? this.providerService.updateProvider(id, payload)
       : this.providerService.createProvider(payload);
 
     request.subscribe({
-      next: (saved) => {
-        this.toast.success(
-          this.isEdit
-            ? `"${saved.providerName}" se envió a actualizar; el procesador lo aplica en un momento`
-            : `"${saved.providerName}" se envió a guardar; el procesador lo aplica en un momento`,
-        );
-        this.router.navigate(['/proveedores']);
-      },
+      next: (saved) => this.modal.close(saved),
       error: (error: HttpErrorResponse) => this.handleSaveError(error),
     });
   }
@@ -122,39 +129,11 @@ export class ProviderForm {
     });
   }
 
-  private loadProvider(id: string): void {
-    this.loading.set(true);
-    this.providerService.getProviderById(id).subscribe({
-      next: (provider) => {
-        this.currentIdType.set(provider.idType);
-        this.form.patchValue({
-          providerName: provider.providerName,
-          representName: provider.representName,
-          idType: provider.idType,
-          documentNumber: provider.documentNumber,
-          mobileNumber: provider.mobileNumber ?? '',
-          address: provider.address ?? '',
-          email: provider.email ?? '',
-        });
-        if (!provider.active) {
-          // El backend rechaza editar un proveedor inactivo: se bloquea el formulario.
-          this.inactive.set(true);
-          this.form.disable();
-        }
-        this.loading.set(false);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.loading.set(false);
-        this.error.set(providerErrorMessage(error, 'No se pudo cargar el proveedor'));
-      },
-    });
-  }
-
   private handleSaveError(error: HttpErrorResponse): void {
     this.saving.set(false);
     const message = providerErrorMessage(
       error,
-      this.isEdit ? 'No se pudo actualizar el proveedor' : 'No se pudo crear el proveedor',
+      this.providerId() ? 'No se pudo actualizar el proveedor' : 'No se pudo crear el proveedor',
     );
     if (error.status === 409) {
       // Documento repetido: el aviso del backend se muestra debajo del campo del documento.

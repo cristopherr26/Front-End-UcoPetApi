@@ -3,12 +3,12 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AsyncPipe, UpperCasePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
 import { combineLatest, debounceTime, distinctUntilChanged, map, startWith } from 'rxjs';
 
 import { PageHeader } from '../../shared/page-header';
 import { Provider } from '../../../models/provider/provider.model';
 import { ProviderStatusPipe } from '../../../pipes/provider/provider-status.pipe';
+import { ProviderDialogs } from '../../../services/provider/provider-dialogs.service';
 import { ProviderService } from '../../../services/provider/provider.service';
 import { injectConfirm } from '../../../services/shared/confirm';
 import { ToastService } from '../../../services/shared/toast.service';
@@ -16,19 +16,12 @@ import { providerErrorMessage } from '../../../utils/provider/provider-error';
 import { filterProviders } from '../../../utils/provider/provider-filter';
 @Component({
   selector: 'app-provider-list',
-  imports: [
-    RouterLink,
-    ReactiveFormsModule,
-    AsyncPipe,
-    UpperCasePipe,
-    ProviderStatusPipe,
-    PageHeader,
-  ],
+  imports: [ReactiveFormsModule, AsyncPipe, UpperCasePipe, ProviderStatusPipe, PageHeader],
   templateUrl: './provider-list.html',
 })
 export class ProviderList {
   private readonly providerService = inject(ProviderService);
-  private readonly router = inject(Router);
+  private readonly dialogs = inject(ProviderDialogs);
   private readonly toast = inject(ToastService);
   private readonly confirm = injectConfirm();
 
@@ -67,11 +60,23 @@ export class ProviderList {
     });
   }
 
-  // Un proveedor inactivo no se puede editar (el backend lo rechaza), por eso no se navega.
+  // Crear y editar abren el mismo modal; al guardar se avisa y se recarga la lista.
+  protected create(): void {
+    this.dialogs.provider().subscribe((saved) => this.afterSave(saved, 'guardar'));
+  }
+
+  // Un proveedor inactivo no se puede editar (el backend lo rechaza), por eso no se abre.
   protected edit(provider: Provider): void {
     if (provider.active) {
-      this.router.navigate(['/proveedores/edit', provider.id]);
+      this.dialogs.provider(provider).subscribe((saved) => this.afterSave(saved, 'actualizar'));
     }
+  }
+
+  private afterSave(saved: Provider, action: 'guardar' | 'actualizar'): void {
+    this.toast.success(
+      `"${saved.providerName}" se envió a ${action}; el procesador lo aplica en un momento`,
+    );
+    this.load();
   }
 
   protected deactivate(provider: Provider): void {

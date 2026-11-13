@@ -1,169 +1,164 @@
-<app-page-header
-  eyebrow="Procesador Comercial"
-  [title]="isEdit ? 'Editar proveedor' : 'Nuevo proveedor'"
-  subtitle="Los campos con * son obligatorios"
-/>
-
-<div class="card">
-  <form class="card-body p-4" [formGroup]="form" (ngSubmit)="save()" novalidate>
-    @if (loading()) {
-      <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
-    } @else {
-      @if (inactive()) {
-        <div class="alert alert-warning d-flex align-items-center gap-2">
-          <i class="bi bi-lock-fill"></i>Este proveedor está inactivo y no se puede editar.
-        </div>
-      }
-      @if (error()) {
-        <div class="alert alert-danger d-flex align-items-center gap-2">
-          <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
-        </div>
-      }
-
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label" for="provider-name">Nombre del proveedor *</label>
-          <input
-            id="provider-name"
-            class="form-control"
-            formControlName="providerName"
-            [class.is-invalid]="invalid('providerName')"
-          />
-          @if (invalid('providerName')) {
-            <div class="invalid-feedback d-block">
-              @if (hasError('providerName', 'required')) {
-                <span>El nombre del proveedor es obligatorio.</span>
-              }
-              @if (hasError('providerName', 'maxlength')) {
-                <span>No puede superar 100 caracteres.</span>
-              }
-            </div>
-          }
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label" for="provider-represent">Nombre del representante *</label>
-          <input
-            id="provider-represent"
-            class="form-control"
-            formControlName="representName"
-            [class.is-invalid]="invalid('representName')"
-          />
-          @if (invalid('representName')) {
-            <div class="invalid-feedback d-block">
-              @if (hasError('representName', 'required')) {
-                <span>El nombre del representante es obligatorio.</span>
-              }
-              @if (hasError('representName', 'maxlength')) {
-                <span>No puede superar 100 caracteres.</span>
-              }
-            </div>
-          }
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label" for="provider-id-type">Tipo de documento *</label>
-          <select
-            id="provider-id-type"
-            class="form-select"
-            formControlName="idType"
-            [class.is-invalid]="invalid('idType')"
-          >
-            <option value="" disabled>Elige uno</option>
-            @for (type of documentTypes(); track type.value) {
-              <option [value]="type.value">{{ type.label }}</option>
-            }
-          </select>
-          @if (hasError('idType', 'required')) {
-            <div class="invalid-feedback d-block">El tipo de documento es obligatorio.</div>
-          }
-        </div>
-
-        <div class="col-md-8">
-          <label class="form-label" for="provider-document">Número de documento *</label>
-          <input
-            id="provider-document"
-            class="form-control"
-            formControlName="documentNumber"
-            [class.is-invalid]="invalid('documentNumber')"
-          />
-          @if (invalid('documentNumber')) {
-            <div class="invalid-feedback d-block">
-              @if (hasError('documentNumber', 'required')) {
-                <span>El número de documento es obligatorio.</span>
-              }
-              @if (hasError('documentNumber', 'pattern')) {
-                <span>El número de documento no puede tener espacios.</span>
-              }
-              @if (hasError('documentNumber', 'maxlength')) {
-                <span>No puede superar 20 caracteres.</span>
-              }
-              @if (hasError('documentNumber', 'duplicate')) {
-                <span>{{ duplicateMessage() }}</span>
-              }
-            </div>
-          }
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label" for="provider-mobile">Celular</label>
-          <input
-            id="provider-mobile"
-            class="form-control"
-            inputmode="numeric"
-            formControlName="mobileNumber"
-            [class.is-invalid]="invalid('mobileNumber')"
-          />
-          @if (hasError('mobileNumber', 'pattern')) {
-            <div class="invalid-feedback d-block">El celular debe tener entre 7 y 15 dígitos.</div>
-          }
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label" for="provider-email">Correo</label>
-          <input
-            id="provider-email"
-            type="email"
-            class="form-control"
-            formControlName="email"
-            [class.is-invalid]="invalid('email')"
-          />
-          @if (invalid('email')) {
-            <div class="invalid-feedback d-block">
-              @if (hasError('email', 'maxlength')) {
-                <span>No puede superar 120 caracteres.</span>
-              }
-              @if (hasError('email', 'pattern')) {
-                <span>El correo no es válido.</span>
-              }
-            </div>
-          }
-        </div>
-
-        <div class="col-12">
-          <label class="form-label" for="provider-address">Dirección</label>
-          <input
-            id="provider-address"
-            class="form-control"
-            formControlName="address"
-            [class.is-invalid]="invalid('address')"
-          />
-          @if (hasError('address', 'maxlength')) {
-            <div class="invalid-feedback d-block">No puede superar 150 caracteres.</div>
-          }
-        </div>
-      </div>
-
-      <div class="d-flex justify-content-end gap-2 mt-4">
-        <a class="btn btn-light" [routerLink]="['/proveedores']">Cancelar</a>
-        <button type="submit" class="btn btn-primary" [disabled]="saving() || inactive()">
-          @if (saving()) {
-            <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
-          } @else {
-            <i class="bi bi-check2 me-1"></i>Guardar
-          }
-        </button>
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="providerId() ? 'Editar proveedor' : 'Nuevo proveedor'"
+    subtitle="Los campos con * son obligatorios"
+    icon="bi-truck"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (inactive()) {
+      <div class="alert alert-warning d-flex align-items-center gap-2">
+        <i class="bi bi-lock-fill"></i>Este proveedor está inactivo y no se puede editar.
       </div>
     }
-  </form>
-</div>
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="provider-name">Nombre del proveedor *</label>
+        <input
+          id="provider-name"
+          class="form-control"
+          formControlName="providerName"
+          [class.is-invalid]="invalid('providerName')"
+        />
+        @if (invalid('providerName')) {
+          <div class="invalid-feedback d-block">
+            @if (hasError('providerName', 'required')) {
+              <span>El nombre del proveedor es obligatorio.</span>
+            }
+            @if (hasError('providerName', 'maxlength')) {
+              <span>No puede superar 100 caracteres.</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label" for="provider-represent">Nombre del representante *</label>
+        <input
+          id="provider-represent"
+          class="form-control"
+          formControlName="representName"
+          [class.is-invalid]="invalid('representName')"
+        />
+        @if (invalid('representName')) {
+          <div class="invalid-feedback d-block">
+            @if (hasError('representName', 'required')) {
+              <span>El nombre del representante es obligatorio.</span>
+            }
+            @if (hasError('representName', 'maxlength')) {
+              <span>No puede superar 100 caracteres.</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label" for="provider-id-type">Tipo de documento *</label>
+        <select
+          id="provider-id-type"
+          class="form-select"
+          formControlName="idType"
+          [class.is-invalid]="invalid('idType')"
+        >
+          <option value="" disabled>Elige uno</option>
+          @for (type of documentTypes(); track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+          }
+        </select>
+        @if (hasError('idType', 'required')) {
+          <div class="invalid-feedback d-block">El tipo de documento es obligatorio.</div>
+        }
+      </div>
+
+      <div class="col-md-8">
+        <label class="form-label" for="provider-document">Número de documento *</label>
+        <input
+          id="provider-document"
+          class="form-control"
+          formControlName="documentNumber"
+          [class.is-invalid]="invalid('documentNumber')"
+        />
+        @if (invalid('documentNumber')) {
+          <div class="invalid-feedback d-block">
+            @if (hasError('documentNumber', 'required')) {
+              <span>El número de documento es obligatorio.</span>
+            }
+            @if (hasError('documentNumber', 'pattern')) {
+              <span>El número de documento no puede tener espacios.</span>
+            }
+            @if (hasError('documentNumber', 'maxlength')) {
+              <span>No puede superar 20 caracteres.</span>
+            }
+            @if (hasError('documentNumber', 'duplicate')) {
+              <span>{{ duplicateMessage() }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label" for="provider-mobile">Celular</label>
+        <input
+          id="provider-mobile"
+          class="form-control"
+          inputmode="numeric"
+          formControlName="mobileNumber"
+          [class.is-invalid]="invalid('mobileNumber')"
+        />
+        @if (hasError('mobileNumber', 'pattern')) {
+          <div class="invalid-feedback d-block">El celular debe tener entre 7 y 15 dígitos.</div>
+        }
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label" for="provider-email">Correo</label>
+        <input
+          id="provider-email"
+          type="email"
+          class="form-control"
+          formControlName="email"
+          [class.is-invalid]="invalid('email')"
+        />
+        @if (invalid('email')) {
+          <div class="invalid-feedback d-block">
+            @if (hasError('email', 'maxlength')) {
+              <span>No puede superar 120 caracteres.</span>
+            }
+            @if (hasError('email', 'pattern')) {
+              <span>El correo no es válido.</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="col-12">
+        <label class="form-label" for="provider-address">Dirección</label>
+        <input
+          id="provider-address"
+          class="form-control"
+          formControlName="address"
+          [class.is-invalid]="invalid('address')"
+        />
+        @if (hasError('address', 'maxlength')) {
+          <div class="invalid-feedback d-block">No puede superar 150 caracteres.</div>
+        }
+      </div>
+    </div>
+
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving() || inactive()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Guardar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>
