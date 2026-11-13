@@ -1,0 +1,28 @@
+.date-range {
+  width: auto;
+
+  .form-control {
+    min-width: 8.5rem;
+  }
+}
+
+.bar-row + .bar-row {
+  margin-top: 1rem;
+}
+
+.progress {
+  height: 0.6rem;
+  border-radius: 999px;
+}
+
+.progress-bar {
+  background: var(--uc-grad);
+
+  &.is-alt {
+    background: var(--bs-teal, #20c997);
+  }
+}
+
+.progress-col {
+  min-width: 10rem;
+}

@@ -23,7 +23,7 @@
             formControlName="doctor"
             [class.is-invalid]="invalid('doctor')"
           >
-            <option value="" disabled>Elige un médico</option>
+            <option value="" disabled>Elige un médico de esta sede</option>
             @for (option of doctorOptions(); track option.id) {
               <option [value]="option.id">{{ option.label }}</option>
             }
