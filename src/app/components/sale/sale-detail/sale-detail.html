@@ -1,0 +1,286 @@
+
+<app-page-header
+  eyebrow="Procesador Comercial"
+  [title]="order()?.orderNumber ?? 'Detalle de venta'"
+  subtitle="Productos, servicios y valores de la orden"
+>
+  <a routerLink="/ventas" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Volver
+  </a>
+
+  @if (order()?.state === 'BORRADOR') {
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      [disabled]="busy()"
+      (click)="editOrder()"
+    >
+      <i class="bi bi-pencil me-1"></i>Editar orden
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-outline-danger"
+      [disabled]="busy()"
+      (click)="cancelOrder()"
+    >
+      <i class="bi bi-x-circle me-1"></i>Anular
+    </button>
+  }
+</app-page-header>
+
+@if (error()) {
+  <div class="alert alert-danger">
+    {{ error() }}
+  </div>
+}
+
+@if (loading()) {
+  <div class="text-center py-5">
+    <span class="spinner-border text-primary"></span>
+  </div>
+} @else if (order(); as sale) {
+
+  <!-- Información y resumen de la venta -->
+  <div class="row g-3 mb-4">
+
+    <!-- Información general -->
+    <div class="col-lg-8">
+      <div class="card h-100">
+        <div class="card-body">
+
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h6 fw-bold mb-0">
+              Información de la venta
+            </h2>
+
+            <span
+              class="uc-tag"
+              [class.is-warn]="sale.state === 'BORRADOR'"
+              [class.is-ok]="sale.state === 'FACTURADA'"
+              [class.is-danger]="sale.state === 'ANULADA'"
+            >
+              {{ sale.state }}
+            </span>
+          </div>
+
+          <div class="row g-3 small">
+
+            <!-- Fecha -->
+            <div class="col-md-6">
+              <div class="text-body-secondary">Fecha</div>
+              <strong>
+                {{ sale.saleDate | date:'dd/MM/yyyy, HH:mm' }}
+              </strong>
+            </div>
+
+            <!-- Sede -->
+            <div class="col-md-6">
+              <div class="text-body-secondary">Sede</div>
+              <strong>
+                @if (referencesLoading()) {
+                  Cargando...
+                } @else {
+                  {{ headquarterName(sale.headquarterId) }}
+                }
+              </strong>
+            </div>
+
+            <!-- Cliente (Tutor) -->
+            <div class="col-md-6">
+              <div class="text-body-secondary">Cliente (tutor)</div>
+              <strong>
+                @if (referencesLoading()) {
+                  Cargando...
+                } @else {
+                  {{ tutorName(sale.clientID) }}
+                }
+              </strong>
+            </div>
+
+            <!-- Mascota -->
+            <div class="col-md-6">
+              <div class="text-body-secondary">Mascota</div>
+              <strong>
+                @if (referencesLoading()) {
+                  Cargando...
+                } @else {
+                  {{ petName(sale.petId) }}
+                }
+              </strong>
+            </div>
+
+            <!-- Póliza -->
+            <div class="col-md-6">
+              <div class="text-body-secondary">Póliza</div>
+              <strong>
+                @if (referencesLoading()) {
+                  Cargando...
+                } @else {
+                  {{ healthPlanName(sale.healthPlanId) }}
+                }
+              </strong>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="col-12">
+              <div class="text-body-secondary">Observaciones</div>
+              <span>
+                {{ sale.comment || 'Sin observaciones' }}
+              </span>
+            </div>
+          </div>
+
+          @if (referencesError()) {
+            <div class="alert alert-warning small mt-3 mb-0">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              {{ referencesError() }}
+            </div>
+          }
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen económico -->
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-body">
+
+          <h2 class="h6 fw-bold mb-3">Resumen</h2>
+
+          <div class="d-flex justify-content-between mb-2">
+            <span>Subtotal</span>
+            <strong>{{ sale.subtotal | price }}</strong>
+          </div>
+
+          <div class="d-flex justify-content-between mb-2">
+            <span>Descuentos</span>
+            <strong>- {{ sale.totalDiscount | price }}</strong>
+          </div>
+
+          <div class="d-flex justify-content-between mb-3">
+            <span>Impuestos</span>
+            <strong>{{ sale.totalTaxes | price }}</strong>
+          </div>
+
+          <hr />
+
+          <div class="d-flex justify-content-between align-items-center">
+            <strong>Total</strong>
+            <strong class="fs-4 text-primary">
+              {{ sale.total | price }}
+            </strong>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ítems de la orden -->
+  <div class="card">
+
+    <div class="card-header d-flex justify-content-between align-items-center py-3">
+      <h2 class="h6 fw-bold mb-0">
+        Ítems de la orden
+      </h2>
+
+      @if (sale.state === 'BORRADOR') {
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="itemDialog()"
+          [disabled]="busy()"
+        >
+          <i class="bi bi-plus-lg me-1"></i>
+          Agregar ítem
+        </button>
+      }
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle table-card">
+
+        <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Identificador</th>
+          <th class="text-end">Cantidad</th>
+          <th class="text-end">Precio</th>
+          <th class="text-end">Subtotal</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr>
+
+              <td>
+                <span class="uc-tag is-info">
+                  {{ item.itemType }}
+                </span>
+              </td>
+
+              <td class="small text-body-secondary text-break">
+                {{ item.itemId }}
+              </td>
+
+              <td class="text-end">
+                {{ item.quantity }}
+              </td>
+
+              <td class="text-end">
+                {{ item.unitPrice | price }}
+              </td>
+
+              <td class="text-end fw-semibold">
+                {{ item.subtotal | price }}
+              </td>
+
+              <td class="text-end text-nowrap">
+                @if (sale.state === 'BORRADOR') {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary me-1"
+                    title="Editar cantidad"
+                    (click)="itemDialog(item)"
+                    [disabled]="busy()"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    title="Eliminar ítem"
+                    (click)="deleteItem(item)"
+                    [disabled]="busy()"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                } @else {
+                  <span class="text-body-secondary">—</span>
+                }
+              </td>
+
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6">
+                <app-empty-state
+                  icon="bi-basket"
+                  title="La orden no tiene ítems"
+                  text="Agrega productos o servicios para comenzar."
+                />
+              </td>
+            </tr>
+          }
+        </tbody>
+
+      </table>
+    </div>
+
+  </div>
+}

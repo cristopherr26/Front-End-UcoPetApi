@@ -1,12 +1,9 @@
 import { Routes } from '@angular/router';
 
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+import { InvoiceDetail } from '../../components/invoice/invoice-detail/invoice-detail';
+import { InvoiceList } from '../../components/invoice/invoice-list/invoice-list';
 
 export const INVOICE_ROUTES: Routes = [
-  {
-    path: '',
-    component: ModulePlaceholder,
-    data: { module: 'facturas' },
-    title: 'Facturas · UcoPet',
-  },
+  { path: '', component: InvoiceList, title: 'Facturas · UcoPet' },
+  { path: ':id', component: InvoiceDetail, title: 'Detalle de factura · UcoPet' },
 ];

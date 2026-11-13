@@ -1,12 +1,8 @@
 import { Routes } from '@angular/router';
-
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+import { SaleList } from '../../components/sale/sale-list/sale-list';
+import { SaleDetail } from '../../components/sale/sale-detail/sale-detail';
 
 export const SALE_ROUTES: Routes = [
-  {
-    path: '',
-    component: ModulePlaceholder,
-    data: { module: 'ventas' },
-    title: 'Ventas · UcoPet',
-  },
+  { path: '', component: SaleList, title: 'Ventas · UcoPet' },
+  { path: ':id', component: SaleDetail, title: 'Detalle de venta · UcoPet' },
 ];

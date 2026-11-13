@@ -15,7 +15,7 @@ describe('NotificationService', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     clearCookies();
-    setSessionCookies('t', ['ADMIN']);
+    setSessionCookies(['ADMIN']);
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -31,15 +31,15 @@ describe('NotificationService', () => {
     vi.useRealTimers();
   });
 
-  it('loads the unread count at start and again every minute', () => {
+  it('loads the unread count at start and again every 30 seconds', () => {
     expect(service.unreadCount()).toBe(3);
-    vi.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(30_000);
     backend.expectOne(`${BASE}/person/p1/unread/count`).flush(5);
     expect(service.unreadCount()).toBe(5);
   });
 
   it('keeps the last count when the API fails', () => {
-    vi.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(30_000);
     backend
       .expectOne(`${BASE}/person/p1/unread/count`)
       .flush(null, { status: 500, statusText: 'Error' });

@@ -12,10 +12,14 @@ export class PersonLookupService {
   private cache: Observable<Map<string, PersonSummary>> | null = null;
 
   byId(): Observable<Map<string, PersonSummary>> {
+    return this.byIdStrict().pipe(catchError(() => of(new Map<string, PersonSummary>())));
+  }
+
+  /** Carga personas y propaga errores para formularios que necesitan distinguirlos de una lista vacía */
+  byIdStrict(): Observable<Map<string, PersonSummary>> {
     if (this.cache === null) {
       this.cache = this.http.get<PersonSummary[]>(`${environment.apiUrl}/persons`).pipe(
         map((persons) => new Map((Array.isArray(persons) ? persons : []).map((p) => [p.id, p]))),
-        catchError(() => of(new Map<string, PersonSummary>())),
         shareReplay(1),
       );
     }

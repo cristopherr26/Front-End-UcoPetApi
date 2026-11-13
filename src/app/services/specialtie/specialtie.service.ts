@@ -5,10 +5,11 @@ import { Observable, shareReplay, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Specialtie } from '../../models/specialtie/specialtie.model';
 
+
 @Injectable({ providedIn: 'root' })
 export class SpecialtieService {
   private readonly http = inject(HttpClient);
-    private readonly url = `${environment.apiUrl}/specialties`;
+  private readonly url = `${environment.apiUrl}/specialties`;
   private cache: Observable<Specialtie[]> | null = null;
 
   list(): Observable<Specialtie[]> {

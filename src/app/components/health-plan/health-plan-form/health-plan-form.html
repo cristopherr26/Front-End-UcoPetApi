@@ -1,0 +1,92 @@
+<div class="container my-4" style="max-width: 600px;">
+  <div class="d-flex align-items-center mb-4">
+    <a [routerLink]="['/polizas']" class="btn btn-outline-secondary rounded-circle me-3 py-1 px-2">
+      ←
+    </a>
+    <h3 class="fw-bold mb-0">
+      {{ isEditMode ? 'Editar Póliza de Salud' : 'Nueva Póliza de Salud' }}
+    </h3>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger rounded-3 mb-3">
+    {{ errorMessage }}
+  </div>
+
+  <form [formGroup]="planForm" (ngSubmit)="onSubmit()" class="card border-0 shadow-sm rounded-4 p-4">
+    <!-- Nombre -->
+    <div class="mb-3">
+      <label for="planName" class="form-label fw-semibold">Nombre de la Póliza *</label>
+      <input
+        id="planName"
+        type="text"
+        formControlName="name"
+        class="form-control rounded-3"
+        placeholder="Ej: Plan Vital Mascotas"
+        [class.is-invalid]="planForm.get('name')?.touched && planForm.get('name')?.invalid"
+      />
+      <div *ngIf="planForm.get('name')?.touched && planForm.get('name')?.invalid" class="invalid-feedback d-block">
+        <span *ngIf="planForm.get('name')?.errors?.['required']">El nombre es obligatorio.</span>
+        <span *ngIf="planForm.get('name')?.errors?.['minlength']">Debe tener al menos 3 caracteres.</span>
+        <span *ngIf="planForm.get('name')?.errors?.['maxlength']">No puede superar los 80 caracteres.</span>
+        <span *ngIf="planForm.get('name')?.errors?.['pattern']">No se permiten caracteres especiales como '?', '!', '#'. Solo letras, números y los signos + o -.</span>
+      </div>
+    </div>
+
+    <!-- Aseguradora -->
+    <div class="mb-3">
+      <label for="insuranceCompany" class="form-label fw-semibold">Aseguradora *</label>
+      <div class="input-group">
+        <input
+          id="insuranceCompany"
+          type="text"
+          formControlName="insuranceCompany"
+          class="form-control rounded-3"
+          [class.rounded-end-0]="isEditMode"
+          placeholder="Ej: Suramericana / Comfama"
+          [class.is-invalid]="planForm.get('insuranceCompany')?.touched && planForm.get('insuranceCompany')?.invalid"
+        />
+        <span *ngIf="isEditMode" class="input-group-text bg-light text-muted rounded-end-3" title="Campo inmutable">
+          🔒
+        </span>
+      </div>
+
+      <div *ngIf="!isEditMode && planForm.get('insuranceCompany')?.valid" class="form-text text-muted small mt-1">
+        <span class="text-warning-emphasis fw-medium">⚠️ Nota:</span> La aseguradora no se podrá modificar después de crear la póliza.
+      </div>
+
+      <div *ngIf="planForm.get('insuranceCompany')?.touched && planForm.get('insuranceCompany')?.invalid" class="invalid-feedback d-block mt-1">
+        <span *ngIf="planForm.get('insuranceCompany')?.errors?.['required']">La aseguradora es obligatoria.</span>
+        <span *ngIf="planForm.get('insuranceCompany')?.errors?.['minlength']">Debe tener al menos 3 caracteres.</span>
+        <span *ngIf="planForm.get('insuranceCompany')?.errors?.['maxlength']">No puede superar los 100 caracteres.</span>
+        <span *ngIf="planForm.get('insuranceCompany')?.errors?.['pattern']">No se permiten caracteres de puntuación ni símbolos extraños (ej: '?', '!', '$'). Solo letras, números, puntos, guiones y '&'.</span>
+      </div>
+    </div>
+
+    <!-- Descripción -->
+    <div class="mb-4">
+      <label for="planDescription" class="form-label fw-semibold">Descripción del Plan *</label>
+      <textarea
+        id="planDescription"
+        formControlName="description"
+        rows="3"
+        class="form-control rounded-3"
+        placeholder="Describe la cobertura general del plan (mínimo 10 caracteres)..."
+        [class.is-invalid]="planForm.get('description')?.touched && planForm.get('description')?.invalid"
+      ></textarea>
+      <div *ngIf="planForm.get('description')?.touched && planForm.get('description')?.invalid" class="invalid-feedback d-block">
+        <span *ngIf="planForm.get('description')?.errors?.['required']">La descripción es obligatoria.</span>
+        <span *ngIf="planForm.get('description')?.errors?.['minlength']">Debe tener al menos 10 caracteres.</span>
+        <span *ngIf="planForm.get('description')?.errors?.['maxlength']">No puede superar los 500 caracteres.</span>
+        <span *ngIf="planForm.get('description')?.errors?.['pattern']">La descripción contiene símbolos no permitidos (ej: '?', '$', '#', '<', '>').</span>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="d-flex justify-content-end gap-2">
+      <a [routerLink]="['/polizas']" class="btn btn-light rounded-pill px-4">Cancelar</a>
+      <button type="submit" class="btn btn-info text-white fw-semibold rounded-pill px-4" [disabled]="planForm.invalid">
+        {{ isEditMode ? 'Guardar Cambios' : 'Crear Póliza' }}
+      </button>
+    </div>
+  </form>
+</div>

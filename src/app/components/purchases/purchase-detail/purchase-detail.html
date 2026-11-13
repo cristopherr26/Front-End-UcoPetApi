@@ -1,0 +1,153 @@
+<app-page-header
+  eyebrow="Comercial"
+  title="Detalle de la compra"
+  subtitle="Proveedor, ítems, totales y estado"
+>
+  <a class="btn btn-light btn-sm" routerLink="/compras">
+    <i class="bi bi-arrow-left me-1"></i>Volver a la lista
+  </a>
+  <button type="button" class="btn btn-light btn-sm" (click)="reload()">
+    <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+  </button>
+</app-page-header>
+
+@if (loading()) {
+  <div class="card">
+    <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}</div>
+} @else if (purchase(); as item) {
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card h-100">
+        <div class="card-header py-3 d-flex flex-wrap align-items-center gap-2">
+          <span class="uc-mark is-grad"><i class="bi bi-bag-check"></i></span>
+          <div>
+            <div class="fw-bold fs-5">{{ item.purchaseNumber | uppercase }}</div>
+            <div class="small text-body-secondary">
+              Comprada el {{ item.purchaseDate | date: 'dd/MM/yyyy HH:mm' }}
+            </div>
+          </div>
+          <span class="flex-grow-1"></span>
+          <span class="uc-tag" [class]="tones[item.status]">{{
+            labelOf(statuses, item.status)
+          }}</span>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-3">
+            <dt class="col-sm-4 text-body-secondary fw-semibold">Proveedor</dt>
+            <dd class="col-sm-8">{{ item.supplier.name ?? 'Proveedor sin nombre' }}</dd>
+
+            <dt class="col-sm-4 text-body-secondary fw-semibold">Sede</dt>
+            <dd class="col-sm-8">{{ item.headquarter.name ?? 'Sede sin nombre' }}</dd>
+
+            <dt class="col-sm-4 text-body-secondary fw-semibold">Descuento</dt>
+            <dd class="col-sm-8">{{ item.hasDiscount ? 'Sí' : 'No' }}</dd>
+
+            <dt class="col-sm-4 text-body-secondary fw-semibold">Registrada por</dt>
+            <dd class="col-sm-8 mb-0">{{ item.createdBy.name ?? 'Desconocido' }}</dd>
+          </dl>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Ítem</th>
+                  <th>Tipo</th>
+                  <th class="text-end">Cantidad</th>
+                  <th class="text-end">Precio</th>
+                  <th class="text-end">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of item.items; track $index) {
+                  <tr>
+                    <td>{{ line.catalogItem.name ?? 'Ítem sin nombre' }}</td>
+                    <td>{{ labelOf(itemTypes, line.itemType) }}</td>
+                    <td class="text-end">{{ line.quantity }}</td>
+                    <td class="text-end">{{ line.unitPrice | price }}</td>
+                    <td class="text-end">{{ line.subtotal | price }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="text-center text-body-secondary py-3">Sin ítems</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card h-100">
+        <div class="card-header py-3 fw-bold">
+          <i class="bi bi-calculator me-2 text-primary"></i>Totales
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-body-secondary">Subtotal</span>
+            <span class="fw-semibold">{{ item.subtotal | price }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-body-secondary">Impuestos</span>
+            <span class="fw-semibold">{{ item.totalTaxes | price }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-body-secondary">Total</span>
+            <span class="fw-bold fs-5">{{ item.total | price }}</span>
+          </div>
+          @if (item.expenseId) {
+            <div class="small text-body-secondary">
+              Egreso vinculado: <code>{{ item.expenseId }}</code>
+            </div>
+          }
+        </div>
+        @if (receivable() || cancellable() || linkable()) {
+          <div class="card-footer bg-white d-flex flex-wrap gap-2 justify-content-end py-3">
+            @if (cancellable()) {
+              <button
+                type="button"
+                class="btn btn-outline-danger btn-sm"
+                [disabled]="busy()"
+                (click)="cancel(item)"
+              >
+                <i class="bi bi-x-circle me-1"></i>Cancelar
+              </button>
+            }
+            @if (receivable()) {
+              <button
+                type="button"
+                class="btn btn-outline-success btn-sm"
+                [disabled]="busy()"
+                (click)="receive(item)"
+              >
+                <i class="bi bi-box-seam me-1"></i>Marcar recibida
+              </button>
+            }
+            @if (linkable()) {
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                [disabled]="busy()"
+                (click)="linkExpense(item)"
+              >
+                <i class="bi bi-link-45deg me-1"></i>Vincular egreso
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+} @else if (notFound()) {
+  <div class="card">
+    <app-empty-state
+      icon="bi-bag-check"
+      title="No encontramos esta compra"
+      text="Si la acabas de crear o cancelar, el procesador de compras puede tardar un momento. Prueba con Actualizar."
+    />
+  </div>
+}

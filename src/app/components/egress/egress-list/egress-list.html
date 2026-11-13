@@ -1,0 +1,221 @@
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Gastado este mes"
+      [value]="summary().monthTotal | price"
+      hint="Egresos con fecha de este mes"
+      scope="Mes actual"
+      tone="danger"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Total registrado"
+      [value]="summary().total | price"
+      [hint]="summary().count + (summary().count === 1 ? ' egreso' : ' egresos')"
+      scope="Toda la lista"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Promedio por egreso"
+      [value]="summary().average | price"
+      scope="Toda la lista"
+    />
+  </div>
+  <div class="col-6 col-xl-3">
+    <app-kpi-card
+      label="Proveedor principal"
+      [value]="topProvider()?.label ?? '—'"
+      [hint]="topProvider() ? (topProvider()!.total | price) + ' · ' + topProvider()!.share + '%' : null"
+      scope="Mayor gasto"
+    />
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar por concepto, proveedor u orden"
+            aria-label="Buscar egreso"
+            [value]="searchText()"
+            (input)="searchText.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Proveedor"
+          (change)="setFilter('providerId', $any($event.target).value || null)"
+        >
+          <option value="" [selected]="filters().providerId === null">Todos los proveedores</option>
+          @for (provider of providers(); track provider.id) {
+          <option [value]="provider.id" [selected]="filters().providerId === provider.id">
+            {{ provider.name }}
+          </option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Método de pago"
+          (change)="setFilter('payMethodId', $any($event.target).value || null)"
+        >
+          <option value="" [selected]="filters().payMethodId === null">Todos los métodos</option>
+          @for (method of payMethods(); track method.id) {
+          <option [value]="method.id" [selected]="filters().payMethodId === method.id">
+            {{ method.name }}
+          </option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <div class="input-group input-group-sm date-range">
+          <span class="input-group-text bg-white">Del</span>
+          <input
+            type="date"
+            class="form-control"
+            aria-label="Desde"
+            [class.is-invalid]="badRange()"
+            [value]="filters().dateFrom"
+            (input)="setFilter('dateFrom', $any($event.target).value)"
+          />
+          <span class="input-group-text bg-white">al</span>
+          <input
+            type="date"
+            class="form-control"
+            aria-label="Hasta"
+            [class.is-invalid]="badRange()"
+            [value]="filters().dateTo"
+            (input)="setFilter('dateTo', $any($event.target).value)"
+          />
+        </div>
+      </div>
+      @if (hasFilters()) {
+      <div class="col-auto">
+        <button type="button" class="btn btn-light btn-sm" (click)="clearFilters()">
+          <i class="bi bi-x-lg me-1"></i>Limpiar
+        </button>
+      </div>
+      }
+      <div class="col-auto">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          [disabled]="catalog() === null"
+          (click)="create()"
+        >
+          <i class="bi bi-plus-lg me-1"></i>Nuevo egreso
+        </button>
+      </div>
+    </div>
+    @if (badRange()) {
+    <div class="small text-danger mt-2">
+      <i class="bi bi-exclamation-circle me-1"></i>La fecha "desde" es posterior a "hasta".
+    </div>
+    }
+  </div>
+
+  @if (error()) {
+  <div class="alert alert-danger m-3 d-flex align-items-center justify-content-between gap-2">
+    <span><i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}</span>
+    <button type="button" class="btn btn-sm btn-outline-danger" (click)="load(false)">
+      Reintentar
+    </button>
+  </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+      <tr>
+        <th appSortHeader="date" [table]="table">Fecha</th>
+        <th appSortHeader="concept" [table]="table">Concepto</th>
+        <th appSortHeader="provider" [table]="table">Proveedor</th>
+        <th appSortHeader="purchase" [table]="table">Orden</th>
+        <th appSortHeader="payMethod" [table]="table">Método de pago</th>
+        <th class="text-end" appSortHeader="total" [table]="table" [end]="true">Total</th>
+        <th class="text-end"></th>
+      </tr>
+      </thead>
+      <tbody>
+      @if (loading()) {
+      <tr>
+        <td colspan="7" class="text-center py-5">
+          <span class="spinner-border text-primary"></span>
+        </td>
+      </tr>
+      } @else {
+      @for (egress of table.rows(); track egress.id) {
+      <tr [class.is-pending]="isPending(egress)">
+        <td class="small text-nowrap">{{ egress.date | date: 'dd/MM/yyyy' }}</td>
+        <td>
+          <a class="fw-semibold text-decoration-none" [routerLink]="['/egresos', egress.id]">{{
+            egress.concept
+            }}</a>
+          @if (isPending(egress)) {
+          <div>
+      <span class="uc-tag is-warn mt-1">
+        <span class="spinner-border spinner-border-sm"></span>Procesando
+      </span>
+          </div>
+          }
+        </td>
+        <td>{{ egress.providerName }}</td>
+        <td class="text-nowrap egress-number">{{ egress.purchaseNumber }}</td>
+        <td>
+                <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">
+                  <i class="bi me-1" [class]="egress.payMethodName | payMethodIcon"></i
+                  >{{ egress.payMethodName }}
+                </span>
+        </td>
+        <td class="text-end fw-semibold egress-total">{{ egress.total | price }}</td>
+        <td class="text-end text-nowrap">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary"
+            title="Editar"
+            [disabled]="isPending(egress)"
+            (click)="edit(egress)"
+          >
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger ms-1"
+            title="Eliminar"
+            [disabled]="isPending(egress)"
+            (click)="remove(egress)"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+      } @empty {
+      <tr>
+        <td colspan="7" class="text-center text-body-secondary py-5">
+          <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+          {{ hasFilters() ? 'No hay egresos con estos filtros' : 'Todavía no hay egresos registrados' }}
+        </td>
+      </tr>
+      }
+      }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="egress-summary">
+    <span class="text-body-secondary small">
+      {{ visible().length === 1 ? 'Total del egreso que se ve' : 'Total de los ' + visible().length + ' egresos que se ven' }}    </span>
+    <span class="egress-summary-value">{{ visibleTotal() | price }}</span>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>

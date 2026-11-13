@@ -1,0 +1,236 @@
+
+<app-page-header
+  eyebrow="Procesador Comercial"
+  title="Ventas"
+  subtitle="Crea órdenes de venta y administra sus productos y servicios"
+>
+  <button
+    type="button"
+    class="btn btn-primary"
+    [disabled]="!session.headquarterId()"
+    (click)="newSale()"
+  >
+    <i class="bi bi-plus-lg me-1"></i>
+    Nueva venta
+  </button>
+</app-page-header>
+
+@if (!session.headquarterId()) {
+  <div class="alert alert-info d-flex gap-2 align-items-center">
+    <i class="bi bi-info-circle"></i>
+    Selecciona una sede para registrar ventas.
+    Puedes consultar todas las ventas mientras tanto.
+  </div>
+}
+
+<!-- Indicadores -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <app-kpi-card
+      label="Órdenes"
+      [value]="sales().length"
+      [scope]="scope()"
+    />
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <app-kpi-card
+      label="En borrador"
+      [value]="draftCount()"
+      tone="warn"
+      [scope]="scope()"
+    />
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <app-kpi-card
+      label="Anuladas"
+      [value]="cancelledCount()"
+      tone="danger"
+      [scope]="scope()"
+    />
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <app-kpi-card
+      label="Total no anulado"
+      [value]="totalAmount() | price"
+      [scope]="scope()"
+    />
+  </div>
+</div>
+
+<!-- Listado -->
+<div class="card">
+
+  <!-- Buscador y filtros -->
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+
+      <div class="col-md">
+        <div class="input-group input-group-sm">
+
+          <span class="input-group-text bg-white">
+            <i class="bi bi-search"></i>
+          </span>
+
+          <input
+            class="form-control"
+            type="search"
+            placeholder="Buscar por orden, cliente o mascota"
+            aria-label="Buscar venta"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="col-md-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Filtrar por estado"
+          (change)="setStatus($any($event.target).value)"
+        >
+          <option value="">Todos los estados</option>
+          <option value="BORRADOR">Borrador</option>
+          <option value="FACTURADA">Facturada</option>
+          <option value="ANULADA">Anulada</option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ error() }}
+    </div>
+  }
+
+  @if (namesError()) {
+    <div class="alert alert-warning m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ namesError() }}
+    </div>
+  }
+
+  <!-- Tabla de ventas -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+
+      <thead>
+      <tr>
+        <th appSortHeader="number" [table]="table">
+          Orden
+        </th>
+
+        <th appSortHeader="date" [table]="table">
+          Fecha
+        </th>
+
+        <th appSortHeader="client" [table]="table">
+          Cliente (tutor)
+        </th>
+
+        <th appSortHeader="pet" [table]="table">
+          Mascota
+        </th>
+
+        <th appSortHeader="status" [table]="table">
+          Estado
+        </th>
+
+        <th
+          appSortHeader="total"
+          [table]="table"
+          [end]="true"
+          class="text-end"
+        >
+          Total
+        </th>
+
+        <th class="text-end">
+          Acciones
+        </th>
+      </tr>
+      </thead>
+
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </td>
+          </tr>
+        } @else {
+          @for (sale of table.rows(); track sale.id) {
+            <tr>
+
+              <td class="fw-semibold">
+                {{ sale.orderNumber }}
+              </td>
+
+              <td class="small">
+                {{ sale.saleDate | date:'dd/MM/yyyy, HH:mm' }}
+              </td>
+
+              <!-- Nombre del tutor -->
+              <td class="small">
+                {{ clientName(sale.clientID) }}
+              </td>
+
+              <!-- Nombre de la mascota -->
+              <td class="small">
+                {{ petName(sale.petId) }}
+              </td>
+
+              <td>
+                <span
+                  class="uc-tag"
+                  [class.is-warn]="sale.state === 'BORRADOR'"
+                  [class.is-ok]="sale.state === 'FACTURADA'"
+                  [class.is-danger]="sale.state === 'ANULADA'"
+                >
+                  {{ sale.state }}
+                </span>
+              </td>
+
+              <td class="text-end fw-semibold">
+                {{ sale.total | price }}
+              </td>
+
+              <td class="text-end">
+                <a
+                  class="btn btn-sm btn-outline-primary"
+                  [routerLink]="['/ventas', sale.id]"
+                >
+                  <i class="bi bi-eye me-1"></i>
+                  Ver detalle
+                </a>
+              </td>
+
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7">
+                <app-empty-state
+                  icon="bi-receipt"
+                  title="No hay ventas para mostrar"
+                  text="Crea una venta o cambia los filtros."
+                />
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+
+    </table>
+  </div>
+
+  <app-table-pager
+    [total]="table.total()"
+    [(page)]="table.page"
+    [(pageSize)]="table.pageSize"
+  />
+</div>
