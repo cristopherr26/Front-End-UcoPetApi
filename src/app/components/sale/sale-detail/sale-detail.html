@@ -5,7 +5,8 @@
   subtitle="Productos, servicios y valores de la orden"
 >
   <a routerLink="/ventas" class="btn btn-outline-secondary">
-    <i class="bi bi-arrow-left me-1"></i>Volver
+    <i class="bi bi-arrow-left me-1"></i>
+    Volver
   </a>
 
   @if (order()?.state === 'BORRADOR') {
@@ -15,7 +16,8 @@
       [disabled]="busy()"
       (click)="editOrder()"
     >
-      <i class="bi bi-pencil me-1"></i>Editar orden
+      <i class="bi bi-pencil me-1"></i>
+      Editar orden
     </button>
 
     <button
@@ -24,7 +26,8 @@
       [disabled]="busy()"
       (click)="cancelOrder()"
     >
-      <i class="bi bi-x-circle me-1"></i>Anular
+      <i class="bi bi-x-circle me-1"></i>
+      Anular
     </button>
   }
 </app-page-header>
@@ -41,15 +44,15 @@
   </div>
 } @else if (order(); as sale) {
 
-  <!-- Información y resumen de la venta -->
   <div class="row g-3 mb-4">
 
-    <!-- Información general -->
     <div class="col-lg-8">
       <div class="card h-100">
         <div class="card-body">
 
-          <div class="d-flex align-items-center justify-content-between mb-3">
+          <div
+            class="d-flex align-items-center justify-content-between mb-3"
+          >
             <h2 class="h6 fw-bold mb-0">
               Información de la venta
             </h2>
@@ -66,17 +69,21 @@
 
           <div class="row g-3 small">
 
-            <!-- Fecha -->
             <div class="col-md-6">
-              <div class="text-body-secondary">Fecha</div>
+              <div class="text-body-secondary">
+                Fecha
+              </div>
+
               <strong>
                 {{ sale.saleDate | date:'dd/MM/yyyy, HH:mm' }}
               </strong>
             </div>
 
-            <!-- Sede -->
             <div class="col-md-6">
-              <div class="text-body-secondary">Sede</div>
+              <div class="text-body-secondary">
+                Sede
+              </div>
+
               <strong>
                 @if (referencesLoading()) {
                   Cargando...
@@ -86,9 +93,11 @@
               </strong>
             </div>
 
-            <!-- Cliente (Tutor) -->
             <div class="col-md-6">
-              <div class="text-body-secondary">Cliente (tutor)</div>
+              <div class="text-body-secondary">
+                Cliente (tutor)
+              </div>
+
               <strong>
                 @if (referencesLoading()) {
                   Cargando...
@@ -98,9 +107,11 @@
               </strong>
             </div>
 
-            <!-- Mascota -->
             <div class="col-md-6">
-              <div class="text-body-secondary">Mascota</div>
+              <div class="text-body-secondary">
+                Mascota
+              </div>
+
               <strong>
                 @if (referencesLoading()) {
                   Cargando...
@@ -110,9 +121,11 @@
               </strong>
             </div>
 
-            <!-- Póliza -->
             <div class="col-md-6">
-              <div class="text-body-secondary">Póliza</div>
+              <div class="text-body-secondary">
+                Póliza
+              </div>
+
               <strong>
                 @if (referencesLoading()) {
                   Cargando...
@@ -122,13 +135,16 @@
               </strong>
             </div>
 
-            <!-- Observaciones -->
             <div class="col-12">
-              <div class="text-body-secondary">Observaciones</div>
+              <div class="text-body-secondary">
+                Observaciones
+              </div>
+
               <span>
                 {{ sale.comment || 'Sin observaciones' }}
               </span>
             </div>
+
           </div>
 
           @if (referencesError()) {
@@ -142,32 +158,42 @@
       </div>
     </div>
 
-    <!-- Resumen económico -->
     <div class="col-lg-4">
       <div class="card h-100">
         <div class="card-body">
 
-          <h2 class="h6 fw-bold mb-3">Resumen</h2>
+          <h2 class="h6 fw-bold mb-3">
+            Resumen
+          </h2>
 
           <div class="d-flex justify-content-between mb-2">
             <span>Subtotal</span>
-            <strong>{{ sale.subtotal | price }}</strong>
+            <strong>
+              {{ sale.subtotal | price }}
+            </strong>
           </div>
 
           <div class="d-flex justify-content-between mb-2">
             <span>Descuentos</span>
-            <strong>- {{ sale.totalDiscount | price }}</strong>
+            <strong>
+              - {{ sale.totalDiscount | price }}
+            </strong>
           </div>
 
           <div class="d-flex justify-content-between mb-3">
             <span>Impuestos</span>
-            <strong>{{ sale.totalTaxes | price }}</strong>
+            <strong>
+              {{ sale.totalTaxes | price }}
+            </strong>
           </div>
 
           <hr />
 
-          <div class="d-flex justify-content-between align-items-center">
+          <div
+            class="d-flex justify-content-between align-items-center"
+          >
             <strong>Total</strong>
+
             <strong class="fs-4 text-primary">
               {{ sale.total | price }}
             </strong>
@@ -176,12 +202,14 @@
         </div>
       </div>
     </div>
+
   </div>
 
-  <!-- Ítems de la orden -->
   <div class="card">
 
-    <div class="card-header d-flex justify-content-between align-items-center py-3">
+    <div
+      class="card-header d-flex justify-content-between align-items-center py-3"
+    >
       <h2 class="h6 fw-bold mb-0">
         Ítems de la orden
       </h2>
@@ -199,17 +227,41 @@
       }
     </div>
 
+    @if (itemNamesError()) {
+      <div class="alert alert-warning mx-3 mt-3 mb-0">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ itemNamesError() }}
+      </div>
+    }
+
     <div class="table-responsive">
-      <table class="table table-hover align-middle table-card">
+      <table
+        class="table table-hover align-middle table-card"
+      >
 
         <thead>
         <tr>
           <th>Tipo</th>
-          <th>Identificador</th>
-          <th class="text-end">Cantidad</th>
-          <th class="text-end">Precio</th>
-          <th class="text-end">Subtotal</th>
-          <th class="text-end">Acciones</th>
+
+          <th>
+            Producto o servicio
+          </th>
+
+          <th class="text-end">
+            Cantidad
+          </th>
+
+          <th class="text-end">
+            Precio
+          </th>
+
+          <th class="text-end">
+            Subtotal
+          </th>
+
+          <th class="text-end">
+            Acciones
+          </th>
         </tr>
         </thead>
 
@@ -223,8 +275,10 @@
                 </span>
               </td>
 
-              <td class="small text-body-secondary text-break">
-                {{ item.itemId }}
+              <td>
+                <span class="fw-semibold">
+                  {{ itemName(item) }}
+                </span>
               </td>
 
               <td class="text-end">
@@ -241,6 +295,7 @@
 
               <td class="text-end text-nowrap">
                 @if (sale.state === 'BORRADOR') {
+
                   <button
                     type="button"
                     class="btn btn-sm btn-outline-primary me-1"
@@ -260,12 +315,16 @@
                   >
                     <i class="bi bi-trash3"></i>
                   </button>
+
                 } @else {
-                  <span class="text-body-secondary">—</span>
+                  <span class="text-body-secondary">
+                    —
+                  </span>
                 }
               </td>
 
             </tr>
+
           } @empty {
             <tr>
               <td colspan="6">

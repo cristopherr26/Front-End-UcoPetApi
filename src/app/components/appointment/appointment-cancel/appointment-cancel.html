@@ -1,0 +1,47 @@
+<form (ngSubmit)="submit()" novalidate>
+  <app-modal-frame
+    title="Cancelar cita"
+    subtitle="La cita quedará cancelada y el horario del médico se liberará"
+    icon="bi-x-circle"
+    tone="danger"
+    (closed)="modal.dismiss()"
+  >
+    @if (appointment(); as current) {
+      <div class="d-flex align-items-center gap-3 p-3 mb-3 rounded-3 bg-light">
+        <span class="uc-mark"><i class="bi bi-calendar3"></i></span>
+        <div>
+          <div class="fw-semibold">
+            {{ current.petName ?? 'Mascota' }} · {{ current.doctorName ?? 'Sin médico' }}
+          </div>
+          <div class="small text-body-secondary">
+            {{ dateLabel(current.appointmentDate) }} · {{ timeLabel(current.appointmentTime) }}
+          </div>
+        </div>
+      </div>
+    }
+
+    <label class="form-label" for="cancel-reason">Justificación *</label>
+    <textarea
+      id="cancel-reason"
+      class="form-control"
+      rows="3"
+      maxlength="255"
+      placeholder="Ej.: El tutor avisó que no puede asistir"
+      [formControl]="reason"
+      [class.is-invalid]="reason.touched && reason.invalid"
+    ></textarea>
+    <div class="d-flex justify-content-between mt-1">
+      <div class="invalid-feedback d-block" [class.invisible]="!(reason.touched && reason.invalid)">
+        La justificación es obligatoria
+      </div>
+      <div class="small text-body-secondary">{{ reason.value.length }}/255</div>
+    </div>
+
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Volver</button>
+      <button type="submit" class="btn btn-danger">
+        <i class="bi bi-x-circle me-1"></i>Cancelar cita
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

@@ -109,7 +109,7 @@ export const NAVIGATION: NavGroup[] = [
           import('../../routes/appointment/appointment.routes').then((m) => m.APPOINTMENT_ROUTES),
         icon: 'bi-calendar3',
         roles: BOTH,
-        description: 'Citas por médico, sede y espacio.',
+        description: 'Citas de los pacientes con su médico y tipo de atención.',
         api: [{ base: '/api/v1/appointments', rule: 'ADMIN y DOCTOR' }],
       },
       {
@@ -212,6 +212,7 @@ export const NAVIGATION: NavGroup[] = [
         icon: 'bi-truck',
         roles: ADMIN,
         description: 'Proveedores de productos y servicios.',
+        ready: true,
         api: [{ base: '/api/v1/providers', rule: 'ADMIN' }],
       },
       {

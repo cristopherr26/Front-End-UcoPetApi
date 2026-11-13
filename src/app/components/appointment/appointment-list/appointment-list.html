@@ -1,0 +1,310 @@
+@if (tutorId()) {
+  <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+    <i class="bi bi-funnel"></i>
+    <span>
+      Mostrando solo las citas de <strong>{{ tutorName() ?? 'este tutor' }}</strong>
+    </span>
+    <a class="ms-auto btn btn-sm btn-outline-primary" routerLink="/agenda">Ver todas</a>
+  </div>
+}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <app-kpi-card label="Hoy" [value]="kpis().today" hint="Citas activas de hoy" />
+  </div>
+  <div class="col-6 col-lg-3">
+    <app-kpi-card
+      label="Pendientes"
+      [value]="kpis().pending"
+      hint="Esperan confirmación"
+      [tone]="kpis().pending > 0 ? 'warn' : 'default'"
+    />
+  </div>
+  <div class="col-6 col-lg-3">
+    <app-kpi-card
+      label="Confirmadas"
+      [value]="kpis().confirmed"
+      hint="Listas para atender"
+      tone="ok"
+    />
+  </div>
+  <div class="col-6 col-lg-3">
+    <app-kpi-card
+      label="Canceladas"
+      [value]="kpis().cancelled"
+      hint="Su horario quedó libre"
+      [tone]="kpis().cancelled > 0 ? 'danger' : 'default'"
+    />
+  </div>
+</div>
+
+@if (processing().size > 0) {
+  <div class="alert alert-info d-flex align-items-center gap-2 py-2" role="status">
+    <span class="spinner-border spinner-border-sm"></span>
+    Procesando {{ processing().size }}
+    {{ processing().size === 1 ? 'solicitud' : 'solicitudes' }} en el procesador de salud...
+  </div>
+}
+
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar por mascota, tutor, médico o tipo"
+            aria-label="Buscar cita"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Periodo">
+          @for (option of periods; track option.value) {
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              [class.active]="period() === option.value"
+              (click)="period.set(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Estado"
+          [value]="status()"
+          (change)="setStatus($any($event.target).value)"
+        >
+          <option value="">Todos los estados</option>
+          @for (option of statuses; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Médico"
+          [value]="doctor()"
+          (change)="doctor.set($any($event.target).value)"
+        >
+          <option value="">Todos los médicos</option>
+          @for (option of doctorOptions(); track option.id) {
+            <option [value]="option.id">{{ option.name }}</option>
+          }
+        </select>
+      </div>
+      @if (canFilterMine()) {
+        <div class="col-auto">
+          <div class="form-check form-switch mb-0">
+            <input
+              id="only-mine"
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              [checked]="onlyMine()"
+              (change)="onlyMine.set($any($event.target).checked)"
+            />
+            <label class="form-check-label small" for="only-mine">Solo mis citas</label>
+          </div>
+        </div>
+      }
+      <div class="col-auto">
+        <button type="button" class="btn btn-primary btn-sm" (click)="create()">
+          <i class="bi bi-plus-lg me-1"></i>Nueva cita
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="when" [table]="table">Fecha y hora</th>
+          <th appSortHeader="patient" [table]="table">Paciente</th>
+          <th appSortHeader="doctor" [table]="table">Médico</th>
+          <th appSortHeader="type" [table]="table">Tipo</th>
+          <th appSortHeader="status" [table]="table">Estado</th>
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="6" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </td>
+          </tr>
+        } @else {
+          @for (appointment of table.rows(); track appointment.id) {
+            @let actions = allowedActions(appointment, todayIso());
+            <tr>
+              <td>
+                <div class="fw-semibold text-nowrap">
+                  {{ dateLabel(appointment.appointmentDate) }}
+                  @if (appointment.appointmentDate === todayIso()) {
+                    <span class="uc-tag is-info ms-1">Hoy</span>
+                  }
+                </div>
+                <div class="small text-body-secondary">
+                  <i class="bi bi-clock me-1"></i>{{ timeLabel(appointment.appointmentTime) }}
+                </div>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <span class="uc-mark is-teal"><i class="bi bi-heart"></i></span>
+                  <div>
+                    <div class="fw-semibold">{{ appointment.petName ?? 'Sin dato' }}</div>
+                    <div class="small text-body-secondary">
+                      {{ appointment.tutorName ?? 'Sin dato' }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ appointment.doctorName ?? 'Sin dato' }}</td>
+              <td>
+                <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{
+                  appointment.appointmentTypeName ?? 'Sin tipo'
+                }}</span>
+              </td>
+              <td>
+                @if (isProcessing(appointment.id)) {
+                  <span class="uc-tag is-neutral">
+                    <span class="spinner-border spinner-border-sm"></span>Procesando
+                  </span>
+                } @else {
+                  <span class="uc-tag" [class]="statusTone(appointment.status)">
+                    <i class="bi" [class]="statusIcon(appointment.status)"></i
+                    >{{ statusLabel(appointment.status) }}
+                  </span>
+                }
+                @if (appointment.status === 'CANCELLED' && appointment.cancellationReason) {
+                  <div
+                    class="small text-body-secondary text-truncate item-description mt-1"
+                    [title]="appointment.cancellationReason"
+                  >
+                    {{ appointment.cancellationReason }}
+                  </div>
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                @if (actions.confirm) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-success"
+                    title="Confirmar"
+                    [disabled]="isProcessing(appointment.id)"
+                    (click)="confirmAppointment(appointment)"
+                  >
+                    <i class="bi bi-check2"></i>
+                  </button>
+                }
+                @if (actions.complete) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-success"
+                    title="Marcar como completada"
+                    [disabled]="isProcessing(appointment.id)"
+                    (click)="complete(appointment)"
+                  >
+                    <i class="bi bi-check2-all"></i>
+                  </button>
+                }
+                @if (actions.reactivate) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Reactivar"
+                    [disabled]="isProcessing(appointment.id)"
+                    (click)="reactivate(appointment)"
+                  >
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                  </button>
+                }
+                @if (actions.edit) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary ms-1"
+                    title="Editar"
+                    [disabled]="isProcessing(appointment.id)"
+                    (click)="edit(appointment)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                }
+                @if (actions.cancel) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-warning ms-1"
+                    title="Cancelar cita"
+                    [disabled]="isProcessing(appointment.id)"
+                    (click)="cancel(appointment)"
+                  >
+                    <i class="bi bi-x-circle"></i>
+                  </button>
+                }
+                @if (session.isAdmin()) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    title="Eliminar"
+                    [disabled]="isProcessing(appointment.id)"
+                    (click)="remove(appointment)"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6">
+                @if (appointments().length === 0) {
+                  <app-empty-state
+                    icon="bi-calendar-x"
+                    title="Aún no hay citas"
+                    text="Agenda la primera cita de un paciente"
+                  >
+                    <button type="button" class="btn btn-primary btn-sm mt-3" (click)="create()">
+                      <i class="bi bi-plus-lg me-1"></i>Nueva cita
+                    </button>
+                  </app-empty-state>
+                } @else {
+                  <app-empty-state
+                    icon="bi-funnel"
+                    title="No hay citas con estos filtros"
+                    text="Prueba con otro periodo, estado o médico"
+                  >
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary btn-sm mt-3"
+                      (click)="clearFilters()"
+                    >
+                      Quitar filtros
+                    </button>
+                  </app-empty-state>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>
