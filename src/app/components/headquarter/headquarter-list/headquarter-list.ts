@@ -91,6 +91,25 @@ export class HeadquarterList {
     });
   }
 
+  protected activate(headquarter: Headquarter): void {
+  this.headquarterService
+    .update(headquarter.id, {
+      name: headquarter.name,
+      address: headquarter.address,
+      isActive: true,
+    })
+    .subscribe({
+      next: () => {
+        this.toast.info(
+          `"${headquarter.name}" se envió a reactivar; el procesador lo aplica en un momento`,
+        );
+        this.reload.update((value) => value + 1);
+      },
+      error: (error: HttpErrorResponse) =>
+        this.toast.error(apiErrorMessage(error, 'No se pudo reactivar la sede')),
+    });
+  }
+
   protected deactivate(headquarter: Headquarter): void {
     this.confirm(
       'Dar de baja la sede',
