@@ -1,0 +1,123 @@
+<app-page-header eyebrow="Tu cuenta" title="Mi cuenta" subtitle="Tus datos y tu contraseña" />
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <form class="card" [formGroup]="dataForm" (ngSubmit)="saveData()" novalidate>
+      <div class="card-header py-3 d-flex align-items-center gap-2">
+        <span class="uc-mark is-primary"><i class="bi bi-person"></i></span>
+        <div class="flex-grow-1">
+          <h2 class="h6 mb-0">Datos personales</h2>
+          @if (me(); as person) {
+            <div class="small text-body-secondary">
+              {{ person.admin ? 'Administrador de la clínica' : 'Personal de la clínica' }}
+            </div>
+          }
+        </div>
+      </div>
+      <div class="card-body">
+        @if (dataError()) {
+          <div class="alert alert-danger d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>{{ dataError() }}
+          </div>
+        }
+        @if (loading()) {
+          <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+        } @else if (me()) {
+          <app-person-fields
+            [form]="fields"
+            [documentTypes]="documentTypes()"
+            idPrefix="my-account"
+          />
+        }
+      </div>
+      <div class="card-footer d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary" [disabled]="savingData() || !me()">
+          @if (savingData()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+          } @else {
+            <i class="bi bi-check2 me-1"></i>Guardar cambios
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-5">
+    <form class="card" [formGroup]="passwordForm" (ngSubmit)="changePassword()" novalidate>
+      <div class="card-header py-3 d-flex align-items-center gap-2">
+        <span class="uc-mark is-warn"><i class="bi bi-key"></i></span>
+        <div class="flex-grow-1">
+          <h2 class="h6 mb-0">Cambiar contraseña</h2>
+          <div class="small text-body-secondary">Al cambiarla se cierran todas tus sesiones</div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-light btn-sm"
+          (click)="showPasswords.set(!showPasswords())"
+          [attr.aria-label]="showPasswords() ? 'Ocultar contraseñas' : 'Mostrar contraseñas'"
+        >
+          <i
+            class="bi"
+            [class.bi-eye]="!showPasswords()"
+            [class.bi-eye-slash]="showPasswords()"
+          ></i>
+        </button>
+      </div>
+      <div class="card-body">
+        @if (passwordError()) {
+          <div class="alert alert-danger d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>{{ passwordError() }}
+          </div>
+        }
+        <div class="mb-3">
+          <label class="form-label" for="current-password">Contraseña actual *</label>
+          <input
+            id="current-password"
+            class="form-control"
+            formControlName="currentPassword"
+            maxlength="72"
+            autocomplete="current-password"
+            [type]="showPasswords() ? 'text' : 'password'"
+            [class.is-invalid]="passwordInvalid('currentPassword')"
+          />
+          <div class="invalid-feedback">Escribe tu contraseña actual</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="my-new-password">Contraseña nueva *</label>
+          <input
+            id="my-new-password"
+            class="form-control"
+            formControlName="newPassword"
+            maxlength="72"
+            autocomplete="new-password"
+            [type]="showPasswords() ? 'text' : 'password'"
+            [class.is-invalid]="passwordInvalid('newPassword')"
+          />
+          <div class="invalid-feedback">Entre 8 y 72 caracteres</div>
+        </div>
+        <div>
+          <label class="form-label" for="my-confirm-password">Repite la contraseña nueva *</label>
+          <input
+            id="my-confirm-password"
+            class="form-control"
+            formControlName="confirmPassword"
+            maxlength="72"
+            autocomplete="new-password"
+            [type]="showPasswords() ? 'text' : 'password'"
+            [class.is-invalid]="confirmInvalid()"
+          />
+          <div class="invalid-feedback">Las dos contraseñas no coinciden</div>
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-end">
+        <button type="submit" class="btn btn-warning" [disabled]="savingPassword()">
+          @if (savingPassword()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>Cambiando...
+          } @else {
+            <i class="bi bi-key me-1"></i>Cambiar contraseña
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,204 @@
+<div class="card">
+<div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+
+    <div class="col-md">
+        <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white">
+            <i class="bi bi-search"></i>
+        </span>
+
+        <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar por código, tipo o descripción"
+            aria-label="Buscar procedimiento"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+        />
+        </div>
+    </div>
+
+    <div class="col-auto">
+        <select
+        class="form-select form-select-sm"
+        aria-label="Estado del procedimiento"
+        [value]="status()"
+        (change)="setStatus($any($event.target).value)"
+        >
+        <option value="active">Activos</option>
+        <option value="inactive">Desactivados</option>
+        <option value="all">Todos los estados</option>
+        </select>
+    </div>
+
+    <div class="col-auto">
+        <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        (click)="create()"
+        >
+        <i class="bi bi-plus-lg me-1"></i>
+        Nuevo procedimiento
+        </button>
+    </div>
+
+    </div>
+</div>
+
+@if (error()) {
+    <div class="alert alert-danger m-3">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    {{ error() }}
+    </div>
+}
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+    <thead>
+        <tr>
+        <th appSortHeader="code" [table]="table">
+            Código
+        </th>
+
+        <th appSortHeader="type" [table]="table">
+            Tipo
+        </th>
+
+        <th appSortHeader="description" [table]="table">
+            Descripción
+        </th>
+
+        <th appSortHeader="durationMinutes" [table]="table">
+            Duración
+        </th>
+
+        <th>
+            Espacio
+        </th>
+
+        <th>
+            Insumos
+        </th>
+
+        <th appSortHeader="active" [table]="table">
+            Estado
+        </th>
+
+        <th class="text-end"></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @if (loading()) {
+        <tr>
+            <td colspan="8" class="text-center py-5">
+            <span class="spinner-border text-primary"></span>
+            <div class="small text-body-secondary mt-2">
+                Cargando procedimientos...
+            </div>
+            </td>
+        </tr>
+        } @else {
+        @for (procedure of table.rows(); track procedure.id) {
+            <tr>
+            <td class="fw-semibold text-nowrap">
+                {{ procedure.code }}
+            </td>
+
+            <td>
+                {{ procedure.type }}
+            </td>
+
+            <td class="text-truncate" style="max-width: 260px;" [title]="procedure.description">
+                {{ procedure.description }}
+            </td>
+
+            <td class="text-nowrap">
+                {{ procedure.durationMinutes | duration }}
+            </td>
+
+            <td class="text-nowrap">
+                {{ spaceLabel(procedure.spaceId) }}
+            </td>
+
+            <td>
+                {{ procedure.defaultItems.length }}
+            </td>
+
+            <td>
+                @if (procedure.active) {
+                <span
+                    class="badge rounded-pill bg-success-subtle text-success-emphasis"
+                >
+                    Activo
+                </span>
+                } @else {
+                <span
+                    class="badge rounded-pill bg-danger-subtle text-danger-emphasis"
+                >
+                    Desactivado
+                </span>
+                }
+            </td>
+
+            <td class="text-end text-nowrap">
+                <a
+                class="btn btn-sm btn-outline-secondary me-1"
+                title="Ver detalle"
+                [routerLink]="[procedure.id]"
+                >
+                <i class="bi bi-eye"></i>
+                </a>
+
+                <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                title="Editar procedimiento"
+                (click)="edit(procedure)"
+                >
+                <i class="bi bi-pencil"></i>
+                </button>
+
+                @if (session.isAdmin()) {
+                @if (procedure.active) {
+                    <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    title="Desactivar procedimiento"
+                    (click)="deactivate(procedure)"
+                    >
+                    <i class="bi bi-trash3"></i>
+                    </button>
+                } @else {
+                    <button
+                    type="button"
+                    class="btn btn-sm btn-outline-success ms-1"
+                    title="Activar procedimiento"
+                    (click)="activate(procedure)"
+                    >
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                }
+                }
+            </td>
+            </tr>
+        } @empty {
+            <tr>
+            <td colspan="8" class="text-center text-body-secondary py-5">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                No hay procedimientos con estos filtros.
+            </td>
+            </tr>
+        }
+        }
+    </tbody>
+    </table>
+</div>
+
+<app-table-pager
+    [total]="table.total()"
+    [(page)]="table.page"
+    [(pageSize)]="table.pageSize"
+/>
+</div>

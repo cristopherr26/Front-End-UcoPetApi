@@ -10,6 +10,7 @@ import { Brand } from '../../shared/brand';
 import { ToastHost } from '../../shared/toast-host';
 import { NAVIGATION, findModule, isReady } from '../../../config/navigation/navigation';
 import { HeadquarterMenu } from '../headquarter-menu/headquarter-menu';
+import { NotificationBell } from '../../notification/notification-bell/notification-bell';
 
 @Component({
   selector: 'app-shell',
@@ -21,6 +22,7 @@ import { HeadquarterMenu } from '../headquarter-menu/headquarter-menu';
     NgbDropdownModule,
     Brand,
     HeadquarterMenu,
+    NotificationBell,
     ToastHost,
   ],
   templateUrl: './shell.html',
@@ -55,7 +57,7 @@ export class Shell {
 
   protected readonly section = computed(() => {
     const segment = this.url().split('?')[0].split('/').filter(Boolean)[0] ?? 'inicio';
-    return findModule(segment)?.label ?? 'Inicio';
+    return findModule(segment)?.label ?? (segment === 'mi-cuenta' ? 'Mi cuenta' : 'Inicio');
   });
 
   protected readonly initials = computed(() =>

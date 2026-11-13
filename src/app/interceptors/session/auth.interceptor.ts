@@ -6,18 +6,18 @@ import { catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SessionService } from '../../services/session/session.service';
 
+const KEEP_SESSION_ON_401 = ['/persons/login', '/persons/me/password'];
+
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const session = inject(SessionService);
   const router = inject(Router);
-  const token = session.token();
-  const authorized =
-    token !== null && request.url.startsWith(environment.apiBase)
-      ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-      : request;
+  const toApi = request.url.startsWith(environment.apiBase);
+  const sent = toApi ? request.clone({ withCredentials: true }) : request;
 
-  return next(authorized).pipe(
+  return next(sent).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && !request.url.endsWith('/persons/login')) {
+      const keepSession = KEEP_SESSION_ON_401.some((path) => request.url.endsWith(path));
+      if (toApi && error.status === 401 && !keepSession) {
         session.clear();
         void router.navigate(['/login']);
       }

@@ -13,7 +13,7 @@ describe('HeadquarterService', () => {
 
   beforeEach(() => {
     clearCookies();
-    setSessionCookies('t', ['ADMIN']);
+    setSessionCookies(['ADMIN']);
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });

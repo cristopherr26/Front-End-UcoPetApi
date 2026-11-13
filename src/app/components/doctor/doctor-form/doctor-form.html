@@ -1,0 +1,82 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="doctorId() ? 'Editar médico' : 'Nuevo médico'"
+    subtitle="Los campos con * son obligatorios"
+    icon="bi-person-badge"
+    tone="teal"
+    (closed)="modal.dismiss()"
+  >
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label" for="doctor-person">Persona *</label>
+        @if (canPick()) {
+          <select
+            id="doctor-person"
+            class="form-select"
+            formControlName="idPerson"
+            [class.is-invalid]="invalid('idPerson')"
+          >
+            <option value="" disabled>Elige una persona</option>
+            @for (option of options(); track option.id) {
+              <option [value]="option.id">{{ option.label }}</option>
+            }
+          </select>
+        } @else {
+          <input
+            id="doctor-person"
+            class="form-control"
+            formControlName="idPerson"
+            placeholder="UUID de la persona"
+            [class.is-invalid]="invalid('idPerson')"
+          />
+          <div class="form-text">
+            No se pudo cargar la lista de personas: pega el id de una persona existente.
+          </div>
+        }
+        <div class="invalid-feedback">Elige una persona o pega un UUID válido</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="doctor-license">Tarjeta profesional *</label>
+        <input
+          id="doctor-license"
+          class="form-control"
+          formControlName="licenseNumber"
+          placeholder="LIC-001"
+          [class.is-invalid]="invalid('licenseNumber')"
+        />
+        <div class="invalid-feedback">{{ licenseMessage() }}</div>
+        <div class="form-text">De 4 a 30 caracteres: letras, números y guiones.</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="doctor-headquarter">Sede *</label>
+        <select
+          id="doctor-headquarter"
+          class="form-select"
+          formControlName="headquarterId"
+          [class.is-invalid]="invalid('headquarterId')"
+        >
+          <option value="" disabled>Elige una sede</option>
+          @for (headquarter of headquarters(); track headquarter.id) {
+            <option [value]="headquarter.id">{{ headquarter.name }}</option>
+          }
+        </select>
+        <div class="invalid-feedback">La sede es obligatoria</div>
+      </div>
+    </div>
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Guardar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

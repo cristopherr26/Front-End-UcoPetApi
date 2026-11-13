@@ -1,0 +1,148 @@
+
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="receipt() ? 'Editar ' + receipt()!.receiptNumber : 'Nuevo recibo'"
+    subtitle="Los campos con * son obligatorios"
+    icon="bi-cash-coin"
+    tone="teal"
+    (closed)="modal.dismiss()"
+  >
+    <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+      <i class="bi bi-info-circle"></i>
+      El número y el estado del recibo los asigna el procesador de pagos.
+    </div>
+
+    <div class="row g-3">
+      <!-- Tutor -->
+      <div class="col-md-6">
+        <label class="form-label" for="receipt-tutor">Tutor *</label>
+
+        <select
+          id="receipt-tutor"
+          class="form-select"
+          formControlName="tutorId"
+        >
+          <option value="" disabled>Elige un tutor</option>
+
+          @for (tutor of sortedTutors(); track tutor.id) {
+          <option [value]="tutor.id">
+            {{ tutor.name }}
+          </option>
+          }
+        </select>
+      </div>
+
+      <!-- Mascota -->
+      <div class="col-md-6">
+        <label class="form-label" for="receipt-pet">Mascota</label>
+
+        <select
+          id="receipt-pet"
+          class="form-select"
+          formControlName="petId"
+          [disabled]="form.controls.tutorId.value === ''"
+        >
+          <option value="">
+            {{ form.controls.tutorId.value === '' ? 'Primero elige un tutor' : 'Sin mascota' }}
+          </option>
+
+          @for (pet of pets(); track pet.id) {
+          <option [value]="pet.id">
+            {{ pet.name }}
+          </option>
+          }
+        </select>
+
+        @if (form.controls.tutorId.value !== '' && pets().length === 0) {
+        <div class="form-text">
+          Este tutor no tiene mascotas registradas.
+        </div>
+        }
+      </div>
+
+      <!-- Concepto -->
+      <div class="col-12">
+        <label class="form-label" for="receipt-concept">Concepto *</label>
+
+        <input
+          id="receipt-concept"
+          type="text"
+          class="form-control"
+          formControlName="concept"
+          maxlength="255"
+          placeholder="Ej. Consulta veterinaria general"
+        />
+      </div>
+
+      <!-- Valor -->
+      <div class="col-md-4">
+        <label class="form-label" for="receipt-amount">Valor *</label>
+
+        <div class="input-group">
+          <span class="input-group-text">$</span>
+
+          <input
+            id="receipt-amount"
+            type="number"
+            class="form-control"
+            min="0.01"
+            step="any"
+            formControlName="amount"
+            placeholder="0"
+          />
+        </div>
+      </div>
+
+      <!-- Método de pago -->
+      <div class="col-md-4">
+        <label class="form-label" for="receipt-method">Método de pago *</label>
+
+        <select
+          id="receipt-method"
+          class="form-select"
+          formControlName="payMethodId"
+        >
+          <option [ngValue]="null" disabled>Elige uno</option>
+
+          @for (method of payMethods(); track method.id) {
+          <option [ngValue]="method.id">
+            {{ method.name }}
+          </option>
+          }
+        </select>
+      </div>
+
+      <!-- Fecha -->
+      <div class="col-md-4">
+        <label class="form-label" for="receipt-date">Fecha y hora *</label>
+
+        <input
+          id="receipt-date"
+          type="datetime-local"
+          class="form-control"
+          formControlName="date"
+          required
+        />
+
+        <div class="form-text">
+          Se establece automáticamente la fecha y hora actual.
+        </div>
+      </div>
+    </div>
+
+    <ng-container modalFooter>
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="modal.dismiss()"
+      >
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check2 me-1"></i>
+        {{ receipt() ? 'Guardar cambios' : 'Registrar recibo' }}
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

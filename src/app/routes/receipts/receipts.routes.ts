@@ -1,12 +1,11 @@
 import { Routes } from '@angular/router';
 
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+import { ReceiptsList } from '../../components/receipts/receipts-list/receipts-list';
 
 export const RECEIPTS_ROUTES: Routes = [
   {
     path: '',
-    component: ModulePlaceholder,
-    data: { module: 'recibos' },
+    component: ReceiptsList,
     title: 'Recibos de caja · UcoPet',
   },
 ];

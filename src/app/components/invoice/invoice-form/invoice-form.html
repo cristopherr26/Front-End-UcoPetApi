@@ -1,0 +1,93 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    title="Nueva factura"
+    subtitle="Se factura una orden de venta en borrador. Los campos con * son obligatorios"
+    icon="bi-receipt"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (loading()) {
+      <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+    } @else {
+      @if (error()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+        </div>
+      }
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label" for="invoice-sale-order">Orden de venta *</label>
+          <select
+            id="invoice-sale-order"
+            class="form-select"
+            formControlName="saleOrderId"
+            [class.is-invalid]="invalid('saleOrderId')"
+          >
+            <option [ngValue]="null" disabled>
+              {{ orders().length === 0 ? 'No hay órdenes en borrador' : 'Elige una' }}
+            </option>
+            @for (order of orders(); track order.id) {
+              <option [ngValue]="order.id">
+                {{ order.orderNumber }} · {{ order.total | price }} ·
+                {{ order.saleDate | date: 'dd/MM/yyyy' }}
+              </option>
+            }
+          </select>
+          <div class="invalid-feedback">Elige la orden de venta que vas a facturar</div>
+          @if (orders().length === 0) {
+            <div class="form-text">
+              Solo se facturan órdenes en estado borrador de la sede activa.
+            </div>
+          }
+        </div>
+
+        @if (selected(); as order) {
+          <div class="col-12">
+            <div class="border rounded-3 p-3 bg-light-subtle">
+              <div class="d-flex justify-content-between small">
+                <span class="text-body-secondary">Orden</span>
+                <span class="fw-semibold">{{ order.orderNumber }}</span>
+              </div>
+              <div class="d-flex justify-content-between small">
+                <span class="text-body-secondary">Fecha de la venta</span>
+                <span>{{ order.saleDate | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <span class="text-body-secondary">Total a facturar</span>
+                <span class="fw-bold">{{ order.total | price }}</span>
+              </div>
+            </div>
+          </div>
+        }
+
+        <div class="col-12">
+          <label class="form-label" for="invoice-observations">Observaciones</label>
+          <textarea
+            id="invoice-observations"
+            class="form-control"
+            rows="3"
+            formControlName="observations"
+            [attr.maxlength]="observationsMax"
+            [class.is-invalid]="invalid('observations')"
+          ></textarea>
+          <div class="invalid-feedback">Máximo {{ observationsMax }} caracteres</div>
+          <div class="form-text text-end">{{ observationsLength() }}/{{ observationsMax }}</div>
+        </div>
+      </div>
+    }
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="saving() || loading() || orders().length === 0"
+      >
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Enviando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Facturar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

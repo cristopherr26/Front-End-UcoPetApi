@@ -1,0 +1,221 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+<app-modal-frame
+  title="Nueva compra"
+  subtitle="Los campos con * son obligatorios"
+  icon="bi-bag-check"
+  tone="grad"
+  (closed)="modal.dismiss()"
+>
+  @if (loading()) {
+    <div class="text-center py-5">
+      <span class="spinner-border text-primary"></span>
+      <p class="text-body-secondary mt-2">Cargando información...</p>
+    </div>
+  } @else {
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+
+    <div class="row g-3">
+      <div class="col-md-12">
+        <label class="form-label" for="purchase-number">Número de compra *</label>
+        <input
+          id="purchase-number"
+          type="text"
+          class="form-control"
+          formControlName="purchaseNumber"
+          [attr.maxlength]="numberMax"
+          [class.is-invalid]="invalid('purchaseNumber')"
+          placeholder="Ejemplo: OC-2026-001"
+        />
+        @if (hasError('purchaseNumber', 'required')) {
+          <div class="invalid-feedback">El número de compra es obligatorio.</div>
+        }
+        @if (hasError('purchaseNumber', 'minlength')) {
+          <div class="invalid-feedback">Mínimo {{ numberMin }} caracteres.</div>
+        }
+        @if (hasError('purchaseNumber', 'maxlength')) {
+          <div class="invalid-feedback">Máximo {{ numberMax }} caracteres.</div>
+        }
+        @if (hasError('purchaseNumber', 'pattern')) {
+          <div class="invalid-feedback">No se permiten espacios.</div>
+        }
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label" for="purchase-supplier">Proveedor *</label>
+        <select
+          id="purchase-supplier"
+          class="form-select"
+          formControlName="supplierId"
+          [class.is-invalid]="invalid('supplierId')"
+        >
+          <option value="">Selecciona un proveedor</option>
+          @for (supplier of suppliers(); track supplier.id) {
+            <option [value]="supplier.id">{{ supplier.providerName }}</option>
+          }
+        </select>
+        @if (invalid('supplierId')) {
+          <div class="invalid-feedback">Debes seleccionar un proveedor.</div>
+        }
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label" for="purchase-headquarter">Sede *</label>
+        <select
+          id="purchase-headquarter"
+          class="form-select"
+          formControlName="headquarterId"
+          [class.is-invalid]="invalid('headquarterId')"
+        >
+          <option value="">Selecciona una sede</option>
+          @for (headquarter of headquarters(); track headquarter.id) {
+            <option [value]="headquarter.id">{{ headquarter.name }}</option>
+          }
+        </select>
+        @if (invalid('headquarterId')) {
+          <div class="invalid-feedback">Debes seleccionar una sede.</div>
+        }
+      </div>
+
+      <div class="col-md-12">
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            role="switch"
+            id="purchase-has-discount"
+            formControlName="hasDiscount"
+          />
+          <label class="form-check-label" for="purchase-has-discount">
+            ¿Tiene descuento? {{ form.controls.hasDiscount.value ? 'Sí' : 'No' }}
+          </label>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <label class="form-label mb-0">Ítems de la compra *</label>
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="addItem()">
+            <i class="bi bi-plus-lg me-1"></i>Agregar ítem
+          </button>
+        </div>
+
+        @if (items.hasError('minlength')) {
+          <div class="small text-danger mb-2">Debes agregar al menos un ítem.</div>
+        }
+        @if (items.hasError('duplicateItems')) {
+          <div class="small text-danger mb-2">No puedes repetir el mismo ítem.</div>
+        }
+
+        <div formArrayName="items">
+          @for (item of items.controls; track $index; let i = $index) {
+            <div class="row g-2 align-items-start mb-2" [formGroupName]="i">
+              <div class="col-12 col-lg-4">
+                <select
+                  class="form-select"
+                  formControlName="productId"
+                  aria-label="Ítem del catálogo"
+                  [class.is-invalid]="itemInvalid(i, 'productId')"
+                  (change)="onItemSelected(i, $any($event.target).value)"
+                >
+                  <option value="">Selecciona un ítem</option>
+                  @for (catalogItem of catalogItems(); track catalogItem.id) {
+                    <option [value]="catalogItem.id">{{ itemLabel(catalogItem) }}</option>
+                  }
+                </select>
+                @if (itemInvalid(i, 'productId')) {
+                  <div class="invalid-feedback">Selecciona un ítem.</div>
+                }
+              </div>
+
+              <div class="col-4 col-lg-2">
+                <input
+                  type="number"
+                  class="form-control"
+                  formControlName="quantity"
+                  min="1"
+                  aria-label="Cantidad"
+                  [class.is-invalid]="itemInvalid(i, 'quantity')"
+                  placeholder="Cant."
+                />
+                @if (itemInvalid(i, 'quantity')) {
+                  <div class="invalid-feedback">Entero mayor a 0.</div>
+                }
+              </div>
+
+              <div class="col-5 col-lg-2">
+                <div class="input-group has-validation">
+                  <span class="input-group-text">$</span>
+                  <input
+                    type="text"
+                    inputmode="decimal"
+                    class="form-control"
+                    aria-label="Precio unitario (pesos colombianos)"
+                    [class.is-invalid]="itemInvalid(i, 'unitPrice')"
+                    placeholder="Precio"
+                    (input)="onUnitPriceInput(i, $event)"
+                    (blur)="onUnitPriceBlur(i)"
+                  />
+                  @if (itemInvalid(i, 'unitPrice')) {
+                    <div class="invalid-feedback">Mayor a 0.</div>
+                  }
+                </div>
+                <!-- Vista previa en pesos colombianos; no se usa para editar, solo confirma lo escrito. -->
+                @if (item.controls.unitPrice.value) {
+                  <div class="form-text">{{ item.controls.unitPrice.value | price }} COP</div>
+                }
+              </div>
+
+              <div class="col-7 col-lg-3">
+                <select
+                  class="form-select"
+                  formControlName="taxCategory"
+                  aria-label="Categoría fiscal"
+                  [class.is-invalid]="itemInvalid(i, 'taxCategory')"
+                >
+                  <option value="">Categoría fiscal</option>
+                  @for (option of taxCategories; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+                @if (itemInvalid(i, 'taxCategory')) {
+                  <div class="invalid-feedback">Selecciona una categoría.</div>
+                }
+              </div>
+
+              <div class="col-1 text-end">
+                <button
+                  type="button"
+                  class="btn btn-outline-danger"
+                  title="Quitar ítem"
+                  (click)="removeItem(i)"
+                >
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-container modalFooter>
+    <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+    <button
+      type="submit"
+      class="btn btn-primary"
+      [disabled]="saving() || loading() || form.invalid"
+    >
+      @if (saving()) {
+        <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+      } @else {
+        <i class="bi bi-check2 me-1"></i>Guardar compra
+      }
+    </button>
+  </ng-container>
+</app-modal-frame>
+</form>

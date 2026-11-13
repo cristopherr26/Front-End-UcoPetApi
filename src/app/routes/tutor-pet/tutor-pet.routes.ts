@@ -1,11 +1,11 @@
 import { Routes } from '@angular/router';
 
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+import { TutorPetList } from '../../components/tutor-pet/tutor-pet-list/tutor-pet-list';
 
 export const TUTOR_PET_ROUTES: Routes = [
   {
     path: '',
-    component: ModulePlaceholder,
+    component: TutorPetList,
     data: { module: 'tutores' },
     title: 'Tutores · UcoPet',
   },

@@ -1,0 +1,54 @@
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Gestión de Pólizas</h2>
+      <p class="text-muted small mb-0">Administra los planes de salud y sus coberturas</p>
+    </div>
+    <a [routerLink]="['/polizas/new']" class="btn btn-info text-white fw-semibold rounded-pill px-3">
+      + Nueva póliza
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light text-secondary small text-uppercase">
+        <tr>
+          <th>Nombre</th>
+          <th>Aseguradora</th>
+          <th>Descripción</th>
+          <th>Estado</th>
+          <th class="text-end pe-4">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let plan of healthPlans">
+          <td class="fw-bold">{{ plan.name }}</td>
+          <td>{{ plan.insuranceCompany }}</td>
+          <td class="text-muted small">{{ plan.description }}</td>
+          <td>
+            <span class="badge rounded-pill px-2 py-1" 
+                  [ngClass]="(plan.status === 'INACTIVA' || plan.deleted) ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'">
+              {{ (plan.status === 'INACTIVA' || plan.deleted) ? 'Inactiva' : 'Activa' }}
+            </span>
+          </td>
+          <td class="text-end pe-3">
+            <div class="btn-group btn-group-sm">
+              <a [routerLink]="['/polizas/edit', plan.id]" class="btn btn-outline-secondary">Editar</a>
+              <button (click)="openCoverageModal(plan)" class="btn btn-outline-info">Coberturas</button>
+              <button (click)="deletePlan(plan.id)" class="btn btn-outline-danger" [disabled]="plan.status === 'INACTIVA' || plan.deleted">Desactivar</button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="healthPlans.length === 0">
+          <td colspan="5" class="text-center text-muted py-4">No hay pólizas registradas.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <app-health-plan-coverage-modal
+    *ngIf="selectedPlanForCoverage"
+    [plan]="selectedPlanForCoverage"
+    (closeModal)="closeCoverageModal()">
+  </app-health-plan-coverage-modal>
+</div>

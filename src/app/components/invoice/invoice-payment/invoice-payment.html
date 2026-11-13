@@ -1,0 +1,70 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    title="Registrar pago"
+    [subtitle]="invoice() ? 'Factura ' + invoice()!.invoiceNumber : null"
+    icon="bi-cash-coin"
+    tone="teal"
+    (closed)="modal.dismiss()"
+  >
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+    @if (invoice(); as item) {
+      <div class="border rounded-3 p-3 mb-3 bg-light-subtle">
+        <div class="d-flex justify-content-between small">
+          <span class="text-body-secondary">Total</span>
+          <span>{{ item.total | price }}</span>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span class="text-body-secondary">Pagado</span>
+          <span>{{ item.paidAmount | price }}</span>
+        </div>
+        <div class="d-flex justify-content-between mt-1">
+          <span class="text-body-secondary">Saldo pendiente</span>
+          <span class="fw-bold">{{ item.balance | price }}</span>
+        </div>
+      </div>
+
+      <label class="form-label" for="payment-amount">Valor del abono *</label>
+      <div class="input-group has-validation">
+        <span class="input-group-text">$</span>
+        <input
+          id="payment-amount"
+          type="number"
+          class="form-control"
+          min="0.01"
+          step="any"
+          formControlName="amount"
+          [class.is-invalid]="invalid()"
+        />
+        <button type="button" class="btn btn-outline-secondary" (click)="payAll()">
+          Saldo completo
+        </button>
+        <div class="invalid-feedback">
+          @if (hasError('required')) {
+            Escribe el valor del abono
+          } @else if (hasError('maxAmount')) {
+            El abono no puede pasar del saldo pendiente ({{ item.balance | price }})
+          } @else {
+            El valor debe ser mayor a cero, con hasta 2 decimales
+          }
+        </div>
+      </div>
+      <div class="form-text">
+        Saldo después del pago: <span class="fw-semibold">{{ balanceAfter() | price }}</span>
+      </div>
+    }
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Enviando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Registrar pago
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

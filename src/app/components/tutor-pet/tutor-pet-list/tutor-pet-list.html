@@ -1,0 +1,126 @@
+<app-page-header
+  eyebrow="Procesador Usuarios"
+  title="Tutores de mascotas"
+  subtitle="Personas registradas como responsables de mascotas."
+>
+  @if (sessionIsAdmin()) {
+    <button type="button" class="btn btn-primary" (click)="create()">
+      <i class="bi bi-plus-lg me-1"></i>Nuevo tutor
+    </button>
+  }
+</app-page-header>
+
+<div class="card">
+  <div class="card-header py-3">
+    <div class="input-group input-group-sm">
+      <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+      <input
+        type="search"
+        class="form-control"
+        placeholder="Buscar por nombre, documento o identificador"
+        aria-label="Buscar tutor"
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3 mb-0">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="person" [table]="table">Persona tutora</th>
+          <th appSortHeader="document" [table]="table">Documento</th>
+          <th appSortHeader="status" [table]="table">Estado de la persona</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="4" class="text-center py-5">
+              <span class="spinner-border text-primary" aria-hidden="true"></span>
+              <div class="small text-body-secondary mt-2">Cargando tutores...</div>
+            </td>
+          </tr>
+        } @else {
+          @for (tutor of table.rows(); track tutor.id) {
+            <tr>
+              <td>
+                @if (nameOf(tutor); as name) {
+                  <div class="fw-semibold">{{ name }}</div>
+                } @else {
+                  <div class="fw-semibold text-body-secondary">
+                    Persona {{ shortId(tutor.person) }}…
+                  </div>
+                }
+                <div class="small text-body-secondary">ID tutor: {{ shortId(tutor.id) }}…</div>
+              </td>
+              <td>
+                @if (persons().get(tutor.person); as person) {
+                  {{ person.documentType ?? 'Documento' }} {{ person.documentNumber ?? '—' }}
+                } @else {
+                  <span class="text-body-secondary">Persona {{ shortId(tutor.person) }}…</span>
+                }
+              </td>
+              <td>
+                @switch (persons().get(tutor.person)?.active) {
+                  @case (true) {
+                    <span class="uc-tag is-ok">Activa</span>
+                  }
+                  @case (false) {
+                    <span class="uc-tag is-danger">Inactiva</span>
+                  }
+                  @default {
+                    <span class="uc-tag is-neutral" title="No se pudo leer el estado de la persona">
+                      Sin dato
+                    </span>
+                  }
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                @if (sessionIsAdmin()) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    title="Editar relación de tutor"
+                    aria-label="Editar relación de tutor"
+                    (click)="edit(tutor)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    title="Desactivar relación de tutor"
+                    aria-label="Desactivar relación de tutor"
+                    (click)="deactivate(tutor)"
+                  >
+                    <i class="bi bi-person-x"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="p-0">
+                <app-empty-state
+                  icon="bi-people"
+                  title="No hay tutores con estos filtros"
+                  text="Registra una relación entre una persona existente y el rol de tutor."
+                />
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>

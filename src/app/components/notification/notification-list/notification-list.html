@@ -1,0 +1,143 @@
+<app-page-header
+  eyebrow="Procesador Usuarios"
+  title="Notificaciones"
+  subtitle="Avisos del sistema para ti"
+>
+  <button type="button" class="btn btn-light btn-sm" (click)="reload()">
+    <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+  </button>
+  @if (hasUnread()) {
+    <button type="button" class="btn btn-primary btn-sm" (click)="markAll()">
+      <i class="bi bi-check2-all me-1"></i>Marcar todas como leídas
+    </button>
+  }
+</app-page-header>
+
+<div class="card">
+  <form class="card-header py-3" [formGroup]="form" novalidate>
+    <div class="row g-2 align-items-start">
+      <div class="col-md">
+        <div class="input-group input-group-sm has-validation">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar por título"
+            aria-label="Buscar por título"
+            formControlName="text"
+            [class.is-invalid]="invalid()"
+          />
+          <div class="invalid-feedback">El texto no puede pasar de {{ textMax }} caracteres</div>
+        </div>
+      </div>
+      <div class="col-auto">
+        <select class="form-select form-select-sm" aria-label="Tipo" formControlName="type">
+          <option [ngValue]="null">Todos los tipos</option>
+          @for (option of types; track option.value) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <select class="form-select form-select-sm" aria-label="Estado" formControlName="status">
+          @for (option of statuses; track option.value) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="button" class="btn btn-light btn-sm" (click)="clearFilters()">Limpiar</button>
+      </div>
+    </div>
+  </form>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="read" [table]="table">Estado</th>
+          <th appSortHeader="title" [table]="table">Notificación</th>
+          <th appSortHeader="type" [table]="table">Tipo</th>
+          <th appSortHeader="createdAt" [table]="table">Fecha</th>
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="5" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </td>
+          </tr>
+        } @else {
+          @for (item of table.rows(); track item.id) {
+            <tr>
+              <td>
+                <span
+                  class="badge rounded-pill"
+                  [class]="
+                    item.read
+                      ? 'bg-light text-body-secondary border'
+                      : 'bg-primary-subtle text-primary'
+                  "
+                  >{{ (item.read ? 'Leída' : 'No leída') | uppercase }}</span
+                >
+              </td>
+              <td>
+                <div [class.fw-semibold]="!item.read">{{ item.title }}</div>
+                <div class="small text-body-secondary">{{ item.message | truncate: 80 }}</div>
+              </td>
+              <td>
+                <span class="badge rounded-pill bg-info-subtle text-info-emphasis">{{
+                  item.type | notificationType
+                }}</span>
+              </td>
+              <td class="small text-nowrap">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td class="text-end text-nowrap">
+                <a
+                  class="btn btn-sm btn-outline-secondary"
+                  title="Ver detalle"
+                  [routerLink]="[item.id]"
+                >
+                  <i class="bi bi-eye"></i>
+                </a>
+                @if (!item.read) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary ms-1"
+                    title="Marcar como leída"
+                    (click)="markAsRead(item)"
+                  >
+                    <i class="bi bi-check2"></i>
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger ms-1"
+                  title="Eliminar"
+                  (click)="remove(item)"
+                >
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center text-body-secondary py-5">
+                <i class="bi bi-bell-slash fs-2 d-block mb-2"></i>No hay notificaciones con estos
+                filtros
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>

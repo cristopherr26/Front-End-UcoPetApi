@@ -1,0 +1,359 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+
+<app-modal-frame
+    [title]="procedureId() ? 'Editar procedimiento' : 'Nuevo procedimiento'"
+    [subtitle]="'Los campos con * son obligatorios'"
+    icon="bi-clipboard2-pulse"
+    tone="grad"
+    (closed)="modal.dismiss()"
+>
+
+    @if (loading()) {
+
+    <div class="text-center py-5">
+        <span class="spinner-border text-primary"></span>
+        <p class="text-body-secondary mt-2">
+        Cargando información...
+        </p>
+    </div>
+
+    } @else {
+
+    @if (error()) {
+
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        {{ error() }}
+        </div>
+
+    }
+
+    <div class="row g-3">
+
+        <!-- Código (solo al editar, no se puede modificar) -->
+        @if (procedureCode()) {
+
+        <div class="col-md-12">
+
+            <label class="form-label" for="procedure-code">
+            Código
+            </label>
+
+            <input
+            id="procedure-code"
+            type="text"
+            class="form-control"
+            [value]="procedureCode()"
+            disabled
+            readonly
+            />
+
+        </div>
+
+        }
+
+        <!-- Tipo -->
+        <div class="col-md-6">
+
+        <label class="form-label" for="procedure-type">
+            Tipo *
+        </label>
+
+        <input
+            id="procedure-type"
+            type="text"
+            class="form-control"
+            formControlName="type"
+            maxlength="100"
+            (blur)="trimField('type')"
+            [class.is-invalid]="invalid('type')"
+            placeholder="Ejemplo: Vacunación"
+        />
+
+        @if (hasError('type', 'required')) {
+            <div class="invalid-feedback">
+            El tipo es obligatorio.
+            </div>
+        }
+
+        @if (hasError('type', 'minlength')) {
+            <div class="invalid-feedback">
+            Mínimo 3 caracteres.
+            </div>
+        }
+
+        @if (hasError('type', 'maxlength')) {
+            <div class="invalid-feedback">
+            Máximo 100 caracteres.
+            </div>
+        }
+
+        </div>
+
+        <!-- Duración -->
+        <div class="col-md-6">
+
+        <label class="form-label" for="procedure-duration">
+            Duración (minutos) *
+        </label>
+
+        <input
+            id="procedure-duration"
+            type="number"
+            class="form-control"
+            formControlName="durationMinutes"
+            min="1"
+            [class.is-invalid]="invalid('durationMinutes')"
+            placeholder="Ejemplo: 20"
+        />
+
+        @if (hasError('durationMinutes', 'required')) {
+            <div class="invalid-feedback">
+            La duración es obligatoria.
+            </div>
+        }
+
+        @if (hasError('durationMinutes', 'min')) {
+            <div class="invalid-feedback">
+            Debe ser de al menos 1 minuto.
+            </div>
+        }
+
+        @if (hasError('durationMinutes', 'max')) {
+            <div class="invalid-feedback">
+            Máximo 1440 minutos (24 horas).
+            </div>
+        }
+
+        @if (hasError('durationMinutes', 'pattern')) {
+            <div class="invalid-feedback">
+            Ingresa un número entero.
+            </div>
+        }
+
+        </div>
+
+        <!-- Descripción -->
+        <div class="col-md-12">
+
+        <label class="form-label" for="procedure-description">
+            Descripción *
+        </label>
+
+        <textarea
+            id="procedure-description"
+            class="form-control"
+            rows="2"
+            formControlName="description"
+            maxlength="500"
+            (blur)="trimField('description')"
+            [class.is-invalid]="invalid('description')"
+            placeholder="Describe brevemente el procedimiento"
+        ></textarea>
+
+        @if (hasError('description', 'required')) {
+            <div class="invalid-feedback">
+            La descripción es obligatoria.
+            </div>
+        }
+
+        @if (hasError('description', 'minlength')) {
+            <div class="invalid-feedback">
+            Mínimo 3 caracteres.
+            </div>
+        }
+
+        @if (hasError('description', 'maxlength')) {
+            <div class="invalid-feedback">
+            Máximo 500 caracteres.
+            </div>
+        }
+
+        </div>
+
+        <!-- Espacio -->
+        <div class="col-md-12">
+
+        <label class="form-label" for="procedure-space">
+            Espacio *
+        </label>
+
+        <select
+            id="procedure-space"
+            class="form-select"
+            formControlName="spaceId"
+            [class.is-invalid]="invalid('spaceId')"
+        >
+
+            <option value="">Selecciona un espacio</option>
+
+            @for (space of spaces(); track space.id) {
+
+            <option [value]="space.id">
+                {{ space.code }} — {{ space.description }}
+            </option>
+
+            }
+
+        </select>
+
+        @if (invalid('spaceId')) {
+            <div class="invalid-feedback">
+            Debes seleccionar un espacio.
+            </div>
+        }
+
+        </div>
+
+        <!-- Insumos por defecto -->
+        <div class="col-md-12">
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+
+            <label class="form-label mb-0">
+            Insumos por defecto *
+            </label>
+
+            <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            (click)="addItem()"
+            >
+            <i class="bi bi-plus-lg me-1"></i>
+            Agregar insumo
+            </button>
+
+        </div>
+
+        @if (items.hasError('minlength')) {
+
+            <div class="small text-danger mb-2">
+            Debes agregar al menos un insumo.
+            </div>
+
+        }
+
+        @if (items.hasError('duplicateItems')) {
+
+            <div class="small text-danger mb-2">
+            No puedes repetir el mismo ítem.
+            </div>
+
+        }
+
+        <div formArrayName="items">
+
+            @for (item of items.controls; track $index; let i = $index) {
+
+            <div class="row g-2 align-items-start mb-2" [formGroupName]="i">
+
+                <div class="col-8">
+
+                <select
+                    class="form-select"
+                    formControlName="itemId"
+                    aria-label="Ítem del catálogo"
+                    [class.is-invalid]="itemInvalid(i, 'itemId')"
+                >
+
+                    <option value="">Selecciona un ítem</option>
+
+                    @for (catalogItem of catalogItems(); track catalogItem.id) {
+
+                    <option [value]="catalogItem.id">
+                        {{ itemLabel(catalogItem) }}
+                    </option>
+
+                    }
+
+                </select>
+
+                @if (itemInvalid(i, 'itemId')) {
+                    <div class="invalid-feedback">
+                    Selecciona un ítem.
+                    </div>
+                }
+
+                </div>
+
+                <div class="col-3">
+
+                <input
+                    type="number"
+                    class="form-control"
+                    formControlName="quantity"
+                    min="1"
+                    aria-label="Cantidad"
+                    [class.is-invalid]="itemInvalid(i, 'quantity')"
+                    placeholder="Cant."
+                />
+
+                @if (itemInvalid(i, 'quantity')) {
+                    <div class="invalid-feedback">
+                    Cantidad entera mayor a 0.
+                    </div>
+                }
+
+                </div>
+
+                <div class="col-1 text-end">
+
+                <button
+                    type="button"
+                    class="btn btn-outline-danger"
+                    title="Quitar insumo"
+                    (click)="removeItem(i)"
+                >
+                    <i class="bi bi-trash3"></i>
+                </button>
+
+                </div>
+
+            </div>
+
+            }
+
+        </div>
+
+        </div>
+
+    </div>
+
+    }
+
+    <!-- Botones del modal -->
+    <ng-container modalFooter>
+
+    <button
+        type="button"
+        class="btn btn-light"
+        (click)="modal.dismiss()"
+    >
+        Cancelar
+    </button>
+
+    <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="saving() || loading() || form.invalid"
+    >
+
+        @if (saving()) {
+
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Guardando...
+
+        } @else {
+
+        <i class="bi bi-check2 me-1"></i>
+        Guardar procedimiento
+
+        }
+
+    </button>
+
+    </ng-container>
+
+</app-modal-frame>
+
+</form>
