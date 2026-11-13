@@ -1,0 +1,138 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    title="Nueva orden de procedimiento"
+    [subtitle]="'Los campos con * son obligatorios'"
+    icon="bi-file-medical"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (loading()) {
+      <div class="text-center py-5">
+        <span class="spinner-border text-primary"></span>
+        <p class="text-body-secondary mt-2">Cargando información...</p>
+      </div>
+    } @else {
+      @if (error()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          {{ error() }}
+        </div>
+      }
+
+      @if (session.headquarterId() === null) {
+        <div class="alert alert-warning d-flex align-items-center gap-2">
+          <i class="bi bi-buildings"></i>
+          Selecciona una sede en la barra superior para poder elegir la mascota.
+        </div>
+      }
+
+      <div class="row g-3">
+        <!-- Tutor -->
+        <div class="col-md-12">
+          <label class="form-label" for="order-tutor">Tutor *</label>
+
+          <select
+            id="order-tutor"
+            class="form-select"
+            formControlName="tutorPetId"
+            [class.is-invalid]="invalid('tutorPetId')"
+          >
+            <option value="">Selecciona un tutor</option>
+
+            @for (tutor of tutors(); track tutor.tutorPetId) {
+              <option [value]="tutor.tutorPetId">{{ tutor.name }}</option>
+            }
+          </select>
+
+          @if (invalid('tutorPetId')) {
+            <div class="invalid-feedback">Debes seleccionar un tutor.</div>
+          }
+        </div>
+
+        <!-- Mascota (depende del tutor) -->
+        <div class="col-md-12">
+          <label class="form-label" for="order-pet">Mascota *</label>
+
+          <select
+            id="order-pet"
+            class="form-select"
+            formControlName="petId"
+            [class.is-invalid]="invalid('petId')"
+          >
+            <option value="">
+              @if (loadingPets()) {
+                Cargando mascotas...
+              } @else if (!form.controls.tutorPetId.value) {
+                Primero selecciona un tutor
+              } @else {
+                Selecciona una mascota
+              }
+            </option>
+
+            @for (pet of pets(); track pet.id) {
+              <option [value]="pet.id">{{ pet.name }} ({{ pet.species }})</option>
+            }
+          </select>
+
+          @if (invalid('petId')) {
+            <div class="invalid-feedback">Debes seleccionar una mascota.</div>
+          }
+
+          @if (petsError()) {
+            <div class="small text-danger mt-1">{{ petsError() }}</div>
+          } @else if (
+            form.controls.tutorPetId.value &&
+            session.headquarterId() !== null &&
+            !loadingPets() &&
+            pets().length === 0
+          ) {
+            <div class="small text-body-secondary mt-1">
+              Este tutor no tiene mascotas activas en la sede seleccionada.
+            </div>
+          }
+        </div>
+
+        <!-- Procedimiento -->
+        <div class="col-md-12">
+          <label class="form-label" for="order-procedure">Procedimiento *</label>
+
+          <select
+            id="order-procedure"
+            class="form-select"
+            formControlName="procedureId"
+            [class.is-invalid]="invalid('procedureId')"
+          >
+            <option value="">Selecciona un procedimiento</option>
+
+            @for (procedure of procedures(); track procedure.id) {
+              <option [value]="procedure.id">{{ procedureLabel(procedure) }}</option>
+            }
+          </select>
+
+          @if (invalid('procedureId')) {
+            <div class="invalid-feedback">Debes seleccionar un procedimiento.</div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Botones del modal -->
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="saving() || loading() || form.invalid"
+      >
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Enviando...
+        } @else {
+          <i class="bi bi-send me-1"></i>
+          Crear orden
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

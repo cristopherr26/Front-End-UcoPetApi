@@ -1,0 +1,167 @@
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white">
+            <i class="bi bi-search"></i>
+          </span>
+
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar por número, mascota, tutor o procedimiento"
+            aria-label="Buscar orden"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Estado de la orden"
+          [value]="status()"
+          (change)="setStatus($any($event.target).value)"
+        >
+          <option value="ALL">Todos los estados</option>
+          @for (state of states; track state.value) {
+            <option [value]="state.value">{{ state.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-auto">
+        <button type="button" class="btn btn-primary btn-sm" (click)="create()">
+          <i class="bi bi-plus-lg me-1"></i>
+          Nueva orden
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ error() }}
+    </div>
+  }
+
+  @if (session.headquarterId() === null) {
+    <div class="alert alert-info small m-3 mb-0">
+      <i class="bi bi-info-circle me-2"></i>
+      Selecciona una sede para ver el nombre de las mascotas.
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="idOrder" [table]="table">N.º</th>
+
+          <th appSortHeader="date" [table]="table">Fecha</th>
+
+          <th appSortHeader="pet" [table]="table">Mascota</th>
+
+          <th appSortHeader="tutor" [table]="table">Tutor</th>
+
+          <th appSortHeader="procedure" [table]="table">Procedimiento</th>
+
+          <th appSortHeader="state" [table]="table">Estado</th>
+
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+              <div class="small text-body-secondary mt-2">Cargando órdenes...</div>
+            </td>
+          </tr>
+        } @else {
+          @for (order of table.rows(); track order.id) {
+            <tr>
+              <td class="fw-semibold text-nowrap">#{{ order.idOrder }}</td>
+
+              <td class="text-nowrap">{{ order.date | date: 'dd/MM/yyyy HH:mm' }}</td>
+
+              <td>{{ petLabel(order.petId) }}</td>
+
+              <td>{{ tutorLabel(order.tutorId) }}</td>
+
+              <td
+                class="text-truncate"
+                style="max-width: 240px"
+                [title]="procedureLabel(order.procedureId)"
+              >
+                {{ procedureLabel(order.procedureId) }}
+              </td>
+
+              <td>
+                <span [class]="'uc-tag ' + stateTag(order.state)">{{
+                  stateLabel(order.state)
+                }}</span>
+              </td>
+
+              <td class="text-end text-nowrap">
+                @if (order.state === 'PENDING') {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    title="Cambiar procedimiento"
+                    (click)="changeProcedure(order)"
+                  >
+                    <i class="bi bi-arrow-left-right"></i>
+                  </button>
+
+                  @if (session.isAdmin()) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-success ms-1"
+                      title="Autorizar orden"
+                      (click)="authorize(order, true)"
+                    >
+                      <i class="bi bi-check2-circle"></i>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-warning ms-1"
+                      title="Denegar orden"
+                      (click)="authorize(order, false)"
+                    >
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger ms-1"
+                      title="Eliminar orden"
+                      (click)="remove(order)"
+                    >
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  }
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center text-body-secondary py-5">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                No hay órdenes con estos filtros.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>
