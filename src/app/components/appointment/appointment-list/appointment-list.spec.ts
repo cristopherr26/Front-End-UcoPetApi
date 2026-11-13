@@ -36,13 +36,16 @@ describe('AppointmentList', () => {
 
   function open(roles: string[], appointments: Appointment[]) {
     clearCookies();
-    setSessionCookies('token', roles);
+    setSessionCookies(roles);
+    document.cookie = 'ucopet_headquarter=h1; Path=/';
     const fixture = TestBed.createComponent(AppointmentList);
     fixture.detectChanges();
     backend = TestBed.inject(HttpTestingController);
     backend.expectOne((req) => req.url === '/api/v1/appointments').flush(appointments);
     // El médico de la sesión (personId p1) es el médico d1
-    backend.expectOne('/api/v1/doctor').flush([{ id: 'd1', licenseNumber: 'LIC-1', person: 'p1' }]);
+    backend
+      .expectOne((req) => req.url === '/api/v1/doctor')
+      .flush([{ id: 'd1', licenseNumber: 'LIC-1', person: 'p1' }]);
     fixture.detectChanges();
     return fixture;
   }

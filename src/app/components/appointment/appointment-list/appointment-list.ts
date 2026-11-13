@@ -150,7 +150,12 @@ export class AppointmentList {
     });
 
     // La API no filtra por médico: se ubica al médico de la sesión para ofrecer "solo mis citas".
-    this.doctorService.list().subscribe({
+    // La API de médicos exige la sede activa: sin sede no se puede ubicar al médico.
+    const headquarterId = this.session.headquarterId();
+    if (!headquarterId) {
+      return;
+    }
+    this.doctorService.list(headquarterId).subscribe({
       next: (doctors) => {
         const personId = this.session.profile()?.personId;
         const mine = doctors.find((doctor) => doctor.idPerson === personId)?.id ?? null;

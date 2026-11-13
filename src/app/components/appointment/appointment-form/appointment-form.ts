@@ -127,12 +127,20 @@ export class AppointmentForm {
     this.loadingOptions.set(true);
     forkJoin({
       tutors: this.references.tutors(),
-      doctors: this.references.doctors(),
+      doctors: this.references.doctors(this.session.headquarterId()),
       types: this.references.activeTypes(),
     }).subscribe({
       next: ({ tutors, doctors, types }) => {
         this.tutors.set(tutors);
-        this.doctors.set(doctors);
+        // Al editar sin sede activa se conserva el médico actual de la cita para no perderlo.
+        const currentDoctor: SelectOption | null = appointment
+          ? { id: appointment.doctorId, label: appointment.doctorName ?? 'Médico de la cita' }
+          : null;
+        this.doctors.set(
+          currentDoctor && !doctors.some((doctor) => doctor.id === currentDoctor.id)
+            ? [...doctors, currentDoctor]
+            : doctors,
+        );
         this.types.set(types);
         if (appointment) {
           this.fillFrom(appointment, types);

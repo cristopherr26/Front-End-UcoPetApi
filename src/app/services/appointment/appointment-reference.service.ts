@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, map } from 'rxjs';
+import { Observable, forkJoin, map, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { SelectOption } from '../../models/appointment/appointment-option.model';
@@ -45,8 +45,15 @@ export class AppointmentReferenceService {
     );
   }
 
-  doctors(): Observable<SelectOption[]> {
-    return forkJoin({ doctors: this.doctorService.list(), persons: this.persons.byId() }).pipe(
+  // La API de médicos exige la sede activa: sin sede no hay opciones.
+  doctors(headquarterId: string | null): Observable<SelectOption[]> {
+    if (!headquarterId) {
+      return of([]);
+    }
+    return forkJoin({
+      doctors: this.doctorService.list(headquarterId),
+      persons: this.persons.byId(),
+    }).pipe(
       map(({ doctors, persons }) =>
         doctors
           .filter((doctor) => doctor.id)
