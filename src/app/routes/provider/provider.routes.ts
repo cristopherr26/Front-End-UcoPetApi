@@ -1,12 +1,10 @@
 import { Routes } from '@angular/router';
 
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+import { ProviderForm } from '../../components/provider/provider-form/provider-form';
+import { ProviderList } from '../../components/provider/provider-list/provider-list';
 
 export const PROVIDER_ROUTES: Routes = [
-  {
-    path: '',
-    component: ModulePlaceholder,
-    data: { module: 'proveedores' },
-    title: 'Proveedores · UcoPet',
-  },
+  { path: '', component: ProviderList, title: 'Proveedores · UcoPet' },
+  { path: 'new', component: ProviderForm, title: 'Nuevo proveedor · UcoPet' },
+  { path: 'edit/:id', component: ProviderForm, title: 'Editar proveedor · UcoPet' },
 ];
