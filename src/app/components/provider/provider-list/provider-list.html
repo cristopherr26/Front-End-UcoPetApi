@@ -1,0 +1,91 @@
+<app-page-header
+  eyebrow="Procesador Comercial"
+  title="Proveedores"
+  subtitle="Proveedores de productos y servicios"
+>
+  <a class="btn btn-primary" [routerLink]="['/proveedores/new']">
+    <i class="bi bi-plus-lg me-1"></i>Nuevo proveedor
+  </a>
+</app-page-header>
+
+<div class="card">
+  @if (error()) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between m-3">
+      <span><i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}</span>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="load()">
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card mb-0">
+      <thead>
+        <tr>
+          <th>Proveedor</th>
+          <th>Representante</th>
+          <th>Documento</th>
+          <th>Celular</th>
+          <th>Correo</th>
+          <th>Estado</th>
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </td>
+          </tr>
+        } @else {
+          @for (provider of providers(); track provider.id) {
+            <tr>
+              <td class="fw-semibold">{{ provider.providerName | uppercase }}</td>
+              <td>{{ provider.representName }}</td>
+              <td class="text-nowrap">{{ provider.idType }} {{ provider.documentNumber }}</td>
+              <td>{{ provider.mobileNumber ?? '—' }}</td>
+              <td>{{ provider.email ?? '—' }}</td>
+              <td>
+                <span
+                  class="badge rounded-pill"
+                  [class.bg-success-subtle]="provider.active"
+                  [class.text-success-emphasis]="provider.active"
+                  [class.bg-danger-subtle]="!provider.active"
+                  [class.text-danger-emphasis]="!provider.active"
+                  >{{ provider.active | providerStatus }}</span
+                >
+              </td>
+              <td class="text-end text-nowrap">
+                @if (provider.active) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    [disabled]="busyId() === provider.id"
+                    (click)="edit(provider)"
+                  >
+                    <i class="bi bi-pencil me-1"></i>Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    [disabled]="busyId() === provider.id"
+                    (click)="deactivate(provider)"
+                  >
+                    <i class="bi bi-slash-circle me-1"></i>Inactivar
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center text-body-secondary py-5">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>No hay proveedores registrados
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
