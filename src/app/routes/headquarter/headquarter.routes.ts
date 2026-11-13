@@ -1,12 +1,9 @@
 import { Routes } from '@angular/router';
 
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+import { HeadquarterList } from '../../components/headquarter/headquarter-list/headquarter-list';
+import { HeadquarterDetail } from '../../components/headquarter/headquarter-detail/headquarter-detail';
 
 export const HEADQUARTER_ROUTES: Routes = [
-  {
-    path: '',
-    component: ModulePlaceholder,
-    data: { module: 'sedes' },
-    title: 'Sedes · UcoPet',
-  },
+  { path: '', component: HeadquarterList, title: 'Sedes · UcoPet' },
+  { path: ':id', component: HeadquarterDetail, title: 'Sede · UcoPet' },
 ];

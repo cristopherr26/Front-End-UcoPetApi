@@ -4,3 +4,9 @@ export interface Headquarter {
   address: string;
   isActive: boolean;
 }
+
+export interface HeadquarterPayload {
+  name: string;
+  address: string;
+  isActive: boolean;
+}
