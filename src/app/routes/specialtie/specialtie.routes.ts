@@ -1,12 +1,13 @@
 import { Routes } from '@angular/router';
 
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+import { SpecialtieDoctorList } from '../../components/doctor/specialtie-doctor-list/specialtie-doctor-list';
 
+// Por ahora solo está la asignación médico-especialidad (/api/v1/specialtiedoctor).
+// El CRUD de la especialidad en sí (/api/v1/specialtie) se agrega aquí cuando exista.
 export const SPECIALTIE_ROUTES: Routes = [
   {
     path: '',
-    component: ModulePlaceholder,
-    data: { module: 'especialidades' },
+    component: SpecialtieDoctorList,
     title: 'Especialidades · UcoPet',
   },
 ];

@@ -113,6 +113,14 @@ body {
   overflow: hidden;
 }
 
+// Asegura que el encabezado y los botones del modal (p. ej. "Guardar") siempre
+// se vean, con scroll solo en el cuerpo, sin importar cuanto contenido tenga
+// (por ejemplo, varios items en el formulario de compras).
+.modal-body {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
 .modal-backdrop.show {
   opacity: 0.45;
   background-color: $navy;

@@ -1,0 +1,61 @@
+<app-page-header
+  eyebrow="Procesador Usuarios"
+  title="Detalle de la notificación"
+  subtitle="Toda la información de este aviso"
+>
+  <a class="btn btn-light btn-sm" routerLink="/notificaciones">
+    <i class="bi bi-arrow-left me-1"></i>Volver a la lista
+  </a>
+</app-page-header>
+
+@if (loading()) {
+  <div class="card">
+    <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}</div>
+} @else if (notification(); as item) {
+  <div class="card">
+    <div class="card-header py-3 d-flex flex-wrap align-items-center gap-2">
+      <span
+        class="badge rounded-pill"
+        [class]="
+          item.read ? 'bg-light text-body-secondary border' : 'bg-primary-subtle text-primary'
+        "
+        >{{ (item.read ? 'Leída' : 'No leída') | uppercase }}</span
+      >
+      <span class="badge rounded-pill bg-info-subtle text-info-emphasis">{{
+        item.type | notificationType
+      }}</span>
+      <span class="flex-grow-1"></span>
+      @if (target()) {
+        <button type="button" class="btn btn-outline-primary btn-sm" (click)="goToTarget()">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Ver {{ referenceLabel() }}
+        </button>
+      }
+      <button type="button" class="btn btn-outline-danger btn-sm" (click)="remove(item)">
+        <i class="bi bi-trash3 me-1"></i>Eliminar
+      </button>
+    </div>
+    <div class="card-body">
+      <h2 class="h5 mb-3">{{ item.title }}</h2>
+      <p class="mb-4">{{ item.message }}</p>
+      <dl class="row mb-0 small">
+        <dt class="col-sm-3 text-body-secondary">Usuario</dt>
+        <dd class="col-sm-9">{{ userName() }}</dd>
+        <dt class="col-sm-3 text-body-secondary">Fecha</dt>
+        <dd class="col-sm-9">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        <dt class="col-sm-3 text-body-secondary">Proceso</dt>
+        <dd class="col-sm-9 mb-0">{{ referenceLabel() || (item.type | notificationType) }}</dd>
+      </dl>
+    </div>
+  </div>
+} @else {
+  <div class="card">
+    <app-empty-state
+      icon="bi-bell-slash"
+      title="No encontramos esta notificación"
+      text="Puede que ya se haya eliminado o que no sea tuya."
+    />
+  </div>
+}

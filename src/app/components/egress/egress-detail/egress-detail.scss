@@ -1,0 +1,36 @@
+.detail-eyebrow {
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+}
+
+.detail-total {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-list {
+  dt {
+    font-weight: 600;
+    color: var(--bs-secondary-color);
+  }
+
+  dd {
+    font-weight: 600;
+  }
+}
+
+.progress {
+  height: 0.6rem;
+  border-radius: 999px;
+}
+
+.progress-bar {
+  background: var(--uc-grad);
+}
+
+tr.is-current > td {
+  background: #f8fbff;
+}

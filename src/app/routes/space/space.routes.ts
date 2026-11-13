@@ -1,12 +1,9 @@
-import { Routes } from '@angular/router';
+  import { Routes } from '@angular/router';
 
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+  import { SpaceDetail } from '../../components/space/space-detail/space-detail';
+  import { SpaceList } from '../../components/space/space-list/space-list';
 
-export const SPACE_ROUTES: Routes = [
-  {
-    path: '',
-    component: ModulePlaceholder,
-    data: { module: 'espacios' },
-    title: 'Espacios · UcoPet',
-  },
-];
+  export const SPACE_ROUTES: Routes = [
+    { path: '', component: SpaceList, title: 'Espacios · UcoPet' },
+    { path: ':code', component: SpaceDetail, title: 'Detalle del espacio · UcoPet' },
+  ];

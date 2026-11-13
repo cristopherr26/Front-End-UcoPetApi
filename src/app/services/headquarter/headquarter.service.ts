@@ -15,7 +15,7 @@ export class HeadquarterService {
   constructor() {
     const session = inject(SessionService);
     effect(() => {
-      session.token();
+      session.profile();
       this.refresh();
     });
   }

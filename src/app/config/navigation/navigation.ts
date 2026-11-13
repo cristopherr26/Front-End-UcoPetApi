@@ -38,6 +38,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'usuarios',
         entity: 'person',
         label: 'Usuarios',
+        ready: true,
         loadChildren: () =>
           import('../../routes/person/person.routes').then((m) => m.PERSON_ROUTES),
         icon: 'bi-shield-lock',
@@ -51,6 +52,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'medicos',
         entity: 'doctor',
         label: 'Médicos',
+         ready: true,
         loadChildren: () =>
           import('../../routes/doctor/doctor.routes').then((m) => m.DOCTOR_ROUTES),
         icon: 'bi-person-badge',
@@ -73,6 +75,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'mascotas',
         entity: 'pet',
         label: 'Pacientes',
+        ready: true,
         loadChildren: () => import('../../routes/pet/pet.routes').then((m) => m.PET_ROUTES),
         icon: 'bi-heart',
         roles: BOTH,
@@ -90,7 +93,7 @@ export const NAVIGATION: NavGroup[] = [
         icon: 'bi-bell',
         roles: BOTH,
         description: 'Avisos del sistema para cada persona.',
-        api: [{ base: '/api/notifications', rule: 'cualquiera con rol' }],
+        api: [{ base: '/api/v1/notifications', rule: 'cualquiera con rol' }],
       },
     ],
   },
@@ -146,10 +149,11 @@ export const NAVIGATION: NavGroup[] = [
         description: 'Órdenes médicas y de medicación.',
         api: [{ base: '/api/v1/orders', rule: 'ADMIN y DOCTOR' }],
       },
-      {
+           {
         path: 'espacios',
         entity: 'space',
         label: 'Espacios',
+        ready: true,
         loadChildren: () => import('../../routes/space/space.routes').then((m) => m.SPACE_ROUTES),
         icon: 'bi-door-open',
         roles: BOTH,
@@ -184,7 +188,8 @@ export const NAVIGATION: NavGroup[] = [
         icon: 'bi-cart3',
         roles: ADMIN,
         description: 'Venta de productos y servicios del catálogo.',
-        api: [{ base: 'SaleController', rule: 'ADMIN · el controller todavía no tiene rutas' }],
+        api: [{ base: '/api/v1/sales', rule: 'ADMIN · órdenes e ítems' }],
+        ready: true
       },
       {
         path: 'compras',
@@ -212,6 +217,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'polizas',
         entity: 'health-plan',
         label: 'Pólizas',
+        ready: true,
         loadChildren: () =>
           import('../../routes/health-plan/health-plan.routes').then((m) => m.HEALTH_PLAN_ROUTES),
         icon: 'bi-shield-plus',
@@ -277,6 +283,7 @@ export const NAVIGATION: NavGroup[] = [
         path: 'facturas',
         entity: 'invoice',
         label: 'Facturas',
+        ready: true,
         loadChildren: () =>
           import('../../routes/invoice/invoice.routes').then((m) => m.INVOICE_ROUTES),
         icon: 'bi-receipt',
@@ -293,21 +300,27 @@ export const NAVIGATION: NavGroup[] = [
         icon: 'bi-cash-coin',
         roles: ADMIN,
         description: 'Recibos de caja y métodos de pago.',
+        ready : true,
         api: [
           { base: '/api/v1/receipts', rule: 'ADMIN' },
-          { base: '/api/v1/metodosDePago', rule: 'ADMIN' },
+          { base: '/api/v1/PayMethods', rule: 'ADMIN' },
         ],
       },
-      {
-        path: 'egresos',
-        entity: 'egress',
-        label: 'Egresos',
-        loadChildren: () =>
-          import('../../routes/egress/egress.routes').then((m) => m.EGRESS_ROUTES),
-        icon: 'bi-wallet2',
-        roles: ADMIN,
-        description: 'Salidas de dinero de la clínica.',
-        api: [{ base: '/api/v1/Egresses', rule: 'ADMIN' }],
+        {
+          path: 'egresos',
+          entity: 'egress',
+          label: 'Egresos',
+          ready: true,
+          loadChildren: () =>
+            import('../../routes/egress/egress.routes').then((m) => m.EGRESS_ROUTES),
+          icon: 'bi-wallet2',
+          roles: ADMIN,
+          description: 'Pagos a proveedores por órdenes de compra.',
+          api: [
+            { base: '/api/v1/Egresses', rule: 'ADMIN' },
+            { base: '/api/v1/providers', rule: 'ADMIN · solo lectura' },
+            { base: '/api/v1/purchases', rule: 'ADMIN · solo lectura' },
+            { base: '/api/v1/PayMethods', rule: 'ADMIN · solo lectura' }],
       },
     ],
   },

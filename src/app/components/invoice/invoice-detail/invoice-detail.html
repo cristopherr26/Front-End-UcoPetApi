@@ -1,0 +1,129 @@
+<app-page-header
+  eyebrow="Procesador Pagos"
+  title="Detalle de la factura"
+  subtitle="Valores, pagos y estado de la factura"
+>
+  <a class="btn btn-light btn-sm" routerLink="/facturas">
+    <i class="bi bi-arrow-left me-1"></i>Volver a la lista
+  </a>
+  <button type="button" class="btn btn-light btn-sm" (click)="reload()">
+    <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+  </button>
+</app-page-header>
+
+@if (loading()) {
+  <div class="card">
+    <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}</div>
+} @else if (invoice(); as item) {
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card h-100">
+        <div class="card-header py-3 d-flex flex-wrap align-items-center gap-2">
+          <span class="uc-mark is-grad"><i class="bi bi-receipt"></i></span>
+          <div>
+            <div class="fw-bold fs-5">{{ item.invoiceNumber | uppercase }}</div>
+            <div class="small text-body-secondary">
+              Emitida el {{ item.issueDate | date: 'dd/MM/yyyy HH:mm' }}
+            </div>
+          </div>
+          <span class="flex-grow-1"></span>
+          <span class="uc-tag" [class]="tones[item.state]">{{ item.state | invoiceState }}</span>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-4 text-body-secondary fw-semibold">Sede</dt>
+            <dd class="col-sm-8">
+              {{ headquarterName() ?? 'Sede ' + shortId(item.headquarterId) }}
+            </dd>
+
+            <dt class="col-sm-4 text-body-secondary fw-semibold">Cliente</dt>
+            <dd class="col-sm-8">
+              {{ clientName() ?? 'Cliente ' + shortId(item.clientID) + '…' }}
+            </dd>
+
+            <dt class="col-sm-4 text-body-secondary fw-semibold">Paciente</dt>
+            <dd class="col-sm-8">
+              <code>{{ shortId(item.petId) }}</code>
+            </dd>
+
+            <dt class="col-sm-4 text-body-secondary fw-semibold">Orden de venta</dt>
+            <dd class="col-sm-8">
+              <code>{{ shortId(item.saleOrderId) }}</code>
+            </dd>
+
+            <dt class="col-sm-4 text-body-secondary fw-semibold">Observaciones</dt>
+            <dd class="col-sm-8 mb-0">
+              @if (item.observations) {
+                {{ item.observations }}
+              } @else {
+                <span class="text-body-secondary">Sin observaciones</span>
+              }
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card h-100">
+        <div class="card-header py-3 fw-bold">
+          <i class="bi bi-cash-stack me-2 text-primary"></i>Pagos
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-body-secondary">Total</span>
+            <span class="fw-bold">{{ item.total | price }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-body-secondary">Pagado</span>
+            <span class="text-success fw-semibold">{{ item.paidAmount | price }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-body-secondary">Saldo</span>
+            <span class="fw-semibold" [class.text-warning]="item.balance > 0">{{
+              item.balance | price
+            }}</span>
+          </div>
+          <div
+            class="progress mb-1"
+            role="progressbar"
+            aria-label="Porcentaje pagado"
+            [attr.aria-valuenow]="paidPercent()"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <div class="progress-bar bg-success" [style.width.%]="paidPercent()"></div>
+          </div>
+          <div class="small text-body-secondary text-end">
+            {{ paidPercent() | number: '1.0-0' }} % pagado
+          </div>
+        </div>
+        @if (payable() || cancellable()) {
+          <div class="card-footer bg-white d-flex flex-wrap gap-2 justify-content-end py-3">
+            @if (cancellable()) {
+              <button type="button" class="btn btn-outline-danger btn-sm" (click)="cancel(item)">
+                <i class="bi bi-x-circle me-1"></i>Anular
+              </button>
+            }
+            @if (payable()) {
+              <button type="button" class="btn btn-primary btn-sm" (click)="registerPayment(item)">
+                <i class="bi bi-cash-coin me-1"></i>Registrar pago
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+} @else if (notFound()) {
+  <div class="card">
+    <app-empty-state
+      icon="bi-receipt"
+      title="No encontramos esta factura"
+      text="Si la acabas de crear, el procesador de pagos puede tardar un momento. Prueba con Actualizar."
+    />
+  </div>
+}

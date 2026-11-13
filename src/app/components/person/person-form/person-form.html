@@ -1,0 +1,78 @@
+<form class="d-flex flex-column overflow-hidden" [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="personId() ? 'Editar usuario' : 'Nuevo usuario'"
+    [subtitle]="'Los campos con * son obligatorios'"
+    icon="bi-person-gear"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+
+    <app-person-fields [form]="fields" [documentTypes]="documentTypes()" idPrefix="person-form" />
+
+    <hr class="my-4" />
+    <h3 class="h6 mb-3">Acceso</h3>
+    <div class="row g-3" formGroupName="access">
+      <div class="col-md-6">
+        <div class="form-check form-switch">
+          <input
+            id="person-admin"
+            class="form-check-input"
+            type="checkbox"
+            role="switch"
+            formControlName="admin"
+          />
+          <label class="form-check-label" for="person-admin">Administrador de la clínica</label>
+        </div>
+        <div class="form-text">
+          Si no es administrador, solo podrá entrar cuando esté registrado como médico.
+        </div>
+      </div>
+      @if (personId()) {
+        <div class="col-md-6">
+          <div class="form-check form-switch">
+            <input
+              id="person-active"
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              formControlName="active"
+            />
+            <label class="form-check-label" for="person-active">Activo</label>
+          </div>
+          <div class="form-text">Una persona inactiva no puede iniciar sesión.</div>
+        </div>
+      }
+      @if (isMe()) {
+        <div class="col-12">
+          <div class="alert alert-info py-2 mb-0 small">
+            <i class="bi bi-info-circle me-1"></i>No puedes cambiar tu propio rol ni tu estado.
+          </div>
+        </div>
+      }
+      @if (!personId()) {
+        <div class="col-12">
+          <div class="alert alert-light border py-2 mb-0 small">
+            <i class="bi bi-key me-1"></i>La persona se crea sin contraseña. Cuando aparezca en la
+            lista, usa el botón de la llave para asignarle una.
+          </div>
+        </div>
+      }
+    </div>
+
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Guardar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

@@ -1,0 +1,169 @@
+<app-page-header
+  eyebrow="Procesador Salud"
+  title="Espacios"
+  subtitle="Consultorios, quirófanos y demás espacios por sede"
+/>
+
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar por código, tipo o descripción"
+            aria-label="Buscar espacio"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Estado"
+          [value]="status()"
+          (change)="setStatus($any($event.target).value)"
+        >
+          <option value="active">Activos</option>
+          <option value="inactive">Desactivados</option>
+          <option value="all">Todos</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Tipo"
+          (change)="setType($any($event.target).value)"
+        >
+          <option value="" [selected]="type() === null">Todos los tipos</option>
+          @for (option of types(); track option) {
+            <option [value]="option" [selected]="option === type()">{{ option }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="button" class="btn btn-primary btn-sm" (click)="create()">
+          <i class="bi bi-plus-lg me-1"></i>Nuevo espacio
+        </button>
+      </div>
+    </div>
+    <div class="small text-body-secondary mt-2">
+      <i class="bi bi-geo-alt me-1"></i>
+      @if (scope(); as sede) {
+        Espacios de la sede <b>{{ sede }}</b>
+      } @else {
+        Espacios de toda la clínica
+      }
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="code" [table]="table">Código</th>
+          <th appSortHeader="type" [table]="table">Tipo</th>
+          <th>Descripción</th>
+          <th appSortHeader="headquarter" [table]="table">Sede</th>
+          <th appSortHeader="active" [table]="table">Estado</th>
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="6" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </td>
+          </tr>
+        } @else {
+          @for (space of table.rows(); track space.id) {
+            <tr>
+              <td class="fw-semibold text-nowrap">
+                <a
+                  class="text-decoration-none"
+                  [routerLink]="['/espacios', space.code]"
+                  title="Ver el detalle"
+                  >{{ space.code | uppercase }}</a
+                >
+              </td>
+              <td>
+                <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{
+                  space.type
+                }}</span>
+              </td>
+              <td>
+                <div class="small text-body-secondary text-truncate item-description">
+                  {{ space.description }}
+                </div>
+              </td>
+              <td class="small text-nowrap">
+                @if (headquarterName(space.headquarterId); as sede) {
+                  {{ sede }}
+                } @else {
+                  <span class="badge bg-light text-body-secondary border">Sin sede</span>
+                }
+              </td>
+              <td>
+                @if (space.active) {
+                  <span class="badge rounded-pill bg-success-subtle text-success-emphasis"
+                    >Activo</span
+                  >
+                } @else {
+                  <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis"
+                    >Desactivado</span
+                  >
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  title="Editar"
+                  (click)="edit(space)"
+                >
+                  <i class="bi bi-pencil"></i>
+                </button>
+                @if (space.active) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    title="Desactivar"
+                    (click)="deactivate(space)"
+                  >
+                    <i class="bi bi-slash-circle"></i>
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-success ms-1"
+                    title="Activar"
+                    (click)="activate(space)"
+                  >
+                    <i class="bi bi-check-circle"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center text-body-secondary py-5">
+                <i class="bi bi-inbox fs-2 d-block mb-2"></i>No hay espacios con estos filtros
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>

@@ -1,0 +1,404 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+
+  <app-modal-frame
+    [title]="petId() ? 'Editar mascota' : 'Nueva mascota'"
+    [subtitle]="'Los campos con * son obligatorios'"
+    icon="bi-heart-pulse"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+
+    @if (loading()) {
+
+      <div class="text-center py-5">
+        <span class="spinner-border text-primary"></span>
+        <p class="text-body-secondary mt-2">
+          Cargando información...
+        </p>
+      </div>
+
+    } @else {
+
+      @if (error()) {
+
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          {{ error() }}
+        </div>
+
+      }
+
+      <div class="row g-3">
+
+        <!-- Nombre -->
+        <div class="col-md-6">
+
+          <label class="form-label" for="pet-name">
+            Nombre *
+          </label>
+
+          <input
+            id="pet-name"
+            type="text"
+            class="form-control"
+            formControlName="name"
+            maxlength="100"
+            (blur)="trimField('name')"
+            [class.is-invalid]="invalid('name')"
+            placeholder="Nombre de la mascota"
+          />
+
+          @if (hasError('name', 'required')) {
+            <div class="invalid-feedback">
+              El nombre es obligatorio.
+            </div>
+          }
+
+          @if (hasError('name', 'minlength')) {
+            <div class="invalid-feedback">
+              Mínimo 2 caracteres.
+            </div>
+          }
+
+          @if (hasError('name', 'maxlength')) {
+            <div class="invalid-feedback">
+              Máximo 100 caracteres.
+            </div>
+          }
+
+          @if (hasError('name', 'pattern')) {
+            <div class="invalid-feedback">
+              Solo se permiten letras y espacios internos.
+            </div>
+          }
+
+        </div>
+
+        <!-- Fecha de nacimiento -->
+        <div class="col-md-6">
+
+          <label class="form-label" for="pet-birthDate">
+            Fecha de nacimiento *
+          </label>
+
+          <input
+            id="pet-birthDate"
+            type="date"
+            class="form-control"
+            formControlName="birthDate"
+            [max]="null"
+            [class.is-invalid]="invalid('birthDate')"
+          />
+
+          @if (hasError('birthDate', 'required')) {
+            <div class="invalid-feedback">
+              La fecha es obligatoria.
+            </div>
+          }
+
+          @if (hasError('birthDate', 'invalidDateFormat')) {
+            <div class="invalid-feedback">
+              El formato debe ser yyyy-MM-dd.
+            </div>
+          }
+
+          @if (hasError('birthDate', 'invalidCalendarDate')) {
+            <div class="invalid-feedback">
+              La fecha no existe en el calendario.
+            </div>
+          }
+
+          @if (hasError('birthDate', 'futureDate')) {
+            <div class="invalid-feedback">
+              No se permiten fechas futuras.
+            </div>
+          }
+
+        </div>
+
+        <!-- Raza -->
+        <div class="col-md-6">
+
+          <label class="form-label" for="pet-breed">
+            Raza *
+          </label>
+
+          <input
+            id="pet-breed"
+            type="text"
+            class="form-control"
+            formControlName="breed"
+            maxlength="50"
+            (blur)="trimField('breed')"
+            [class.is-invalid]="invalid('breed')"
+            placeholder="Ejemplo: Husky"
+          />
+
+          @if (hasError('breed', 'required')) {
+            <div class="invalid-feedback">
+              La raza es obligatoria.
+            </div>
+          }
+
+          @if (hasError('breed', 'minlength')) {
+            <div class="invalid-feedback">
+              Mínimo 2 caracteres.
+            </div>
+          }
+
+          @if (hasError('breed', 'maxlength')) {
+            <div class="invalid-feedback">
+              Máximo 50 caracteres.
+            </div>
+          }
+
+          @if (hasError('breed', 'pattern')) {
+            <div class="invalid-feedback">
+              La raza solo debe contener texto.
+            </div>
+          }
+
+        </div>
+
+        <!-- Especie -->
+        <div class="col-md-6">
+
+          <label class="form-label" for="pet-species">
+            Especie *
+          </label>
+
+          <input
+            id="pet-species"
+            type="text"
+            class="form-control"
+            formControlName="species"
+            maxlength="50"
+            (blur)="trimField('species')"
+            [class.is-invalid]="invalid('species')"
+            placeholder="Ejemplo: Perro"
+          />
+
+          @if (hasError('species', 'required')) {
+            <div class="invalid-feedback">
+              La especie es obligatoria.
+            </div>
+          }
+
+          @if (hasError('species', 'minlength')) {
+            <div class="invalid-feedback">
+              Mínimo 3 caracteres.
+            </div>
+          }
+
+          @if (hasError('species', 'maxlength')) {
+            <div class="invalid-feedback">
+              Máximo 50 caracteres.
+            </div>
+          }
+
+          @if (hasError('species', 'pattern')) {
+            <div class="invalid-feedback">
+              La especie solo debe contener texto.
+            </div>
+          }
+
+        </div>
+
+        <!-- Género -->
+        <div class="col-md-6">
+
+          <label class="form-label" for="pet-gender">
+            Género *
+          </label>
+
+          <select
+            id="pet-gender"
+            class="form-select"
+            formControlName="gender"
+            [class.is-invalid]="invalid('gender')"
+          >
+
+            <option value="">Selecciona un género</option>
+
+            <option value="M">Macho</option>
+
+            <option value="F">Hembra</option>
+
+          </select>
+
+          @if (invalid('gender')) {
+            <div class="invalid-feedback">
+              Debes seleccionar M o F.
+            </div>
+          }
+
+        </div>
+
+        <!-- Fotografía -->
+        <div class="col-md-6">
+
+          <label class="form-label" for="pet-photo">
+            URL de fotografía *
+          </label>
+
+          <input
+            id="pet-photo"
+            type="url"
+            class="form-control"
+            formControlName="photoUrl"
+            maxlength="500"
+            (blur)="trimField('photoUrl')"
+            [class.is-invalid]="invalid('photoUrl')"
+            placeholder="https://example.com/max.jpg"
+          />
+
+          @if (hasError('photoUrl', 'required')) {
+            <div class="invalid-feedback">
+              La fotografía es obligatoria.
+            </div>
+          }
+
+          @if (hasError('photoUrl', 'maxlength')) {
+            <div class="invalid-feedback">
+              Máximo 500 caracteres.
+            </div>
+          }
+
+          @if (hasError('photoUrl', 'invalidUrl')) {
+            <div class="invalid-feedback">
+              Debes ingresar una URL HTTP o HTTPS válida.
+            </div>
+          }
+
+        </div>
+
+        <!-- Tutor -->
+        <div class="col-md-12">
+          <label class="form-label" for="pet-tutor">
+            Tutor *
+          </label>
+
+          <select
+            id="pet-tutor"
+            class="form-select"
+            formControlName="tutorId"
+            [class.is-invalid]="invalid('tutorId')"
+          >
+            <option value="">Selecciona un tutor</option>
+
+            @for (tutor of tutors(); track tutor.id) {
+              <option [value]="tutor.id">
+                {{ tutorLabel(tutor) }}
+              </option>
+            }
+          </select>
+
+          @if (invalid('tutorId')) {
+            <div class="invalid-feedback">
+              Debes seleccionar un tutor.
+            </div>
+          }
+        </div>
+
+        <!-- Póliza -->
+        <div class="col-md-6">
+          <label class="form-label" for="pet-policy">
+            Póliza *
+          </label>
+
+          <select
+            id="pet-policy"
+            class="form-select"
+            formControlName="policyId"
+            [class.is-invalid]="invalid('policyId')"
+          >
+            <option value="">Selecciona una póliza</option>
+
+            @for (policy of policies(); track policy.id) {
+              <option [value]="policy.id ?? ''">
+                {{ policy.name }}
+              </option>
+            }
+          </select>
+
+          @if (invalid('policyId')) {
+            <div class="invalid-feedback">
+              Debes seleccionar una póliza.
+            </div>
+          }
+        </div>
+
+        <!-- Sede -->
+        <div class="col-md-6">
+
+          <label class="form-label" for="pet-headquarter">
+            Sede *
+          </label>
+
+          <select
+            id="pet-headquarter"
+            class="form-select"
+            formControlName="headquarterId"
+            [class.is-invalid]="invalid('headquarterId')"
+          >
+
+            <option value="">Selecciona una sede</option>
+
+            @for (headquarter of headquarters(); track headquarter.id) {
+
+              <option [value]="headquarter.id">
+                {{ headquarter.name }}
+              </option>
+
+            }
+
+          </select>
+
+          @if (invalid('headquarterId')) {
+            <div class="invalid-feedback">
+              Debes seleccionar una sede.
+            </div>
+          }
+
+        </div>
+
+      </div>
+
+    }
+
+    <!-- Botones del modal -->
+    <ng-container modalFooter>
+
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="modal.dismiss()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="saving() || loading() || form.invalid"
+      >
+
+        @if (saving()) {
+
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Guardando...
+
+        } @else {
+
+          <i class="bi bi-check2 me-1"></i>
+          Guardar mascota
+
+        }
+
+      </button>
+
+    </ng-container>
+
+  </app-modal-frame>
+
+</form>

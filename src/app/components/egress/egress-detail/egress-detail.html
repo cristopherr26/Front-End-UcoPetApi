@@ -1,0 +1,176 @@
+<a routerLink="/egresos" class="btn btn-link px-0 mb-3 text-decoration-none">
+  <i class="bi bi-arrow-left me-1"></i>Volver al registro
+</a>
+
+@if (loading()) {
+<div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
+} @else if (error()) {
+<div class="alert alert-danger d-flex align-items-center justify-content-between gap-2">
+  <span><i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}</span>
+  <button type="button" class="btn btn-sm btn-outline-danger" (click)="load(false)">
+    Reintentar
+  </button>
+</div>
+} @else if (egress(); as egress) {
+<div class="row g-4">
+  <!-- El egreso -->
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-body p-4">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+          <div>
+            <div class="text-uppercase small fw-bold text-body-secondary detail-eyebrow">
+              Egreso
+            </div>
+            <h2 class="h4 mb-1">{{ egress.concept }}</h2>
+            @if (processing()) {
+            <span class="uc-tag is-warn">
+                  <span class="spinner-border spinner-border-sm"></span>Procesando
+                </span>
+            }
+          </div>
+          <div class="text-end">
+            <div class="detail-total">{{ egress.total | price }}</div>
+            <div class="small text-body-secondary">{{ egress.date | date: 'dd/MM/yyyy' }}</div>
+          </div>
+        </div>
+
+        <dl class="row mb-4 detail-list">
+          <dt class="col-sm-4">Proveedor</dt>
+          <dd class="col-sm-8">{{ egress.providerName }}</dd>
+
+          <dt class="col-sm-4">Orden de compra</dt>
+          <dd class="col-sm-8">
+            <span class="fw-semibold">{{ egress.purchaseNumber }}</span>
+            @if (purchase(); as purchase) {
+            <span class="text-body-secondary"> · {{ purchase.headquarterName }}</span>
+            }
+          </dd>
+
+          <dt class="col-sm-4">Método de pago</dt>
+          <dd class="col-sm-8">
+            <i class="bi me-1" [class]="egress.payMethodName | payMethodIcon"></i
+            >{{ egress.payMethodName }}
+          </dd>
+
+          <dt class="col-sm-4">Fecha</dt>
+          <dd class="col-sm-8">{{ longDate(egress.date) }}</dd>
+        </dl>
+
+        <div class="d-flex gap-2">
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            [disabled]="processing()"
+            (click)="edit()"
+          >
+            <i class="bi bi-pencil me-1"></i>Editar
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-danger"
+            [disabled]="processing()"
+            (click)="remove()"
+          >
+            <i class="bi bi-trash me-1"></i>Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- La orden de compra y su saldo -->
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-body p-4">
+        <div class="text-uppercase small fw-bold text-body-secondary detail-eyebrow mb-3">
+          Saldo de la orden
+        </div>
+        @if (purchase(); as purchase) {
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="fw-bold">{{ purchase.number }}</span>
+          <span class="uc-tag" [class.is-danger]="purchase.status === 'CANCELLED'"
+                [class.is-info]="purchase.status !== 'CANCELLED'">
+                {{ statusLabel(purchase.status) }}
+              </span>
+        </div>
+        @if (balance(); as balance) {
+        <div class="progress mb-2" role="progressbar" [attr.aria-valuenow]="paidPercent()"
+             aria-valuemin="0" aria-valuemax="100" aria-label="Porcentaje pagado">
+          <div class="progress-bar" [style.width.%]="paidPercent()"></div>
+        </div>
+        <div class="small text-body-secondary mb-3">{{ paidPercent() }}% pagado</div>
+        <div class="row text-center g-2">
+          <div class="col-4">
+            <div class="small text-body-secondary">Total</div>
+            <div class="fw-bold">{{ purchase.total | price }}</div>
+          </div>
+          <div class="col-4">
+            <div class="small text-body-secondary">Pagado</div>
+            <div class="fw-bold text-success">{{ balance.paid | price }}</div>
+          </div>
+          <div class="col-4">
+            <div class="small text-body-secondary">Pendiente</div>
+            <div class="fw-bold" [class.text-danger]="balance.pending > 0">
+              {{ balance.pending | price }}
+            </div>
+          </div>
+        </div>
+        }
+        } @else {
+        <p class="text-body-secondary small mb-0">
+          No se pudo leer la orden de compra (el módulo de Compras no respondió).
+        </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagos a la misma orden -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header py-3 fw-bold">
+        Pagos a {{ egress.purchaseNumber }}
+        <span class="text-body-secondary fw-normal">({{ history().length }})</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle table-card mb-0">
+          <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Concepto</th>
+            <th>Método de pago</th>
+            <th class="text-end">Total</th>
+          </tr>
+          </thead>
+          <tbody>
+          @for (payment of history(); track payment.id) {
+          <tr [class.is-current]="payment.id === egress.id">
+            <td class="small text-nowrap">{{ payment.date | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              @if (payment.id === egress.id) {
+              <span class="fw-semibold">{{ payment.concept }}</span>
+              <span class="small text-body-secondary"> · este egreso</span>
+              } @else {
+              <a [routerLink]="['/egresos', payment.id]">{{ payment.concept }}</a>
+              }
+            </td>
+            <td>{{ payment.payMethodName }}</td>
+            <td class="text-end fw-semibold">{{ payment.total | price }}</td>
+          </tr>
+          }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+} @else {
+<app-empty-state
+  icon="bi-search"
+  title="No encontramos este egreso"
+  text="Puede que lo hayan eliminado o que el procesador aún no lo registre."
+>
+  <a routerLink="/egresos" class="btn btn-primary btn-sm mt-3">Ir al registro</a>
+</app-empty-state>
+}

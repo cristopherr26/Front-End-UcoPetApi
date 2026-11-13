@@ -81,26 +81,40 @@ completo.
 
 ## La sesión
 
-Todo lo de la entidad `session` es provisional (`components/session/login`, `services/session`,
-`models/session`, `guards/session`, `interceptors/session` y `utils/session/testing.ts`): lo reemplaza el
-módulo de login. El resto de la app usa **solo** esto de `SessionService`, y es lo que el reemplazo tiene que conservar con el mismo nombre:
+La entidad `session` (`components/session/login`, `services/session`, `models/session`, `guards/session`,
+`interceptors/session` y `utils/session/testing.ts`) es del módulo de Usuarios.
+
+**El token no lo maneja el front.** Al iniciar sesión, la API manda el JWT en la cookie `ucopet_auth`, que es
+`HttpOnly` (JavaScript no la puede leer, así que un script inyectado no se la roba), `SameSite=Strict` (no viaja
+desde otros sitios) y con `Path=/api`. El navegador la manda solo en cada petición a `/api`. En el front solo
+quedan cookies con datos que no son secretos: el perfil (`ucopet_profile`) y la sede (`ucopet_headquarter`).
+Nada se guarda en `localStorage`.
+
+El resto de la app usa **solo** esto de `SessionService`:
 
 | Miembro                                                | Qué es                                                 |
 | ------------------------------------------------------ | ------------------------------------------------------ |
-| `token()`                                              | el JWT o `null` (signal)                               |
 | `profile()`                                            | `{ personId, fullName, roles }` o `null` (signal)      |
 | `isLoggedIn()`, `isAdmin()`                            | signals derivados                                      |
 | `headquarterId()`                                      | la sede activa, o `null` para toda la clínica (signal) |
 | `selectHeadquarter(id \| null)`, `logout()`, `clear()` | cambiar de sede, cerrar sesión, olvidar todo           |
 
-Más `authInterceptor` (pone el token en todo lo que empieza por `/api`, con o sin `v1`; un 401 cierra la sesión
-y un 403 no), `sessionGuard` y `guestGuard`. Nadie más lee cookies.
+Ya no hay `token()`: si necesitas reaccionar a un cambio de sesión, usa `profile()`.
 
-Para probar, dos cosas:
+`authInterceptor` no pone ningún encabezado `Authorization`. Un 401 cierra la sesión y lleva al login (menos en
+el login y en "cambiar mi contraseña", donde 401 quiere decir contraseña incorrecta), y un 403 no. Además están
+`sessionGuard` y `guestGuard`. Nadie más lee cookies.
+
+En Bruno y en las pruebas de integración se sigue usando `Authorization: Bearer <token>`: la API acepta las dos
+formas y el login sigue devolviendo `token` en el cuerpo.
+
+Para probar, tres cosas:
 
 - **Cerrar sesión cierra todas las sesiones de esa cuenta.** El `/persons/logout` de la API sube su
-  `token_version`. Si dos personas prueban con el mismo admin, una saca a la otra.
+  `token_version`. Si dos personas prueban con el mismo admin, una saca a la otra. Cambiar la contraseña también.
 - **La sesión dura 12 horas**, igual que el token.
+- **Varios intentos fallidos bloquean la cuenta un rato.** La API responde 423 y el login muestra hasta cuándo.
+  Un admin la desbloquea asignándole una contraseña nueva en Usuarios.
 
 ## Piezas compartidas (entidad `shared`)
 

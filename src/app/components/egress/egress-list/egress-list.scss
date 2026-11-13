@@ -1,0 +1,36 @@
+.date-range {
+  .form-control {
+    min-width: 8.5rem;
+  }
+}
+
+.egress-number,
+.egress-total {
+  font-variant-numeric: tabular-nums;
+}
+
+.egress-number {
+  letter-spacing: 0.02em;
+}
+
+tr.is-pending > td {
+  background: #f8fbff;
+}
+
+.egress-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--uc-line);
+  background: #fff;
+}
+
+.egress-summary-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+}
