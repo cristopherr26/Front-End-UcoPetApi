@@ -142,10 +142,11 @@ export const NAVIGATION: NavGroup[] = [
         path: 'ordenes',
         entity: 'order',
         label: 'Órdenes',
+        ready: true,
         loadChildren: () => import('../../routes/order/order.routes').then((m) => m.ORDER_ROUTES),
         icon: 'bi-file-medical',
         roles: BOTH,
-        description: 'Órdenes médicas y de medicación.',
+        description: 'Órdenes de procedimiento y su autorización.',
         api: [{ base: '/api/v1/orders', rule: 'ADMIN y DOCTOR' }],
       },
            {
