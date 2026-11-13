@@ -210,6 +210,7 @@ export const NAVIGATION: NavGroup[] = [
         icon: 'bi-truck',
         roles: ADMIN,
         description: 'Proveedores de productos y servicios.',
+        ready: true,
         api: [{ base: '/api/v1/providers', rule: 'ADMIN' }],
       },
       {
