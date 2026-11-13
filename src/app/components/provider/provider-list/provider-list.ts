@@ -1,7 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { UpperCasePipe } from '@angular/common';
+import { AsyncPipe, UpperCasePipe } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { combineLatest, debounceTime, distinctUntilChanged, map, startWith } from 'rxjs';
 
 import { PageHeader } from '../../shared/page-header';
 import { Provider } from '../../../models/provider/provider.model';
@@ -10,10 +13,17 @@ import { ProviderService } from '../../../services/provider/provider.service';
 import { injectConfirm } from '../../../services/shared/confirm';
 import { ToastService } from '../../../services/shared/toast.service';
 import { providerErrorMessage } from '../../../utils/provider/provider-error';
-
+import { filterProviders } from '../../../utils/provider/provider-filter';
 @Component({
   selector: 'app-provider-list',
-  imports: [RouterLink, UpperCasePipe, ProviderStatusPipe, PageHeader],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    AsyncPipe,
+    UpperCasePipe,
+    ProviderStatusPipe,
+    PageHeader,
+  ],
   templateUrl: './provider-list.html',
 })
 export class ProviderList {
@@ -26,6 +36,16 @@ export class ProviderList {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly busyId = signal<string | null>(null);
+
+  // Buscador por nombre o documento. El FormControl avisa cada vez que el usuario escribe
+  // (valueChanges) y el pipe de RxJS espera a que termine de teclear antes de filtrar.
+  protected readonly search = new FormControl('', { nonNullable: true });
+
+  // Los proveedores cargados filtrados por lo que dice el buscador.
+  protected readonly filteredProviders$ = combineLatest([
+    toObservable(this.providers),
+    this.search.valueChanges.pipe(debounceTime(250), distinctUntilChanged(), startWith('')),
+  ]).pipe(map(([providers, term]) => filterProviders(providers, term)));
 
   constructor() {
     this.load();
