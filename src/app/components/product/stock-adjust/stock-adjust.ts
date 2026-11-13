@@ -16,7 +16,7 @@ import {
 } from '../../../models/product/catalog-enums';
 import { StockService } from '../../../services/product/stock.service';
 import { apiErrorMessage } from '../../../utils/shared/api-error';
-import { blankToNull } from '../../../utils/product/form-rules';
+import { QUANTITY_RULES, blankToNull } from '../../../utils/product/form-rules';
 
 type Direction = 'IN' | 'OUT';
 
@@ -34,11 +34,7 @@ export class StockAdjust implements OnInit {
   protected readonly form = this.fb.group({
     headquarterId: this.fb.control<string | null>(null, Validators.required),
     direction: this.fb.control<Direction>('IN'),
-    quantity: this.fb.control<number | null>(null, [
-      Validators.required,
-      Validators.min(1),
-      Validators.pattern(/^\d+$/),
-    ]),
+    quantity: this.fb.control<number | null>(null, QUANTITY_RULES),
     reason: this.fb.control<StockMovementReason>('PURCHASE', Validators.required),
     note: ['', Validators.maxLength(255)],
   });

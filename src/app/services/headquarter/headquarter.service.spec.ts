@@ -34,16 +34,18 @@ describe('HeadquarterService', () => {
   });
 
   it('asks again after refresh, after an error and after the session changes', () => {
-    service.list().subscribe();
+    const seen: number[] = [];
+    service.list().subscribe((list) => seen.push(list.length));
     backend.expectOne('/api/v1/headquarter').flush([sede]);
     service.refresh();
-    service.list().subscribe({ error: () => undefined });
+    service.list().subscribe({ error: () => seen.push(-1) });
     backend.expectOne('/api/v1/headquarter').flush(null, { status: 500, statusText: 'Error' });
-    service.list().subscribe({ error: () => undefined });
+    service.list().subscribe((list) => seen.push(list.length));
     backend.expectOne('/api/v1/headquarter').flush([sede]);
     TestBed.inject(SessionService).clear();
     TestBed.tick();
-    service.list().subscribe();
+    service.list().subscribe((list) => seen.push(list.length));
     backend.expectOne('/api/v1/headquarter').flush([]);
+    expect(seen).toEqual([1, -1, 1, 0]);
   });
 });

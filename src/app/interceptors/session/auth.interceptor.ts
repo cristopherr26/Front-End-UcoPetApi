@@ -19,7 +19,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401 && !request.url.endsWith('/persons/login')) {
         session.clear();
-        router.navigate(['/login']);
+        void router.navigate(['/login']);
       }
       return throwError(() => error);
     }),

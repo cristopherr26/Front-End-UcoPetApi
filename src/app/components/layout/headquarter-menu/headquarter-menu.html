@@ -1,6 +1,6 @@
 <div ngbDropdown #menu="ngbDropdown" (openChange)="search.set('')">
   <button type="button" class="hq-button" ngbDropdownToggle [class.is-open]="menu.isOpen()">
-    <span class="hq-mark">{{ initials(current()?.name ?? null) }}</span>
+    <span class="hq-mark">{{ initials(current()?.name ?? null) | uppercase }}</span>
     <span class="hq-text">
       <b>{{ current()?.name ?? 'Todas las sedes' }}</b>
       <small>Sede activa</small>
@@ -40,7 +40,7 @@
           [class.is-on]="session.headquarterId() === headquarter.id"
           (click)="select(headquarter.id); menu.close()"
         >
-          <span class="hq-item-mark">{{ initials(headquarter.name) }}</span>
+          <span class="hq-item-mark">{{ initials(headquarter.name) | uppercase }}</span>
           <span class="flex-grow-1 text-start text-truncate"
             ><b>{{ headquarter.name }}</b
             ><small>{{ headquarter.address }}</small></span

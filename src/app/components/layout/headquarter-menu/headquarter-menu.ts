@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { UpperCasePipe } from '@angular/common';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 
 import { Headquarter } from '../../../models/headquarter/headquarter.model';
@@ -7,7 +8,7 @@ import { SessionService } from '../../../services/session/session.service';
 
 @Component({
   selector: 'app-headquarter-menu',
-  imports: [NgbDropdownModule],
+  imports: [NgbDropdownModule, UpperCasePipe],
   templateUrl: './headquarter-menu.html',
   styleUrl: './headquarter-menu.scss',
 })
@@ -59,8 +60,6 @@ export class HeadquarterMenu implements OnInit {
       .replace(/^Sede\s+/i, '')
       .split(' ')
       .filter((word) => word.length > 2);
-    return (
-      words.length > 1 ? words[0][0] + words[1][0] : (words[0] ?? name).slice(0, 2)
-    ).toUpperCase();
+    return words.length > 1 ? words[0][0] + words[1][0] : (words[0] ?? name).slice(0, 2);
   }
 }

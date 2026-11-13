@@ -24,7 +24,18 @@ import { ModalFrame } from '../shared/modal-frame';
               formControlName="name"
               [class.is-invalid]="form.controls.name.touched && form.controls.name.invalid"
             />
-            <div class="invalid-feedback">El nombre es obligatorio</div>
+            <div class="invalid-feedback">El nombre es obligatorio (al menos 3 caracteres)</div>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="example-email">Correo de contacto *</label>
+            <input
+              id="example-email"
+              type="email"
+              class="form-control"
+              formControlName="email"
+              [class.is-invalid]="form.controls.email.touched && form.controls.email.invalid"
+            />
+            <div class="invalid-feedback">Escribe un correo válido</div>
           </div>
           <div class="col-12">
             <label class="form-label" for="example-note"
@@ -36,6 +47,23 @@ import { ModalFrame } from '../shared/modal-frame';
               rows="2"
               formControlName="note"
             ></textarea>
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input
+                id="example-confirm"
+                type="checkbox"
+                class="form-check-input"
+                formControlName="confirmed"
+                [class.is-invalid]="
+                  form.controls.confirmed.touched && form.controls.confirmed.invalid
+                "
+              />
+              <label class="form-check-label" for="example-confirm"
+                >Confirmo que los datos son correctos *</label
+              >
+              <div class="invalid-feedback">Hay que confirmar antes de guardar</div>
+            </div>
           </div>
         </div>
         <ng-container modalFooter>
@@ -51,8 +79,10 @@ import { ModalFrame } from '../shared/modal-frame';
 export class ExampleModal {
   protected readonly modal = inject(NgbActiveModal);
   protected readonly form = inject(NonNullableFormBuilder).group({
-    name: ['', Validators.required],
+    name: ['', [Validators.required, Validators.minLength(3)]],
+    email: ['', [Validators.required, Validators.email]],
     note: [''],
+    confirmed: [false, Validators.requiredTrue],
   });
 
   protected save(): void {

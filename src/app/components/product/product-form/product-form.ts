@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { first, forkJoin, map } from 'rxjs';
 
 import { ModalFrame } from '../../shared/modal-frame';
 import { Product } from '../../../models/product/product.model';
@@ -13,7 +14,23 @@ import {
 } from '../../../models/product/catalog-enums';
 import { ProductService } from '../../../services/product/product.service';
 import { apiErrorMessage } from '../../../utils/shared/api-error';
-import { NAME_RULES, bindPriceToSellable, blankToNull } from '../../../utils/product/form-rules';
+import {
+  NAME_RULES,
+  bindPriceToSellable,
+  blankToNull,
+  mergePatch,
+  uniqueName,
+} from '../../../utils/product/form-rules';
+
+const PATCH_FIELDS: readonly (keyof Product)[] = [
+  'name',
+  'description',
+  'imageUrl',
+  'category',
+  'taxCategory',
+  'sellable',
+  'price',
+];
 
 @Component({
   selector: 'app-product-form',
@@ -28,7 +45,18 @@ export class ProductForm {
   protected readonly categories = PRODUCT_CATEGORIES;
   protected readonly taxCategories = TAX_CATEGORIES;
   protected readonly form = this.fb.group({
-    name: ['', NAME_RULES],
+    name: this.fb.control('', {
+      validators: NAME_RULES,
+      asyncValidators: Validators.composeAsync([
+        uniqueName(
+          forkJoin([
+            this.productService.list({ active: true }),
+            this.productService.list({ active: false }),
+          ]).pipe(map(([active, inactive]) => [...active, ...inactive])),
+          () => this.productId(),
+        ),
+      ]),
+    }),
     description: ['', Validators.maxLength(255)],
     imageUrl: ['', Validators.maxLength(500)],
     category: this.fb.control<ProductCategory | null>(null, Validators.required),
@@ -41,6 +69,7 @@ export class ProductForm {
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
   private active = true;
+  private original: Product | null = null;
 
   constructor() {
     const subscription = bindPriceToSellable(this.form.controls.sellable, this.form.controls.price);
@@ -62,6 +91,7 @@ export class ProductForm {
           sellable: product.sellable,
           price: product.price,
         });
+        this.original = this.toProduct();
         this.loading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -72,12 +102,40 @@ export class ProductForm {
   }
 
   protected save(): void {
+    if (this.form.pending) {
+      this.form.statusChanges
+        .pipe(first((status) => status !== 'PENDING'))
+        .subscribe(() => this.save());
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+    const product = this.toProduct();
+    const id = this.productId();
+    const changes = id && this.original ? mergePatch(this.original, product, PATCH_FIELDS) : null;
+    if (id && changes && Object.keys(changes).length === 0) {
+      this.modal.close({ ...product, id });
+      return;
+    }
+    this.saving.set(true);
+    this.error.set(null);
+    (id && changes
+      ? this.productService.patch(id, changes)
+      : this.productService.create(product)
+    ).subscribe({
+      next: (saved) => this.modal.close(saved),
+      error: (error: HttpErrorResponse) => {
+        this.saving.set(false);
+        this.error.set(apiErrorMessage(error, 'No se pudo guardar el producto'));
+      },
+    });
+  }
+
+  private toProduct(): Product {
     const value = this.form.getRawValue();
-    const product: Product = {
+    return {
       name: value.name.trim(),
       description: blankToNull(value.description),
       imageUrl: blankToNull(value.imageUrl),
@@ -87,16 +145,6 @@ export class ProductForm {
       price: value.sellable ? value.price : null,
       active: this.active,
     };
-    const id = this.productId();
-    this.saving.set(true);
-    this.error.set(null);
-    (id ? this.productService.update(id, product) : this.productService.create(product)).subscribe({
-      next: (saved) => this.modal.close(saved),
-      error: (error: HttpErrorResponse) => {
-        this.saving.set(false);
-        this.error.set(apiErrorMessage(error, 'No se pudo guardar el producto'));
-      },
-    });
   }
 
   protected invalid(field: keyof typeof this.form.controls): boolean {

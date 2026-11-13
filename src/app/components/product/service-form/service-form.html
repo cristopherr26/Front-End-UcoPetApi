@@ -24,7 +24,16 @@
             maxlength="100"
             [class.is-invalid]="invalid('name')"
           />
-          <div class="invalid-feedback">El nombre es obligatorio (hasta 100 caracteres)</div>
+          <div class="invalid-feedback">
+            @if (form.controls.name.hasError('nameTaken')) {
+              Ya existe un servicio con este nombre
+            } @else {
+              El nombre es obligatorio (hasta 100 caracteres)
+            }
+          </div>
+          @if (form.controls.name.pending) {
+            <div class="form-text">Revisando que el nombre no esté usado…</div>
+          }
         </div>
         <div class="col-12">
           <label class="form-label" for="service-description">Descripción</label>
@@ -125,12 +134,12 @@
 
         <div class="col-12">
           <div class="d-flex align-items-center justify-content-between mb-2">
-            <label class="form-label mb-0">Sedes donde se ofrece</label>
+            <span class="form-label mb-0" id="service-headquarters">Sedes donde se ofrece</span>
             <span class="badge rounded-pill bg-primary-subtle text-primary"
               >{{ selected().size }} elegidas</span
             >
           </div>
-          <div class="border rounded-3">
+          <div class="border rounded-3" role="group" aria-labelledby="service-headquarters">
             <div class="d-flex gap-2 p-2 border-bottom bg-body-tertiary">
               <input
                 type="search"

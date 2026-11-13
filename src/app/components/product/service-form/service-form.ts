@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { first, forkJoin, map } from 'rxjs';
 
 import { ModalFrame } from '../../shared/modal-frame';
 import { Headquarter } from '../../../models/headquarter/headquarter.model';
@@ -15,7 +16,25 @@ import {
 } from '../../../models/product/catalog-enums';
 import { ServiceService } from '../../../services/product/service.service';
 import { apiErrorMessage } from '../../../utils/shared/api-error';
-import { NAME_RULES, bindPriceToSellable, blankToNull } from '../../../utils/product/form-rules';
+import {
+  NAME_RULES,
+  bindPriceToSellable,
+  blankToNull,
+  mergePatch,
+  uniqueName,
+} from '../../../utils/product/form-rules';
+
+const PATCH_FIELDS: readonly (keyof Service)[] = [
+  'name',
+  'description',
+  'imageUrl',
+  'category',
+  'taxCategory',
+  'sellable',
+  'purchasable',
+  'price',
+  'headquarterIds',
+];
 
 @Component({
   selector: 'app-service-form',
@@ -32,7 +51,18 @@ export class ServiceForm implements OnInit {
   protected readonly categories = SERVICE_CATEGORIES;
   protected readonly taxCategories = TAX_CATEGORIES;
   protected readonly form = this.fb.group({
-    name: ['', NAME_RULES],
+    name: this.fb.control('', {
+      validators: NAME_RULES,
+      asyncValidators: Validators.composeAsync([
+        uniqueName(
+          forkJoin([
+            this.serviceService.list({ active: true }),
+            this.serviceService.list({ active: false }),
+          ]).pipe(map(([active, inactive]) => [...active, ...inactive])),
+          () => this.serviceId(),
+        ),
+      ]),
+    }),
     description: ['', Validators.maxLength(255)],
     imageUrl: ['', Validators.maxLength(500)],
     category: this.fb.control<ServiceCategory | null>(null, Validators.required),
@@ -49,6 +79,7 @@ export class ServiceForm implements OnInit {
   protected readonly selected = signal<ReadonlySet<string>>(new Set());
   private readonly allHeadquarters = signal<Headquarter[]>([]);
   private active = true;
+  private original: Service | null = null;
 
   protected readonly headquarters = computed(() => {
     const selected = this.selected();
@@ -93,6 +124,7 @@ export class ServiceForm implements OnInit {
           purchasable: service.purchasable,
           price: service.price,
         });
+        this.original = this.toService();
         this.loading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -124,12 +156,40 @@ export class ServiceForm implements OnInit {
   }
 
   protected save(): void {
+    if (this.form.pending) {
+      this.form.statusChanges
+        .pipe(first((status) => status !== 'PENDING'))
+        .subscribe(() => this.save());
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+    const service = this.toService();
+    const id = this.serviceId();
+    const changes = id && this.original ? mergePatch(this.original, service, PATCH_FIELDS) : null;
+    if (id && changes && Object.keys(changes).length === 0) {
+      this.modal.close({ ...service, id });
+      return;
+    }
+    this.saving.set(true);
+    this.error.set(null);
+    (id && changes
+      ? this.serviceService.patch(id, changes)
+      : this.serviceService.create(service)
+    ).subscribe({
+      next: (saved) => this.modal.close(saved),
+      error: (error: HttpErrorResponse) => {
+        this.saving.set(false);
+        this.error.set(apiErrorMessage(error, 'No se pudo guardar el servicio'));
+      },
+    });
+  }
+
+  private toService(): Service {
     const value = this.form.getRawValue();
-    const service: Service = {
+    return {
       name: value.name.trim(),
       description: blankToNull(value.description),
       imageUrl: blankToNull(value.imageUrl),
@@ -141,16 +201,6 @@ export class ServiceForm implements OnInit {
       headquarterIds: [...this.selected()],
       active: this.active,
     };
-    const id = this.serviceId();
-    this.saving.set(true);
-    this.error.set(null);
-    (id ? this.serviceService.update(id, service) : this.serviceService.create(service)).subscribe({
-      next: (saved) => this.modal.close(saved),
-      error: (error: HttpErrorResponse) => {
-        this.saving.set(false);
-        this.error.set(apiErrorMessage(error, 'No se pudo guardar el servicio'));
-      },
-    });
   }
 
   protected invalid(field: keyof typeof this.form.controls): boolean {

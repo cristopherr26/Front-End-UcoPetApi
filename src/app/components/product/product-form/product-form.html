@@ -24,7 +24,16 @@
             maxlength="100"
             [class.is-invalid]="invalid('name')"
           />
-          <div class="invalid-feedback">El nombre es obligatorio (hasta 100 caracteres)</div>
+          <div class="invalid-feedback">
+            @if (form.controls.name.hasError('nameTaken')) {
+              Ya existe un producto con este nombre
+            } @else {
+              El nombre es obligatorio (hasta 100 caracteres)
+            }
+          </div>
+          @if (form.controls.name.pending) {
+            <div class="form-text">Revisando que el nombre no esté usado…</div>
+          }
         </div>
         <div class="col-12">
           <label class="form-label" for="product-description">Descripción</label>

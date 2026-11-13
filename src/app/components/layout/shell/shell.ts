@@ -1,3 +1,4 @@
+import { UpperCasePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -13,6 +14,7 @@ import { HeadquarterMenu } from '../headquarter-menu/headquarter-menu';
 @Component({
   selector: 'app-shell',
   imports: [
+    UpperCasePipe,
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
@@ -61,12 +63,12 @@ export class Shell {
       .split(' ')
       .filter(Boolean)
       .slice(0, 2)
-      .map((word) => word[0].toUpperCase())
+      .map((word) => word[0])
       .join(''),
   );
 
   protected logout(): void {
     this.session.logout();
-    this.router.navigate(['/login']);
+    void this.router.navigate(['/login']);
   }
 }

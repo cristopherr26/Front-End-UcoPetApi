@@ -53,7 +53,7 @@
       <span class="flex-grow-1"></span>
       <div ngbDropdown placement="bottom-end">
         <button type="button" class="user-chip" ngbDropdownToggle>
-          <span class="user-avatar">{{ initials() }}</span>
+          <span class="user-avatar">{{ initials() | uppercase }}</span>
           <span class="user-text d-none d-sm-flex">
             <b>{{ session.profile()?.fullName }}</b>
             <small>{{ session.isAdmin() ? 'Administrador' : 'Médico' }}</small>
