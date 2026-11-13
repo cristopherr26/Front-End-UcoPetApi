@@ -52,6 +52,7 @@ export interface TutorOption {
 export interface PetOption {
   id: string;
   name: string;
+  breed: string;
   tutorId: string;
   active: boolean;
 }
