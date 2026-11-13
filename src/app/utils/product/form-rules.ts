@@ -3,6 +3,7 @@ import {
   AsyncValidatorFn,
   FormControl,
   ValidationErrors,
+  ValidatorFn,
   Validators,
 } from '@angular/forms';
 import { Observable, Subscription, catchError, map, of, shareReplay, switchMap, timer } from 'rxjs';
@@ -10,11 +11,11 @@ import { Observable, Subscription, catchError, map, of, shareReplay, switchMap, 
 export const MAX_PRICE = 9_999_999_999_999.99;
 export const MAX_QUANTITY = 2_147_483_647;
 
-export const NAME_RULES = Validators.compose([
+export const NAME_RULES: ValidatorFn[] = [
   Validators.required,
   Validators.maxLength(100),
   Validators.pattern(/\S/),
-]);
+];
 
 export const PRICE_RULES = Validators.compose([
   Validators.required,

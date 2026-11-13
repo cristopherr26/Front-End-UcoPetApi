@@ -46,7 +46,7 @@ export class ProductForm {
   protected readonly taxCategories = TAX_CATEGORIES;
   protected readonly form = this.fb.group({
     name: this.fb.control('', {
-      validators: NAME_RULES,
+      validators: Validators.compose(NAME_RULES),
       asyncValidators: Validators.composeAsync([
         uniqueName(
           forkJoin([
