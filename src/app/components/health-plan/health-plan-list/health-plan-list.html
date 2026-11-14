@@ -10,6 +10,7 @@
   </div>
 
   <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light text-secondary small text-uppercase">
         <tr>
@@ -35,7 +36,7 @@
             <div class="btn-group btn-group-sm">
               <a [routerLink]="['/polizas/edit', plan.id]" class="btn btn-outline-secondary">Editar</a>
               <button (click)="openCoverageModal(plan)" class="btn btn-outline-info">Coberturas</button>
-              <button (click)="deletePlan(plan.id)" class="btn btn-outline-danger" [disabled]="plan.status === 'INACTIVA' || plan.deleted">Desactivar</button>
+              <button (click)="deletePlan(plan)" class="btn btn-outline-danger" [disabled]="plan.status === 'INACTIVA' || plan.deleted">Desactivar</button>
             </div>
           </td>
         </tr>
@@ -44,6 +45,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <app-health-plan-coverage-modal

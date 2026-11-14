@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { Brand } from '../../shared/brand';
 import { SessionService } from '../../../services/session/session.service';
@@ -16,6 +16,7 @@ import { apiErrorMessage } from '../../../utils/shared/api-error';
 export class Login {
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email, Validators.maxLength(120)]],
@@ -24,6 +25,13 @@ export class Login {
   protected readonly sending = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly showPassword = signal(false);
+
+  private returnUrl(): string {
+    const target = this.route.snapshot.queryParamMap.get('volver');
+    return target && target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/login')
+      ? target
+      : '/inicio';
+  }
 
   protected submit(): void {
     if (this.form.invalid) {
@@ -34,7 +42,7 @@ export class Login {
     this.error.set(null);
     const { email, password } = this.form.getRawValue();
     this.session.login(email.trim(), password).subscribe({
-      next: () => this.router.navigate(['/inicio']),
+      next: () => this.router.navigateByUrl(this.returnUrl()),
       error: (error: HttpErrorResponse) => {
         this.sending.set(false);
         this.form.controls.password.reset();

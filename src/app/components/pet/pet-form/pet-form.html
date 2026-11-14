@@ -238,7 +238,7 @@
         <div class="col-md-6">
 
           <label class="form-label" for="pet-photo">
-            URL de fotografía *
+            URL de fotografía
           </label>
 
           <input
@@ -251,12 +251,6 @@
             [class.is-invalid]="invalid('photoUrl')"
             placeholder="https://example.com/max.jpg"
           />
-
-          @if (hasError('photoUrl', 'required')) {
-            <div class="invalid-feedback">
-              La fotografía es obligatoria.
-            </div>
-          }
 
           @if (hasError('photoUrl', 'maxlength')) {
             <div class="invalid-feedback">
@@ -303,7 +297,7 @@
         <!-- Póliza -->
         <div class="col-md-6">
           <label class="form-label" for="pet-policy">
-            Póliza *
+            Póliza
           </label>
 
           <select
@@ -312,7 +306,7 @@
             formControlName="policyId"
             [class.is-invalid]="invalid('policyId')"
           >
-            <option value="">Selecciona una póliza</option>
+            <option value="">Sin póliza</option>
 
             @for (policy of policies(); track policy.id) {
               <option [value]="policy.id ?? ''">
@@ -321,11 +315,6 @@
             }
           </select>
 
-          @if (invalid('policyId')) {
-            <div class="invalid-feedback">
-              Debes seleccionar una póliza.
-            </div>
-          }
         </div>
 
         <!-- Sede -->

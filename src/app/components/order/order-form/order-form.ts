@@ -111,6 +111,7 @@ export class OrderForm implements OnInit {
     }).subscribe(({ tutors, persons, procedures }) => {
       this.tutors.set(
         tutors
+          .filter((tutor) => persons.get(tutor.person)?.active !== false)
           .map((tutor) => {
             const person = persons.get(tutor.person);
             return {

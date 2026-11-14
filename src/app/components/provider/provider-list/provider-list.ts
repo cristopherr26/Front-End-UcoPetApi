@@ -1,12 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AsyncPipe, UpperCasePipe } from '@angular/common';
+import { UpperCasePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { combineLatest, debounceTime, distinctUntilChanged, map, startWith } from 'rxjs';
 
 import { PageHeader } from '../../shared/page-header';
+import { TablePager } from '../../shared/table-pager';
+import { createTableState } from '../../../utils/shared/table-state';
 import { Provider } from '../../../models/provider/provider.model';
 import { ProviderStatusPipe } from '../../../pipes/provider/provider-status.pipe';
 import { ProviderService } from '../../../services/provider/provider.service';
@@ -19,10 +21,10 @@ import { filterProviders } from '../../../utils/provider/provider-filter';
   imports: [
     RouterLink,
     ReactiveFormsModule,
-    AsyncPipe,
     UpperCasePipe,
     ProviderStatusPipe,
     PageHeader,
+    TablePager,
   ],
   templateUrl: './provider-list.html',
 })
@@ -46,6 +48,11 @@ export class ProviderList {
     toObservable(this.providers),
     this.search.valueChanges.pipe(debounceTime(250), distinctUntilChanged(), startWith('')),
   ]).pipe(map(([providers, term]) => filterProviders(providers, term)));
+
+  protected readonly table = createTableState(
+    toSignal(this.filteredProviders$, { initialValue: [] as Provider[] }),
+    { sortKey: 'name', accessors: { name: (provider) => provider.providerName } },
+  );
 
   constructor() {
     this.load();

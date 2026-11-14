@@ -110,7 +110,7 @@ export class PetForm implements OnInit {
 
     tutorId: ['', Validators.required],
 
-    policyId: ['', Validators.required],
+    policyId: [''],
 
     headquarterId: ['', Validators.required]
 
@@ -154,7 +154,7 @@ export class PetForm implements OnInit {
       next: ({ tutors, policies, persons, headquarters }) => {
         this.persons.set(persons);
 
-        this.tutors.set(tutors);
+        this.tutors.set(tutors.filter(tutor => persons.get(tutor.person)?.active !== false));
 
         // Mostrar únicamente los planes activos
         this.policies.set(
@@ -209,11 +209,11 @@ export class PetForm implements OnInit {
 
       gender: pet.gender,
 
-      photoUrl: pet.photoUrl,
+      photoUrl: pet.photoUrl ?? '',
 
       tutorId: pet.tutorId,
 
-      policyId: pet.policyId,
+      policyId: pet.policyId ?? '',
 
       headquarterId: pet.headquarterId
 
@@ -271,11 +271,11 @@ export class PetForm implements OnInit {
 
       gender: value.gender as PetGender,
 
-      photoUrl: value.photoUrl,
+      photoUrl: value.photoUrl || null,
 
       tutorId: value.tutorId,
 
-      policyId: value.policyId,
+      policyId: value.policyId || null,
 
       headquarterId: value.headquarterId
 

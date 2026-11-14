@@ -173,7 +173,6 @@ export const PHOTO_URL_RULE: ValidatorFn = (
 // Reglas para la fotografía
 
 export const PHOTO_URL_RULES: ValidatorFn[] = [
-  Validators.required,
   Validators.maxLength(500),
   PHOTO_URL_RULE,
 ];

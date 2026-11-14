@@ -126,7 +126,7 @@ export class AppointmentForm {
     this.editing.set(appointment);
     this.loadingOptions.set(true);
     forkJoin({
-      tutors: this.references.tutors(),
+      tutors: this.references.tutors(true),
       doctors: this.references.doctors(this.session.headquarterId()),
       types: this.references.activeTypes(),
     }).subscribe({

@@ -25,13 +25,14 @@ export class AppointmentReferenceService {
   private readonly petService = inject(PetService);
   private readonly typeService = inject(AppointmentTypeService);
 
-  tutors(): Observable<SelectOption[]> {
+  tutors(onlyActive = false): Observable<SelectOption[]> {
     return forkJoin({
       tutors: this.http.get<TutorPetApi[]>(`${environment.apiUrl}/tutorPet`),
       persons: this.persons.byId(),
     }).pipe(
       map(({ tutors, persons }) =>
         tutors
+          .filter((tutor) => !onlyActive || persons.get(tutor.person)?.active !== false)
           .map((tutor) => {
             const person = persons.get(tutor.person);
             return {

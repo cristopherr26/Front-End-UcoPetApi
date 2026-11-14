@@ -31,7 +31,6 @@
     </div>
   }
 
-  @let filteredProviders = (filteredProviders$ | async) ?? [];
 
   <div class="table-responsive">
     <table class="table table-hover align-middle table-card mb-0">
@@ -54,7 +53,7 @@
             </td>
           </tr>
         } @else {
-          @for (provider of filteredProviders; track provider.id) {
+          @for (provider of table.rows(); track provider.id) {
             <tr>
               <td class="fw-semibold">{{ provider.providerName | uppercase }}</td>
               <td>{{ provider.representName }}</td>
@@ -108,4 +107,5 @@
       </tbody>
     </table>
   </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
 </div>

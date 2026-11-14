@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { injectConfirm } from '../../../services/shared/confirm';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HealthPlanService } from '../../../services/health-plan/health-plan.service';
@@ -14,6 +15,7 @@ import { HealthPlanCoverageModal } from '../health-plan-coverage-modal/health-pl
 export class HealthPlanList implements OnInit {
   healthPlans: HealthPlan[] = [];
   selectedPlanForCoverage: HealthPlan | null = null;
+  private readonly confirm = injectConfirm();
 
   constructor(
     private healthPlanService: HealthPlanService,
@@ -27,7 +29,6 @@ export class HealthPlanList implements OnInit {
   loadHealthPlans(): void {
     this.healthPlanService.getHealthPlans().subscribe({
       next: (data: any) => {
-        console.log('Pólizas recibidas desde la API:', data);
         if (Array.isArray(data)) {
           this.healthPlans = data;
         } else if (Array.isArray(data?.content)) {
@@ -44,12 +45,20 @@ export class HealthPlanList implements OnInit {
     });
   }
 
-  deletePlan(id?: string): void {
-    if (!id || !confirm('¿Desea desactivar este plan de salud?')) return;
+  deletePlan(plan: HealthPlan): void {
+    const id = plan.id;
+    if (!id) return;
 
-    this.healthPlanService.deleteHealthPlan(id).subscribe({
-      next: () => this.loadHealthPlans(),
-      error: (err: unknown) => console.error('Error al desactivar el plan:', err)
+    this.confirm(
+      'Desactivar póliza',
+      `"${plan.name}" quedará inactiva y no se podrá asignar a nuevas mascotas.`,
+      'Desactivar',
+    ).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.healthPlanService.deleteHealthPlan(id).subscribe({
+        next: () => this.loadHealthPlans(),
+        error: (err: unknown) => console.error('Error al desactivar el plan:', err)
+      });
     });
   }
 

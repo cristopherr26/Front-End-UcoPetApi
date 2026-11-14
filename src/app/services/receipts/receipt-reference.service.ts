@@ -55,7 +55,7 @@ export class ReceiptReferenceService {
    * Obtiene los tutores desde tutorPet y relaciona cada uno
    * con la información de su persona.
    */
-  tutors(): Observable<TutorOption[]> {
+  tutors(onlyActive = false): Observable<TutorOption[]> {
     return forkJoin({
       tutors: this.http
         .get<TutorPetResponse[]>(`${environment.apiUrl}/tutorPet`)
@@ -67,12 +67,15 @@ export class ReceiptReferenceService {
       ),
     }).pipe(
       map(({ tutors, persons }) =>
-        (Array.isArray(tutors) ? tutors : []).map((tutor) => ({
-          id: tutor.id,
-          name:
-            personFullName(persons.get(tutor.person)) ??
-            `Tutor ${tutor.id.slice(0, 8)}`,
-        })),
+        (Array.isArray(tutors) ? tutors : [])
+          .filter((tutor) => !onlyActive || persons.get(tutor.person)?.active !== false)
+          .map((tutor) => ({
+            active: persons.get(tutor.person)?.active !== false,
+            id: tutor.id,
+            name:
+              personFullName(persons.get(tutor.person)) ??
+              `Tutor ${tutor.id.slice(0, 8)}`,
+          })),
       ),
     );
   }

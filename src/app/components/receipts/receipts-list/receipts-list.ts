@@ -356,7 +356,7 @@ export class ReceiptsList implements OnInit {
 
     ref.componentInstance.start(
       this.payMethods(),
-      this.tutors(),
+      this.tutors().filter((tutor) => tutor.active !== false),
       this.pets(),
       receipt,
     );

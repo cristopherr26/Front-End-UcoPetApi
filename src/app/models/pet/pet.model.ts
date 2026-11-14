@@ -8,9 +8,9 @@ export interface PetData {
   breed: string;
   species: string;
   gender: PetGender;
-  photoUrl: string;
+  photoUrl: string | null;
   tutorId: string;
-  policyId: string;
+  policyId: string | null;
   headquarterId: string;
 }
 

@@ -46,6 +46,7 @@ export interface PayMethod {
 export interface TutorOption {
   id: string;
   name: string;
+  active?: boolean;
 }
 
 /** Mascota asociada a un tutor. */
