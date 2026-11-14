@@ -1,8 +1,7 @@
-
 <form [formGroup]="form" (ngSubmit)="save()" novalidate>
   <app-modal-frame
     [title]="existing() ? 'Editar orden de venta' : 'Nueva orden de venta'"
-    subtitle="Selecciona cliente y mascota; la póliza es opcional"
+    subtitle="Selecciona el tutor y la mascota para registrar la venta"
     icon="bi-cart-plus"
     tone="grad"
     (closed)="modal.dismiss()"
@@ -22,7 +21,6 @@
 
       <div class="row g-3">
 
-        <!-- Sede -->
         <div class="col-12">
           <label class="form-label">
             Sede de la orden
@@ -46,9 +44,11 @@
           </div>
         </div>
 
-        <!-- Cliente (tutor) -->
         <div class="col-md-6">
-          <label class="form-label" for="sale-client">
+          <label
+            class="form-label"
+            for="sale-client"
+          >
             Cliente (tutor) *
           </label>
 
@@ -82,9 +82,11 @@
           </div>
         </div>
 
-        <!-- Mascota -->
         <div class="col-md-6">
-          <label class="form-label" for="sale-pet">
+          <label
+            class="form-label"
+            for="sale-pet"
+          >
             Mascota *
           </label>
 
@@ -92,6 +94,7 @@
             id="sale-pet"
             class="form-select"
             formControlName="petId"
+            (change)="changePet($any($event.target).value)"
             [class.is-invalid]="
               form.controls.petId.touched &&
               form.controls.petId.invalid
@@ -121,37 +124,108 @@
           }
         </div>
 
-        <!-- Póliza -->
         <div class="col-12">
           <label
             class="form-label"
             for="sale-health-plan"
           >
-            Póliza (opcional)
+            Póliza de la venta
           </label>
 
-          <select
-            id="sale-health-plan"
-            class="form-select"
-            formControlName="healthPlanId"
-          >
-            <option value="">
-              Sin póliza
-            </option>
+          @if (!selectedPet()) {
 
-            @for (plan of plans(); track plan.id) {
-              <option [value]="plan.id">
-                {{ plan.name }} · {{ plan.insuranceCompany }}
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="bi bi-shield-lock"></i>
+              </span>
+
+              <input
+                class="form-control"
+                value="Selecciona primero una mascota"
+                disabled
+              />
+            </div>
+
+            <div class="form-text">
+              La póliza depende de la mascota seleccionada.
+            </div>
+
+          } @else if (invalidAssignedPolicy()) {
+
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="bi bi-shield-exclamation"></i>
+              </span>
+
+              <input
+                class="form-control"
+                value="Póliza no disponible"
+                disabled
+              />
+            </div>
+
+            <div class="alert alert-warning mt-2 mb-0 small">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              La mascota tiene una póliza asignada,
+              pero no está activa o disponible.
+
+              La venta se registrará sin aplicar
+              esa póliza.
+            </div>
+
+          } @else if (!canSelectPolicy()) {
+
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="bi bi-shield-check"></i>
+              </span>
+
+              <input
+                id="sale-health-plan"
+                class="form-control"
+                [value]="assignedPolicyName()"
+                disabled
+              />
+
+              <span class="input-group-text">
+                <i class="bi bi-lock"></i>
+              </span>
+            </div>
+
+            <div class="form-text text-success">
+              <i class="bi bi-check-circle me-1"></i>
+              Esta póliza está asociada a la mascota
+              y se aplicará automáticamente a la venta.
+            </div>
+
+          } @else {
+
+            <select
+              id="sale-health-plan"
+              class="form-select"
+              formControlName="healthPlanId"
+            >
+              <option value="">
+                Sin póliza
               </option>
-            }
-          </select>
 
-          <div class="form-text">
-            Solo se muestran las pólizas activas.
-          </div>
+              @for (plan of activePlans(); track plan.id) {
+                <option [value]="plan.id">
+                  {{ plan.name }} · {{ plan.insuranceCompany }}
+                </option>
+              }
+            </select>
+
+            <div class="form-text">
+              <i class="bi bi-info-circle me-1"></i>
+              Esta mascota no tiene una póliza asignada.
+              Puedes elegir una póliza activa únicamente
+              para esta orden de venta o continuar sin ella.
+            </div>
+
+          }
         </div>
 
-        <!-- Observaciones -->
         <div class="col-12">
           <label
             class="form-label"
@@ -189,7 +263,11 @@
       <button
         type="submit"
         class="btn btn-primary"
-        [disabled]="saving() || loading() || form.invalid || !!error()"
+        [disabled]="
+          saving() ||
+          loading() ||
+          form.invalid
+        "
       >
         @if (saving()) {
           <span
@@ -206,6 +284,5 @@
         }
       </button>
     </ng-container>
-
   </app-modal-frame>
 </form>

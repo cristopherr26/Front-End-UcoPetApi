@@ -1,49 +1,181 @@
 <form [formGroup]="form" (ngSubmit)="save()" novalidate>
   <app-modal-frame
     [title]="existing() ? 'Editar ítem' : 'Agregar producto o servicio'"
-    subtitle="Los precios se toman del catálogo vigente"
-    icon="bi-basket" tone="grad" (closed)="modal.dismiss()"
+    [subtitle]="
+      existing()
+        ? 'Modifica la cantidad del artículo seleccionado'
+        : 'Los precios se toman del catálogo vigente'
+    "
+    icon="bi-basket"
+    tone="grad"
+    (closed)="modal.dismiss()"
   >
-    @if (error()) {<div class="alert alert-danger">{{ error() }}</div>}
-    @if (loading()) {
-      <div class="text-center py-5"><span class="spinner-border text-primary"></span></div>
-    } @else {
-      <div class="row g-3">
-        @if (existing()) {
-          <div class="col-12">
-            <label class="form-label">Ítem seleccionado</label>
-            <input class="form-control" [value]="existing()!.itemType + ' · ' + existing()!.itemId" disabled />
-          </div>
-        } @else {
-          <div class="col-12">
-            <label class="form-label" for="sale-item-catalog">Producto o servicio *</label>
-            <select id="sale-item-catalog" class="form-select" formControlName="itemId" (change)="chooseItem($any($event.target).value)" [class.is-invalid]="form.controls.itemId.touched && form.controls.itemId.invalid">
-              <option value="">Selecciona del catálogo</option>
-              @for (item of items(); track item.id) {
-                <option [value]="item.id">{{ item.type === 'PRODUCT' ? 'Producto' : 'Servicio' }} · {{ item.name }} · {{ item.price | price }}</option>
-              }
-            </select>
-            <div class="invalid-feedback">Selecciona un ítem.</div>
-          </div>
-        }
-        <div class="col-md-6">
-          <label class="form-label" for="sale-item-qty">Cantidad *</label>
-          <input id="sale-item-qty" class="form-control" type="number" min="1" step="1" formControlName="quantity" [class.is-invalid]="form.controls.quantity.touched && form.controls.quantity.invalid" />
-          <div class="invalid-feedback">Debe ser un número entero mayor a cero.</div>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Precio unitario</label>
-          <input class="form-control" [value]="(existing()?.unitPrice ?? selected()?.price ?? 0) | price" disabled />
-        </div>
-        <div class="col-12 small text-body-secondary">El backend recalcula el subtotal, impuestos y descuentos de póliza.</div>
+
+    @if (error()) {
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ error() }}
       </div>
     }
+
+    @if (nameError()) {
+      <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ nameError() }}
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="text-center py-5">
+        <span class="spinner-border text-primary"></span>
+      </div>
+    } @else {
+
+      <div class="row g-3">
+
+        @if (existing()) {
+          <div class="col-12">
+            <label
+              class="form-label"
+              for="sale-item-selected"
+            >
+              Ítem seleccionado
+            </label>
+
+            <input
+              id="sale-item-selected"
+              class="form-control"
+              [value]="editingItemLabel()"
+              disabled
+            />
+
+            <div class="form-text">
+              El producto o servicio no se puede cambiar
+              al editar el ítem. Solo puedes modificar
+              su cantidad.
+            </div>
+          </div>
+
+        } @else {
+
+          <div class="col-12">
+            <label
+              class="form-label"
+              for="sale-item-catalog"
+            >
+              Producto o servicio *
+            </label>
+
+            <select
+              id="sale-item-catalog"
+              class="form-select"
+              formControlName="itemId"
+              (change)="chooseItem($any($event.target).value)"
+              [class.is-invalid]="
+                form.controls.itemId.touched &&
+                form.controls.itemId.invalid
+              "
+            >
+              <option value="">
+                Selecciona del catálogo
+              </option>
+
+              @for (item of items(); track item.id) {
+                <option [value]="item.id">
+                  {{
+                    item.type === 'PRODUCT'
+                      ? 'Producto'
+                      : 'Servicio'
+                  }}
+                  · {{ item.name }}
+                  · {{ item.price | price }}
+                </option>
+              }
+            </select>
+
+            <div class="invalid-feedback">
+              Selecciona un ítem.
+            </div>
+          </div>
+        }
+
+        <div class="col-md-6">
+          <label
+            class="form-label"
+            for="sale-item-qty"
+          >
+            Cantidad *
+          </label>
+
+          <input
+            id="sale-item-qty"
+            class="form-control"
+            type="number"
+            min="1"
+            step="1"
+            formControlName="quantity"
+            [class.is-invalid]="
+              form.controls.quantity.touched &&
+              form.controls.quantity.invalid
+            "
+          />
+
+          <div class="invalid-feedback">
+            Debe ser un número entero mayor a cero.
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            Precio unitario
+          </label>
+
+          <input
+            class="form-control"
+            [value]="
+              (
+                existing()?.unitPrice ??
+                selected()?.price ??
+                0
+              ) | price
+            "
+            disabled
+          />
+        </div>
+
+        <div class="col-12 small text-body-secondary">
+          El backend recalcula el subtotal, impuestos
+          y descuentos de póliza.
+        </div>
+
+      </div>
+    }
+
     <ng-container modalFooter>
-      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
-      <button type="submit" class="btn btn-primary" [disabled]="saving() || loading()">
-        @if (saving()) {<span class="spinner-border spinner-border-sm me-2"></span>Guardando...}
-        @else {<i class="bi bi-check2 me-1"></i>Guardar ítem}
+      <button
+        type="button"
+        class="btn btn-light"
+        (click)="modal.dismiss()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="saving() || loading()"
+      >
+        @if (saving()) {
+          <span
+            class="spinner-border spinner-border-sm me-2"
+          ></span>
+          Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>
+          Guardar ítem
+        }
       </button>
     </ng-container>
+
   </app-modal-frame>
 </form>

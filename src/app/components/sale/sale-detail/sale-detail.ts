@@ -1,4 +1,3 @@
-
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
@@ -31,6 +30,7 @@ import { TutorPetService } from '../../../services/tutor-pet/tutor-pet.service';
 import { PersonLookupService } from '../../../services/person/person-lookup.service';
 import { PetService } from '../../../services/pet/pet.service';
 import { HealthPlanService } from '../../../services/health-plan/health-plan.service';
+import { CatalogService } from '../../../services/product/catalog.service';
 
 @Component({
   selector: 'app-sale-detail',
@@ -57,6 +57,7 @@ export class SaleDetail {
   private readonly personService = inject(PersonLookupService);
   private readonly petService = inject(PetService);
   private readonly healthPlanService = inject(HealthPlanService);
+  private readonly catalogService = inject(CatalogService);
 
   protected readonly order = signal<SaleOrder | null>(null);
   protected readonly items = signal<SaleItem[]>([]);
@@ -84,7 +85,13 @@ export class SaleDetail {
   protected readonly referencesLoading = signal(false);
   protected readonly referencesError = signal<string | null>(null);
 
-  // Evita abrir el formulario varias veces.
+  protected readonly itemNames = signal<Map<string, string>>(
+    new Map(),
+  );
+
+  protected readonly itemNamesLoading = signal(false);
+  protected readonly itemNamesError = signal<string | null>(null);
+
   private firstItemHandled = false;
 
   constructor() {
@@ -100,8 +107,6 @@ export class SaleDetail {
       return;
     }
 
-    // El backend no tiene GET /sales/:id.
-    // Recuperamos la orden mediante GET /sales.
     this.service.list().subscribe({
       next: (sales) => {
         const found = sales.find((sale) => sale.id === id);
@@ -113,7 +118,11 @@ export class SaleDetail {
         }
 
         this.order.set(found);
+
         this.loadReferences(found.headquarterId);
+
+        this.loadItemNames(found.headquarterId);
+
         this.reloadItems();
       },
 
@@ -150,6 +159,7 @@ export class SaleDetail {
                pets,
                healthPlans,
              }) => {
+
         this.headquarterNames.set(
           new Map(
             headquarters.map((headquarter) => [
@@ -175,7 +185,10 @@ export class SaleDetail {
 
         this.petNames.set(
           new Map(
-            pets.map((pet) => [pet.id, pet.name]),
+            pets.map((pet) => [
+              pet.id,
+              pet.name,
+            ]),
           ),
         );
 
@@ -183,7 +196,10 @@ export class SaleDetail {
           new Map(
             healthPlans
               .filter((plan) => !!plan.id)
-              .map((plan) => [plan.id!, plan.name]),
+              .map((plan) => [
+                plan.id!,
+                plan.name,
+              ]),
           ),
         );
 
@@ -230,6 +246,48 @@ export class SaleDetail {
       ?? 'Póliza no disponible';
   }
 
+
+  private loadItemNames(headquarterId: string): void {
+    this.itemNamesLoading.set(true);
+    this.itemNamesError.set(null);
+
+    this.catalogService.list({
+      headquarterId,
+    }).subscribe({
+      next: (catalogItems) => {
+        const names = new Map<string, string>();
+
+        for (const item of catalogItems) {
+          names.set(item.id, item.name);
+        }
+
+        this.itemNames.set(names);
+        this.itemNamesLoading.set(false);
+      },
+
+      error: (err: HttpErrorResponse) => {
+        this.itemNamesError.set(
+          apiErrorMessage(
+            err,
+            'No se pudieron cargar los nombres de los artículos',
+          ),
+        );
+
+        this.itemNamesLoading.set(false);
+      },
+    });
+  }
+
+  protected itemName(item: SaleItem): string {
+    if (this.itemNamesLoading()) {
+      return 'Cargando...';
+    }
+
+    return this.itemNames().get(item.itemId)
+      ?? 'Artículo no disponible en el catálogo';
+  }
+
+
   private reloadItems(): void {
     const current = this.order();
 
@@ -242,8 +300,6 @@ export class SaleDetail {
         this.items.set(items);
         this.loading.set(false);
 
-        // Solo ocurre al crear una nueva venta
-        // desde el listado.
         this.openFirstItemIfRequested();
       },
 
@@ -276,8 +332,6 @@ export class SaleDetail {
 
     this.firstItemHandled = true;
 
-    // Quitamos el parámetro de la URL antes de abrir el modal,
-    // para evitar que vuelva a aparecer al recargar.
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { addItem: null },
@@ -311,6 +365,7 @@ export class SaleDetail {
         this.toast.success('Orden actualizada');
 
         this.loadReferences(updated.headquarterId);
+        this.loadItemNames(updated.headquarterId);
         this.reloadItems();
       },
       () => undefined,
@@ -340,11 +395,14 @@ export class SaleDetail {
           item ? 'Ítem actualizado' : 'Ítem agregado',
         );
 
+        // Actualizar los ítems y sus nombres
         this.reloadItems();
+        this.loadItemNames(updated.headquarterId);
       },
       () => undefined,
     );
   }
+
 
   protected deleteItem(item: SaleItem): void {
     const current = this.order();
@@ -386,6 +444,7 @@ export class SaleDetail {
       });
     });
   }
+
 
   protected cancelOrder(): void {
     const current = this.order();
