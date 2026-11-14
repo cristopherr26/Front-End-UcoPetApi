@@ -1,12 +1,8 @@
 import { Routes } from '@angular/router';
 
-import { ModulePlaceholder } from '../../components/placeholder/module-placeholder/module-placeholder';
+import { ProviderList } from '../../components/provider/provider-list/provider-list';
 
+// Crear y editar se hacen en un modal que abre la lista, por eso solo hay una ruta.
 export const PROVIDER_ROUTES: Routes = [
-  {
-    path: '',
-    component: ModulePlaceholder,
-    data: { module: 'proveedores' },
-    title: 'Proveedores · UcoPet',
-  },
+  { path: '', component: ProviderList, title: 'Proveedores · UcoPet' },
 ];
