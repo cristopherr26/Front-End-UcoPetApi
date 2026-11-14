@@ -48,7 +48,7 @@
 
           @for (pet of pets(); track pet.id) {
           <option [value]="pet.id">
-            {{ pet.name }}
+            {{ pet.name }} - {{ pet.breed }}
           </option>
           }
         </select>
