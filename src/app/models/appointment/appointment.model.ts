@@ -47,3 +47,9 @@ export interface AcceptedResponse {
   idMessage: string;
   id: string;
 }
+
+// El médico de quien tiene la sesión abierta y su sede (GET /appointments/me/doctor).
+export interface AppointmentDoctor {
+  doctorId: string;
+  headquarterId: string | null;
+}

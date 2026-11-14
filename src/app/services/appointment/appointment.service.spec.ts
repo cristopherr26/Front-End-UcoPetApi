@@ -54,6 +54,15 @@ describe('AppointmentService', () => {
     vi.useRealTimers();
   });
 
+  it('asks for the doctor of the session', () => {
+    let doctor: unknown;
+    service.ownDoctor().subscribe((value) => (doctor = value));
+    const call = backend.expectOne('/api/v1/appointments/me/doctor');
+    expect(call.request.method).toBe('GET');
+    call.flush({ doctorId: 'd1', headquarterId: 'h1' });
+    expect(doctor).toEqual({ doctorId: 'd1', headquarterId: 'h1' });
+  });
+
   it('lists every appointment, or only the tutor one when a tutorId is given', () => {
     service.list().subscribe();
     const all = backend.expectOne('/api/v1/appointments');

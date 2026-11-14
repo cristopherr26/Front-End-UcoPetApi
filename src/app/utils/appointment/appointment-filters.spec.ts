@@ -71,8 +71,13 @@ describe('appointment filters', () => {
     expect(filterAppointments(list, view({ search: 'cirugia' }), today)).toHaveLength(0);
   });
 
+  it('does not count an expired pending appointment as waiting for confirmation', () => {
+    const expired = [make({ id: 'old', appointmentDate: '2026-11-01', status: 'PENDING' })];
+    expect(appointmentKpis(expired, today, new Date(2026, 10, 4, 9, 0)).pending).toBe(0);
+  });
+
   it('counts the cards: today ignores cancelled ones', () => {
-    expect(appointmentKpis(list, today)).toEqual({
+    expect(appointmentKpis(list, today, new Date(2026, 10, 4, 9, 0))).toEqual({
       today: 1,
       pending: 1,
       confirmed: 1,

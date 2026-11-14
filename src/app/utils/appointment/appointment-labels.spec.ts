@@ -1,28 +1,4 @@
-import { Appointment } from '../../models/appointment/appointment.model';
-import {
-  allowedActions,
-  dateLabel,
-  statusIcon,
-  statusLabel,
-  statusTone,
-  timeLabel,
-} from './appointment-labels';
-
-const base: Appointment = {
-  id: 'a1',
-  tutorId: 't1',
-  tutorName: 'Ana Gómez',
-  petId: 'p1',
-  petName: 'Luna',
-  doctorId: 'd1',
-  doctorName: 'Carlos Ruiz',
-  appointmentTypeId: 'ty1',
-  appointmentTypeName: 'Consulta general',
-  appointmentDate: '2026-11-10',
-  appointmentTime: '10:30:00',
-  status: 'PENDING',
-  cancellationReason: null,
-};
+import { dateLabel, statusIcon, statusLabel, statusTone, timeLabel } from './appointment-labels';
 
 describe('appointment labels', () => {
   it('names each status in Spanish with its own tone and icon', () => {
@@ -46,37 +22,5 @@ describe('appointment labels', () => {
     expect(label).toContain('7');
     expect(label).toContain('2026');
     expect(dateLabel(null)).toBe('—');
-  });
-
-  it('only lets pending appointments be confirmed and confirmed ones be completed', () => {
-    const today = '2026-11-04';
-    expect(allowedActions(base, today)).toEqual({
-      confirm: true,
-      complete: false,
-      cancel: true,
-      reactivate: false,
-      edit: true,
-    });
-    const confirmed = allowedActions({ ...base, status: 'CONFIRMED' }, today);
-    expect(confirmed.confirm).toBe(false);
-    expect(confirmed.complete).toBe(true);
-  });
-
-  it('does not allow cancelling or editing a completed appointment, like the API', () => {
-    const actions = allowedActions({ ...base, status: 'COMPLETED' }, '2026-11-04');
-    expect(actions).toEqual({
-      confirm: false,
-      complete: false,
-      cancel: false,
-      reactivate: false,
-      edit: false,
-    });
-  });
-
-  it('hides edit and reactivate once the date has passed', () => {
-    const past = '2026-11-20';
-    expect(allowedActions(base, past).edit).toBe(false);
-    expect(allowedActions({ ...base, status: 'CANCELLED' }, past).reactivate).toBe(false);
-    expect(allowedActions({ ...base, status: 'CANCELLED' }, '2026-11-04').reactivate).toBe(true);
   });
 });

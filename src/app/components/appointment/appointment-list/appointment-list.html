@@ -8,7 +8,18 @@
   </div>
 }
 
-<div class="row g-3 mb-4">
+<p class="small text-body-secondary d-flex align-items-center gap-2 mb-3">
+  <i class="bi bi-person-badge"></i>
+  @if (session.isAdmin()) {
+    <span>
+      Eres administrador: ves las citas de todos los médicos y puedes filtrarlas por médico.
+    </span>
+  } @else {
+    <span>Estás viendo solo tus citas. Cada cita que agendes queda a tu nombre.</span>
+  }
+</p>
+
+<div class="row g-3 mb-3">
   <div class="col-6 col-lg-3">
     <app-kpi-card label="Hoy" [value]="kpis().today" hint="Citas activas de hoy" />
   </div>
@@ -37,6 +48,25 @@
     />
   </div>
 </div>
+
+<details class="small mb-3">
+  <summary class="text-primary" role="button">¿Qué significa cada estado?</summary>
+  <ul class="mt-2 mb-0 text-body-secondary">
+    <li>
+      <strong>Pendiente:</strong> agendada, falta confirmarla. Si su hora pasa sin confirmarse queda
+      <em>Vencida</em> y solo puede cancelarse.
+    </li>
+    <li>
+      <strong>Confirmada:</strong> lista para atender. Se marca como completada cuando llega su
+      hora.
+    </li>
+    <li><strong>Completada:</strong> ya se atendió; no se puede editar ni cancelar.</li>
+    <li>
+      <strong>Cancelada:</strong> libera el horario del médico y de la mascota. Se puede reactivar
+      mientras su fecha y hora no hayan pasado.
+    </li>
+  </ul>
+</details>
 
 @if (processing().size > 0) {
   <div class="alert alert-info d-flex align-items-center gap-2 py-2" role="status">
@@ -89,32 +119,19 @@
           }
         </select>
       </div>
-      <div class="col-auto">
-        <select
-          class="form-select form-select-sm"
-          aria-label="Médico"
-          [value]="doctor()"
-          (change)="doctor.set($any($event.target).value)"
-        >
-          <option value="">Todos los médicos</option>
-          @for (option of doctorOptions(); track option.id) {
-            <option [value]="option.id">{{ option.name }}</option>
-          }
-        </select>
-      </div>
-      @if (canFilterMine()) {
+      @if (session.isAdmin()) {
         <div class="col-auto">
-          <div class="form-check form-switch mb-0">
-            <input
-              id="only-mine"
-              class="form-check-input"
-              type="checkbox"
-              role="switch"
-              [checked]="onlyMine()"
-              (change)="onlyMine.set($any($event.target).checked)"
-            />
-            <label class="form-check-label small" for="only-mine">Solo mis citas</label>
-          </div>
+          <select
+            class="form-select form-select-sm"
+            aria-label="Médico"
+            [value]="doctor()"
+            (change)="doctor.set($any($event.target).value)"
+          >
+            <option value="">Todos los médicos</option>
+            @for (option of doctorOptions(); track option.id) {
+              <option [value]="option.id">{{ option.name }}</option>
+            }
+          </select>
         </div>
       }
       <div class="col-auto">
@@ -152,7 +169,7 @@
           </tr>
         } @else {
           @for (appointment of table.rows(); track appointment.id) {
-            @let actions = allowedActions(appointment, todayIso());
+            @let actions = allowedActions(appointment);
             <tr>
               <td>
                 <div class="fw-semibold text-nowrap">
@@ -187,6 +204,10 @@
                   <span class="uc-tag is-neutral">
                     <span class="spinner-border spinner-border-sm"></span>Procesando
                   </span>
+                } @else if (isExpired(appointment)) {
+                  <span class="uc-tag is-danger" title="La hora ya pasó y no se confirmó">
+                    <i class="bi bi-clock-history"></i>Vencida
+                  </span>
                 } @else {
                   <span class="uc-tag" [class]="statusTone(appointment.status)">
                     <i class="bi" [class]="statusIcon(appointment.status)"></i
@@ -208,6 +229,7 @@
                     type="button"
                     class="btn btn-sm btn-outline-success"
                     title="Confirmar"
+                    aria-label="Confirmar"
                     [disabled]="isProcessing(appointment.id)"
                     (click)="confirmAppointment(appointment)"
                   >
@@ -219,6 +241,7 @@
                     type="button"
                     class="btn btn-sm btn-outline-success"
                     title="Marcar como completada"
+                    aria-label="Marcar como completada"
                     [disabled]="isProcessing(appointment.id)"
                     (click)="complete(appointment)"
                   >
@@ -230,6 +253,7 @@
                     type="button"
                     class="btn btn-sm btn-outline-secondary"
                     title="Reactivar"
+                    aria-label="Reactivar"
                     [disabled]="isProcessing(appointment.id)"
                     (click)="reactivate(appointment)"
                   >
@@ -241,6 +265,7 @@
                     type="button"
                     class="btn btn-sm btn-outline-primary ms-1"
                     title="Editar"
+                    aria-label="Editar"
                     [disabled]="isProcessing(appointment.id)"
                     (click)="edit(appointment)"
                   >
@@ -252,6 +277,7 @@
                     type="button"
                     class="btn btn-sm btn-outline-warning ms-1"
                     title="Cancelar cita"
+                    aria-label="Cancelar cita"
                     [disabled]="isProcessing(appointment.id)"
                     (click)="cancel(appointment)"
                   >
@@ -263,6 +289,7 @@
                     type="button"
                     class="btn btn-sm btn-outline-danger ms-1"
                     title="Eliminar"
+                    aria-label="Eliminar"
                     [disabled]="isProcessing(appointment.id)"
                     (click)="remove(appointment)"
                   >
@@ -277,8 +304,12 @@
                 @if (appointments().length === 0) {
                   <app-empty-state
                     icon="bi-calendar-x"
-                    title="Aún no hay citas"
-                    text="Agenda la primera cita de un paciente"
+                    [title]="session.isAdmin() ? 'Aún no hay citas' : 'Aún no tienes citas'"
+                    [text]="
+                      session.isAdmin()
+                        ? 'Agenda la primera cita de un paciente'
+                        : 'Agenda tu primera cita: quedará a tu nombre'
+                    "
                   >
                     <button type="button" class="btn btn-primary btn-sm mt-3" (click)="create()">
                       <i class="bi bi-plus-lg me-1"></i>Nueva cita

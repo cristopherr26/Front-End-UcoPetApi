@@ -37,15 +37,10 @@ describe('AppointmentList', () => {
   function open(roles: string[], appointments: Appointment[]) {
     clearCookies();
     setSessionCookies(roles);
-    document.cookie = 'ucopet_headquarter=h1; Path=/';
     const fixture = TestBed.createComponent(AppointmentList);
     fixture.detectChanges();
     backend = TestBed.inject(HttpTestingController);
     backend.expectOne((req) => req.url === '/api/v1/appointments').flush(appointments);
-    // El médico de la sesión (personId p1) es el médico d1
-    backend
-      .expectOne((req) => req.url === '/api/v1/doctor')
-      .flush([{ id: 'd1', licenseNumber: 'LIC-1', person: 'p1' }]);
     fixture.detectChanges();
     return fixture;
   }
@@ -120,17 +115,46 @@ describe('AppointmentList', () => {
     expect(fixture.nativeElement.textContent).toContain('Procesando');
   });
 
-  it('for a doctor, starts with "solo mis citas" and hides delete', () => {
-    const fixture = open(
-      ['DOCTOR'],
-      [
-        make({ id: 'a1' }),
-        make({ id: 'a2', doctorId: 'd2', petName: 'Ajena', doctorName: 'Otro' }),
-      ],
-    );
-    const text: string = fixture.nativeElement.textContent;
-    expect(text).toContain('Luna');
-    expect(text).not.toContain('Ajena');
+  it('for a doctor, hides delete and the doctor filter (the API only returns their own)', () => {
+    const fixture = open(['DOCTOR'], [make({ id: 'a1' })]);
+    expect(fixture.nativeElement.textContent).toContain('Luna');
+    expect(fixture.nativeElement.querySelector('select[aria-label="Médico"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('button[title="Eliminar"]')).toBeNull();
+  });
+
+  it('marks a pending appointment whose hour has passed as expired and does not offer to confirm it', () => {
+    const fixture = open(
+      ['ADMIN'],
+      [make({ id: 'old', appointmentDate: inDays(-1), status: 'PENDING' })],
+    );
+    // Las vencidas aparecen en "Pasadas", no en "Próximas"
+    const pastTab = [...fixture.nativeElement.querySelectorAll('button')].find(
+      (button: HTMLButtonElement) => button.textContent?.trim() === 'Pasadas',
+    ) as HTMLButtonElement;
+    pastTab.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Vencida');
+    expect(fixture.nativeElement.querySelector('button[title="Confirmar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('button[title="Cancelar cita"]')).not.toBeNull();
+  });
+
+  it('tells each role what it is looking at and explains the statuses', () => {
+    const doctor = open(['DOCTOR'], [make({ id: 'a1' })]);
+    expect(doctor.nativeElement.textContent).toContain('solo tus citas');
+    expect(doctor.nativeElement.textContent).toContain('¿Qué significa cada estado?');
+    expect(doctor.nativeElement.querySelector('button[aria-label="Cancelar cita"]')).not.toBeNull();
+    backend.verify();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    const admin = open(['ADMIN'], [make({ id: 'a1' })]);
+    expect(admin.nativeElement.textContent).toContain('todos los médicos');
+  });
+
+  it('for an admin, offers the doctor filter and delete', () => {
+    const fixture = open(['ADMIN'], [make({ id: 'a1' })]);
+    expect(fixture.nativeElement.querySelector('select[aria-label="Médico"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('button[title="Eliminar"]')).not.toBeNull();
   });
 });

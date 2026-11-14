@@ -1,4 +1,5 @@
 import { Appointment, AppointmentStatus } from '../../models/appointment/appointment.model';
+import { isExpired } from './appointment-actions';
 
 export type AppointmentPeriod = 'upcoming' | 'today' | 'past' | 'all';
 
@@ -60,14 +61,21 @@ export function filterAppointments(
   });
 }
 
-export function appointmentKpis(appointments: Appointment[], today: string): AppointmentKpis {
+export function appointmentKpis(
+  appointments: Appointment[],
+  today: string,
+  now: Date = new Date(),
+): AppointmentKpis {
   const count = (predicate: (appointment: Appointment) => boolean) =>
     appointments.filter(predicate).length;
   return {
     today: count(
       (appointment) => appointment.appointmentDate === today && appointment.status !== 'CANCELLED',
     ),
-    pending: count((appointment) => appointment.status === 'PENDING'),
+    // Las pendientes vencidas ya no esperan confirmación: no se cuentan
+    pending: count(
+      (appointment) => appointment.status === 'PENDING' && !isExpired(appointment, now),
+    ),
     confirmed: count((appointment) => appointment.status === 'CONFIRMED'),
     cancelled: count((appointment) => appointment.status === 'CANCELLED'),
   };

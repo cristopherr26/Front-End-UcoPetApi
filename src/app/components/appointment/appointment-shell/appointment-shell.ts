@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
+import { SessionService } from '../../../services/session/session.service';
 import { PageHeader } from '../../shared/page-header';
 
 // Marco del módulo Agenda: título y pestañas (Citas | Tipos de cita) sobre la pantalla activa.
@@ -24,11 +25,13 @@ import { PageHeader } from '../../shared/page-header';
             <i class="bi bi-calendar3 me-1"></i>Citas
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/agenda/tipos" routerLinkActive="active">
-            <i class="bi bi-tags me-1"></i>Tipos de cita
-          </a>
-        </li>
+        @if (session.isAdmin()) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/agenda/tipos" routerLinkActive="active">
+              <i class="bi bi-tags me-1"></i>Tipos de cita
+            </a>
+          </li>
+        }
       </ul>
     </app-page-header>
     <router-outlet />
@@ -52,4 +55,6 @@ import { PageHeader } from '../../shared/page-header';
     }
   `,
 })
-export class AppointmentShell {}
+export class AppointmentShell {
+  protected readonly session = inject(SessionService);
+}

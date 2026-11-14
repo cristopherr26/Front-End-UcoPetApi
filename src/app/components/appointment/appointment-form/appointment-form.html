@@ -18,6 +18,46 @@
           <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
         </div>
       }
+      @if (editing()) {
+        <div class="alert alert-info py-2 small d-flex gap-2" role="note">
+          <i class="bi bi-info-circle"></i>
+          <span>
+            Si cambias la fecha o la hora se vuelve a comprobar que el médico y la mascota estén
+            libres. Una cita ya pasada solo puede cancelarse.
+          </span>
+        </div>
+      } @else if (!isAdmin()) {
+        <div class="alert alert-info py-2 small d-flex gap-2" role="note">
+          <i class="bi bi-person-badge"></i>
+          <span>
+            La cita se agendará <strong>a tu nombre</strong>
+            @if (fullName()) {
+              ({{ fullName() }})
+            }
+            @if (headquarterName()) {
+              en <strong>{{ headquarterName() }}</strong
+              >, tu sede. Solo aparecen las mascotas de esa sede.
+            } @else {
+              en tu sede. Solo aparecen las mascotas de esa sede.
+            }
+          </span>
+        </div>
+      } @else if (hasHeadquarter()) {
+        <div class="alert alert-info py-2 small d-flex gap-2" role="note">
+          <i class="bi bi-building"></i>
+          <span>
+            Estás agendando
+            @if (headquarterName()) {
+              en <strong>{{ headquarterName() }}</strong
+              >.
+            } @else {
+              en la sede activa.
+            }
+            Solo aparecen los médicos y las mascotas de esa sede; para otra sede, cámbiala en la
+            barra superior.
+          </span>
+        </div>
+      }
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label" for="appointment-tutor">Tutor *</label>
@@ -88,23 +128,25 @@
           </div>
         }
 
-        <div class="col-md-6">
-          <label class="form-label" for="appointment-doctor">Médico *</label>
-          <select
-            id="appointment-doctor"
-            class="form-select"
-            formControlName="doctorId"
-            [class.is-invalid]="invalid('doctorId')"
-          >
-            <option [ngValue]="null" disabled>Elige un médico</option>
-            @for (doctor of doctors(); track doctor.id) {
-              <option [ngValue]="doctor.id">
-                {{ doctor.label }}{{ doctor.hint ? ' · ' + doctor.hint : '' }}
-              </option>
-            }
-          </select>
-          <div class="invalid-feedback">El médico es obligatorio</div>
-        </div>
+        @if (isAdmin()) {
+          <div class="col-md-6">
+            <label class="form-label" for="appointment-doctor">Médico *</label>
+            <select
+              id="appointment-doctor"
+              class="form-select"
+              formControlName="doctorId"
+              [class.is-invalid]="invalid('doctorId')"
+            >
+              <option [ngValue]="null" disabled>Elige un médico</option>
+              @for (doctor of doctors(); track doctor.id) {
+                <option [ngValue]="doctor.id">
+                  {{ doctor.label }}{{ doctor.hint ? ' · ' + doctor.hint : '' }}
+                </option>
+              }
+            </select>
+            <div class="invalid-feedback">El médico es obligatorio</div>
+          </div>
+        }
 
         <div class="col-md-6">
           <label class="form-label" for="appointment-type">Tipo de cita *</label>
@@ -120,6 +162,9 @@
             }
           </select>
           <div class="invalid-feedback">El tipo de cita es obligatorio</div>
+          @if (selectedType()?.hint; as description) {
+            <div class="form-text">{{ description }}</div>
+          }
         </div>
 
         <div class="col-md-6">
@@ -158,6 +203,9 @@
             } @else {
               La hora es obligatoria
             }
+          </div>
+          <div class="form-text">
+            No puede coincidir con otra cita activa del médico ni de la misma mascota.
           </div>
         </div>
 

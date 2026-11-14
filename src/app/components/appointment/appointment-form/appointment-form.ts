@@ -3,12 +3,17 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Subscription, forkJoin, map } from 'rxjs';
+import { Subscription, forkJoin, map, of } from 'rxjs';
 
 import { SelectOption } from '../../../models/appointment/appointment-option.model';
-import { Appointment, AppointmentRequest } from '../../../models/appointment/appointment.model';
+import {
+  Appointment,
+  AppointmentDoctor,
+  AppointmentRequest,
+} from '../../../models/appointment/appointment.model';
 import { AppointmentReferenceService } from '../../../services/appointment/appointment-reference.service';
 import { AppointmentService } from '../../../services/appointment/appointment.service';
+import { HeadquarterService } from '../../../services/headquarter/headquarter.service';
 import { SessionService } from '../../../services/session/session.service';
 import { appointmentErrorMessage } from '../../../utils/appointment/appointment-errors';
 import { dateLabel, statusLabel, timeLabel } from '../../../utils/appointment/appointment-labels';
@@ -37,6 +42,7 @@ export class AppointmentForm {
   private readonly appointmentService = inject(AppointmentService);
   private readonly references = inject(AppointmentReferenceService);
   private readonly session = inject(SessionService);
+  private readonly headquarters = inject(HeadquarterService);
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly modal = inject(NgbActiveModal);
 
@@ -69,7 +75,16 @@ export class AppointmentForm {
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly minDate = todayIso();
-  protected readonly hasHeadquarter = computed(() => this.session.headquarterId() !== null);
+  // El administrador elige el médico (de la sede activa); un médico agenda siempre a su nombre y con
+  // su propia sede, sin importar la sede elegida en el menú superior.
+  protected readonly isAdmin = computed(() => this.session.isAdmin());
+  private readonly ownDoctor = signal<AppointmentDoctor | null>(null);
+  protected readonly hasHeadquarter = computed(
+    () => !this.isAdmin() || this.session.headquarterId() !== null,
+  );
+  // Para los avisos del formulario: quién agenda y en qué sede.
+  protected readonly fullName = computed(() => this.session.profile()?.fullName ?? '');
+  protected readonly headquarterName = signal<string | null>(null);
 
   private readonly existing = signal<Appointment[]>([]);
   private petsRequest: Subscription | null = null;
@@ -109,6 +124,11 @@ export class AppointmentForm {
     ),
   );
 
+  // Tipo de cita elegido: se muestra su descripción para que se entienda en qué consiste.
+  protected readonly selectedType = computed(
+    () => this.types().find((type) => type.id === this.value().appointmentTypeId) ?? null,
+  );
+
   protected readonly statusLabel = statusLabel;
   protected readonly dateLabel = dateLabel;
   protected readonly timeLabel = timeLabel;
@@ -125,12 +145,18 @@ export class AppointmentForm {
     this.existing.set(existing);
     this.editing.set(appointment);
     this.loadingOptions.set(true);
+    const admin = this.isAdmin();
     forkJoin({
       tutors: this.references.tutors(),
-      doctors: this.references.doctors(this.session.headquarterId()),
+      doctors: admin
+        ? this.references.doctors(this.session.headquarterId())
+        : of<SelectOption[]>([]),
+      ownDoctor: admin ? of(null) : this.appointmentService.ownDoctor(),
       types: this.references.activeTypes(),
     }).subscribe({
-      next: ({ tutors, doctors, types }) => {
+      next: ({ tutors, doctors, ownDoctor, types }) => {
+        this.ownDoctor.set(ownDoctor);
+        this.loadHeadquarterName(admin ? this.session.headquarterId() : ownDoctor?.headquarterId);
         this.tutors.set(tutors);
         // Al editar sin sede activa se conserva el médico actual de la cita para no perderlo.
         const currentDoctor: SelectOption | null = appointment
@@ -144,15 +170,32 @@ export class AppointmentForm {
         this.types.set(types);
         if (appointment) {
           this.fillFrom(appointment, types);
+        } else if (ownDoctor) {
+          this.form.controls.doctorId.setValue(ownDoctor.doctorId);
         }
         this.loadingOptions.set(false);
       },
       error: (error: HttpErrorResponse) => {
         this.loadingOptions.set(false);
         this.error.set(
-          appointmentErrorMessage(error, 'No se pudieron cargar los datos del formulario'),
+          error.status === 404 && !admin
+            ? 'Tu usuario no está registrado como médico'
+            : appointmentErrorMessage(error, 'No se pudieron cargar los datos del formulario'),
         );
       },
+    });
+  }
+
+  // Solo para el aviso del formulario: si no se puede leer la sede, el aviso simplemente no la nombra.
+  private loadHeadquarterName(headquarterId: string | null | undefined): void {
+    this.headquarterName.set(null);
+    if (!headquarterId) {
+      return;
+    }
+    this.headquarters.list().subscribe({
+      next: (list) =>
+        this.headquarterName.set(list.find((item) => item.id === headquarterId)?.name ?? null),
+      error: () => undefined,
     });
   }
 
@@ -244,7 +287,9 @@ export class AppointmentForm {
   private loadPets(tutorId: string | null, selectedPetId: string | null): void {
     this.petsRequest?.unsubscribe();
     this.pets.set([]);
-    const headquarterId = this.session.headquarterId();
+    const headquarterId = this.isAdmin()
+      ? this.session.headquarterId()
+      : (this.ownDoctor()?.headquarterId ?? null);
     const current = this.editing();
     const currentPet: SelectOption | null =
       current && current.tutorId === tutorId

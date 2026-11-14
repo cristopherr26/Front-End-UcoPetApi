@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   AcceptedResponse,
   Appointment,
+  AppointmentDoctor,
   AppointmentFilters,
   AppointmentRequest,
   AppointmentStatusRequest,
@@ -32,6 +33,11 @@ export class AppointmentService {
     return this.http.get<Appointment>(`${this.url}/appointment`, {
       params: new HttpParams().set('id', id),
     });
+  }
+
+  // Médico de la sesión (404 si la persona no es médico).
+  ownDoctor(): Observable<AppointmentDoctor> {
+    return this.http.get<AppointmentDoctor>(`${this.url}/me/doctor`);
   }
 
   pendingByTutor(tutorId: string): Observable<Appointment[]> {

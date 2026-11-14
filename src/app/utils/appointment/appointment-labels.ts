@@ -1,4 +1,4 @@
-import { Appointment, AppointmentStatus } from '../../models/appointment/appointment.model';
+import { AppointmentStatus } from '../../models/appointment/appointment.model';
 
 export const APPOINTMENT_STATUSES: { value: AppointmentStatus; label: string }[] = [
   { value: 'PENDING', label: 'Pendiente' },
@@ -52,27 +52,4 @@ export function dateLabel(iso: string | null | undefined): string {
     month: 'short',
     year: 'numeric',
   }).format(new Date(year, month - 1, day));
-}
-
-export interface AppointmentActions {
-  confirm: boolean;
-  complete: boolean;
-  cancel: boolean;
-  reactivate: boolean;
-  edit: boolean;
-}
-
-// Qué se puede hacer con una cita según su estado y su fecha. Las reglas de verdad las pone la API
-// (no se cancela una cita completada; la fecha no puede estar en el pasado); aquí solo se ocultan
-// los botones que terminarían en un error.
-export function allowedActions(appointment: Appointment, today: string): AppointmentActions {
-  const active = appointment.status === 'PENDING' || appointment.status === 'CONFIRMED';
-  const notPast = appointment.appointmentDate >= today;
-  return {
-    confirm: appointment.status === 'PENDING',
-    complete: appointment.status === 'CONFIRMED',
-    cancel: active,
-    reactivate: appointment.status === 'CANCELLED' && notPast,
-    edit: active && notPast,
-  };
 }

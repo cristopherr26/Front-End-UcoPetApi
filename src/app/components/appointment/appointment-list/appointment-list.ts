@@ -6,7 +6,6 @@ import { Appointment, AppointmentStatus } from '../../../models/appointment/appo
 import { SortHeader } from '../../../directives/shared/sort-header';
 import { AppointmentDialogs } from '../../../services/appointment/appointment-dialogs.service';
 import { AppointmentService } from '../../../services/appointment/appointment.service';
-import { DoctorService } from '../../../services/doctor/doctor.service';
 import { SessionService } from '../../../services/session/session.service';
 import { injectConfirm } from '../../../services/shared/confirm';
 import { ToastService } from '../../../services/shared/toast.service';
@@ -16,9 +15,9 @@ import {
   appointmentKpis,
   filterAppointments,
 } from '../../../utils/appointment/appointment-filters';
+import { allowedActions, isExpired } from '../../../utils/appointment/appointment-actions';
 import {
   APPOINTMENT_STATUSES,
-  allowedActions,
   dateLabel,
   statusIcon,
   statusLabel,
@@ -39,7 +38,6 @@ import { AppointmentFormResult } from '../appointment-form/appointment-form';
 })
 export class AppointmentList {
   private readonly appointmentService = inject(AppointmentService);
-  private readonly doctorService = inject(DoctorService);
   private readonly dialogs = inject(AppointmentDialogs);
   private readonly toast = inject(ToastService);
   private readonly confirm = injectConfirm();
@@ -61,9 +59,6 @@ export class AppointmentList {
   protected readonly period = signal<AppointmentPeriod>('upcoming');
   protected readonly status = signal<AppointmentStatus | ''>('');
   protected readonly doctor = signal('');
-  protected readonly onlyMine = signal(false);
-  private readonly myDoctorId = signal<string | null>(null);
-  protected readonly canFilterMine = computed(() => this.myDoctorId() !== null);
 
   private readonly refresh = signal(0);
   protected readonly appointments = signal<Appointment[]>([]);
@@ -73,19 +68,12 @@ export class AppointmentList {
   // Citas cuyo cambio ya se envió a RabbitMQ y todavía no se ve aplicado.
   protected readonly processing = signal<ReadonlySet<string>>(new Set());
 
-  // Si el usuario es un médico, "solo mis citas" parte activado.
-  private readonly scoped = computed(() => {
-    const mine = this.onlyMine() ? this.myDoctorId() : null;
-    return mine
-      ? this.appointments().filter((appointment) => appointment.doctorId === mine)
-      : this.appointments();
-  });
-
-  protected readonly kpis = computed(() => appointmentKpis(this.scoped(), todayIso()));
+  // La API ya entrega solo las citas que el usuario puede ver: un médico recibe únicamente las suyas.
+  protected readonly kpis = computed(() => appointmentKpis(this.appointments(), todayIso()));
 
   protected readonly doctorOptions = computed(() => {
     const byId = new Map<string, string>();
-    this.scoped().forEach((appointment) =>
+    this.appointments().forEach((appointment) =>
       byId.set(appointment.doctorId, appointment.doctorName ?? 'Sin nombre'),
     );
     return [...byId.entries()]
@@ -95,7 +83,7 @@ export class AppointmentList {
 
   protected readonly visible = computed(() =>
     filterAppointments(
-      this.scoped(),
+      this.appointments(),
       {
         period: this.period(),
         status: this.status(),
@@ -122,6 +110,7 @@ export class AppointmentList {
   });
 
   protected readonly allowedActions = allowedActions;
+  protected readonly isExpired = isExpired;
   protected readonly dateLabel = dateLabel;
   protected readonly timeLabel = timeLabel;
   protected readonly statusLabel = statusLabel;
@@ -148,24 +137,6 @@ export class AppointmentList {
       });
       onCleanup(() => subscription.unsubscribe());
     });
-
-    // La API no filtra por médico: se ubica al médico de la sesión para ofrecer "solo mis citas".
-    // La API de médicos exige la sede activa: sin sede no se puede ubicar al médico.
-    const headquarterId = this.session.headquarterId();
-    if (!headquarterId) {
-      return;
-    }
-    this.doctorService.list(headquarterId).subscribe({
-      next: (doctors) => {
-        const personId = this.session.profile()?.personId;
-        const mine = doctors.find((doctor) => doctor.idPerson === personId)?.id ?? null;
-        this.myDoctorId.set(mine);
-        if (mine && !this.session.isAdmin()) {
-          this.onlyMine.set(true);
-        }
-      },
-      error: () => undefined,
-    });
   }
 
   protected isProcessing(id: string): boolean {
@@ -189,7 +160,7 @@ export class AppointmentList {
   protected complete(appointment: Appointment): void {
     this.confirm(
       'Completar la cita',
-      `La cita de ${appointment.petName ?? 'la mascota'} pasará a completada y ya no se podrá cancelar.`,
+      `La cita de ${appointment.petName ?? 'la mascota'} pasará a completada y ya no se podrá cancelar ni editar.`,
       'Completar',
     ).subscribe((confirmed) => {
       if (confirmed) {
