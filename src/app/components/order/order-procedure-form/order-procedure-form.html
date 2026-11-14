@@ -1,0 +1,74 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="'Cambiar procedimiento · Orden #' + (order()?.idOrder ?? '')"
+    [subtitle]="'Solo se puede cambiar mientras la orden está pendiente'"
+    icon="bi-arrow-left-right"
+    tone="primary"
+    (closed)="modal.dismiss()"
+  >
+    @if (loading()) {
+      <div class="text-center py-4">
+        <span class="spinner-border text-primary"></span>
+        <p class="text-body-secondary mt-2">Cargando procedimientos...</p>
+      </div>
+    } @else {
+      @if (error()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          {{ error() }}
+        </div>
+      }
+
+      <div class="mb-3">
+        <label class="form-label" for="order-current-procedure">Procedimiento actual</label>
+        <input
+          id="order-current-procedure"
+          type="text"
+          class="form-control"
+          [value]="currentLabel()"
+          disabled
+          readonly
+        />
+      </div>
+
+      <div>
+        <label class="form-label" for="order-new-procedure">Nuevo procedimiento *</label>
+
+        <select
+          id="order-new-procedure"
+          class="form-select"
+          formControlName="procedureId"
+          [class.is-invalid]="invalid()"
+        >
+          <option value="">Selecciona un procedimiento</option>
+
+          @for (procedure of procedures(); track procedure.id) {
+            <option [value]="procedure.id">{{ procedureLabel(procedure) }}</option>
+          }
+        </select>
+
+        @if (invalid()) {
+          <div class="invalid-feedback">Debes seleccionar un procedimiento distinto al actual.</div>
+        }
+      </div>
+    }
+
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="saving() || loading() || form.invalid"
+      >
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>
+          Cambiar procedimiento
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>
