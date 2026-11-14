@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, map } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { PageHeader } from '../../shared/page-header';
 import { KpiCard } from '../../shared/kpi-card';
@@ -23,6 +23,7 @@ import { InvoiceService } from '../../../services/invoice/invoice.service';
 import { InvoiceDialogs } from '../../../services/invoice/invoice-dialogs.service';
 import { HeadquarterService } from '../../../services/headquarter/headquarter.service';
 import { PersonLookupService } from '../../../services/person/person-lookup.service';
+import { TutorPetService } from '../../../services/tutor-pet/tutor-pet.service';
 import { SessionService } from '../../../services/session/session.service';
 import { injectConfirm } from '../../../services/shared/confirm';
 import { ToastService } from '../../../services/shared/toast.service';
@@ -67,6 +68,7 @@ export class InvoiceList {
   private readonly invoiceService = inject(InvoiceService);
   private readonly dialogs = inject(InvoiceDialogs);
   private readonly personLookup = inject(PersonLookupService);
+  private readonly tutorService = inject(TutorPetService);
   private readonly headquarterService = inject(HeadquarterService);
   private readonly toast = inject(ToastService);
   private readonly confirm = injectConfirm();
@@ -96,6 +98,7 @@ export class InvoiceList {
 
   protected readonly invoices = signal<Invoice[]>([]);
   private readonly persons = signal<Map<string, PersonSummary>>(new Map());
+  private readonly tutorPersons = signal<Map<string, string>>(new Map());
   private readonly headquarters = signal<Headquarter[]>([]);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -165,10 +168,12 @@ export class InvoiceList {
       const subscription = forkJoin({
         invoices: this.invoiceService.list(filters),
         persons: this.personLookup.byId(),
+        tutors: this.tutorService.list().pipe(catchError(() => of([]))),
       }).subscribe({
-        next: ({ invoices, persons }) => {
+        next: ({ invoices, persons, tutors }) => {
           this.invoices.set(invoices);
           this.persons.set(persons);
+          this.tutorPersons.set(new Map(tutors.map((tutor) => [tutor.id, tutor.person])));
           this.loading.set(false);
         },
         error: (error: HttpErrorResponse) => {
@@ -182,7 +187,9 @@ export class InvoiceList {
   }
 
   protected clientName(invoice: Invoice): string | null {
-    return personName(this.persons().get(invoice.clientID));
+    const persons = this.persons();
+    const tutorPerson = this.tutorPersons().get(invoice.clientID);
+    return personName(persons.get(invoice.clientID) ?? (tutorPerson ? persons.get(tutorPerson) : undefined));
   }
 
   protected headquarterName(headquarterId: string): string {

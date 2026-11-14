@@ -13,6 +13,7 @@ import { InvoiceService } from '../../../services/invoice/invoice.service';
 import { InvoiceDialogs } from '../../../services/invoice/invoice-dialogs.service';
 import { HeadquarterService } from '../../../services/headquarter/headquarter.service';
 import { PersonLookupService } from '../../../services/person/person-lookup.service';
+import { TutorPetService } from '../../../services/tutor-pet/tutor-pet.service';
 import { SessionService } from '../../../services/session/session.service';
 import { injectConfirm } from '../../../services/shared/confirm';
 import { ToastService } from '../../../services/shared/toast.service';
@@ -44,6 +45,7 @@ export class InvoiceDetail {
   private readonly invoiceService = inject(InvoiceService);
   private readonly dialogs = inject(InvoiceDialogs);
   private readonly personLookup = inject(PersonLookupService);
+  private readonly tutorService = inject(TutorPetService);
   private readonly headquarterService = inject(HeadquarterService);
   private readonly toast = inject(ToastService);
   private readonly confirm = injectConfirm();
@@ -54,6 +56,7 @@ export class InvoiceDetail {
 
   protected readonly invoice = signal<Invoice | null>(null);
   private readonly persons = signal<Map<string, PersonSummary>>(new Map());
+  private readonly tutorPersons = signal<Map<string, string>>(new Map());
   private readonly headquarters = signal<Headquarter[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -65,7 +68,12 @@ export class InvoiceDetail {
 
   protected readonly clientName = computed(() => {
     const invoice = this.invoice();
-    return invoice ? personName(this.persons().get(invoice.clientID)) : null;
+    if (!invoice) {
+      return null;
+    }
+    const persons = this.persons();
+    const tutorPerson = this.tutorPersons().get(invoice.clientID);
+    return personName(persons.get(invoice.clientID) ?? (tutorPerson ? persons.get(tutorPerson) : undefined));
   });
   protected readonly headquarterName = computed(() => {
     const invoice = this.invoice();
@@ -86,6 +94,10 @@ export class InvoiceDetail {
 
   constructor() {
     this.personLookup.byId().subscribe((persons) => this.persons.set(persons));
+    this.tutorService.list().subscribe({
+      next: (tutors) => this.tutorPersons.set(new Map(tutors.map((tutor) => [tutor.id, tutor.person]))),
+      error: () => this.tutorPersons.set(new Map()),
+    });
     this.headquarterService.list().subscribe({
       next: (headquarters) => this.headquarters.set(headquarters),
       error: () => this.headquarters.set([]),
