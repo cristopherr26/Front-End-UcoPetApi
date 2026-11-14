@@ -1,4 +1,3 @@
-
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import {
@@ -73,12 +72,10 @@ export class SaleForm {
 
   protected readonly existing = signal<SaleOrder | null>(null);
 
-  // Identificador de la sede correspondiente a la orden.
   protected readonly selectedHeadquarterId = computed(
     () => this.existing()?.headquarterId ?? this.headquarter(),
   );
 
-  // Nombre de la sede que verá el usuario.
   protected readonly headquarterName = computed(() => {
     const id = this.selectedHeadquarterId();
 
@@ -92,8 +89,7 @@ export class SaleForm {
     );
   });
 
-  // clientID corresponde a TutorPet.id.
-  // La mascota se relaciona con TutorPet.id.
+
   protected readonly availablePets = computed(() => {
     const tutor = this.tutors().find(
       (t) => t.id === this.clientId(),
@@ -181,8 +177,7 @@ export class SaleForm {
       comment: sale.comment ?? '',
     });
 
-    // Si se edita una orden de otra sede,
-    // cargar sus mascotas correspondientes.
+
     if (
       sale.headquarterId !== this.headquarter()
     ) {

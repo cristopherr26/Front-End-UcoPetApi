@@ -1,4 +1,3 @@
-
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
@@ -252,10 +251,6 @@ export class SaleDetail {
     this.itemNamesLoading.set(true);
     this.itemNamesError.set(null);
 
-    // Consultamos productos y servicios de la sede.
-    // No aplicamos sellable=true, para poder resolver
-    // también los nombres de artículos que hayan
-    // dejado de estar habilitados para la venta.
     this.catalogService.list({
       headquarterId,
     }).subscribe({

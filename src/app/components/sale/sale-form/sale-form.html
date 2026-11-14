@@ -1,4 +1,3 @@
-
 <form [formGroup]="form" (ngSubmit)="save()" novalidate>
   <app-modal-frame
     [title]="existing() ? 'Editar orden de venta' : 'Nueva orden de venta'"
@@ -22,7 +21,6 @@
 
       <div class="row g-3">
 
-        <!-- Sede -->
         <div class="col-12">
           <label class="form-label">
             Sede de la orden
@@ -46,7 +44,6 @@
           </div>
         </div>
 
-        <!-- Cliente (tutor) -->
         <div class="col-md-6">
           <label class="form-label" for="sale-client">
             Cliente (tutor) *
@@ -82,7 +79,6 @@
           </div>
         </div>
 
-        <!-- Mascota -->
         <div class="col-md-6">
           <label class="form-label" for="sale-pet">
             Mascota *
@@ -121,7 +117,6 @@
           }
         </div>
 
-        <!-- Póliza -->
         <div class="col-12">
           <label
             class="form-label"
@@ -151,7 +146,6 @@
           </div>
         </div>
 
-        <!-- Observaciones -->
         <div class="col-12">
           <label
             class="form-label"
