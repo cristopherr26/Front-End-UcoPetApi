@@ -306,8 +306,6 @@ export class SaleList {
           `Orden ${sale.orderNumber} creada correctamente`,
         );
 
-        // La orden ya existe en el backend.
-        // Vamos directamente al detalle para agregar ítems.
         void this.router.navigate(
           ['/ventas', sale.id],
           {
