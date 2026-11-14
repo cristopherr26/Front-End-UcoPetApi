@@ -1,0 +1,139 @@
+<p class="small text-body-secondary d-flex gap-2 mb-3">
+  <i class="bi bi-info-circle"></i>
+  <span>
+    Los tipos de cita los gestiona el administrador. Un tipo inactivo no aparece al agendar, y si ya
+    tiene citas no se puede eliminar: solo desactivar.
+  </span>
+</p>
+
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar tipo de cita"
+            aria-label="Buscar tipo de cita"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Estado"
+          (change)="setState($any($event.target).value)"
+        >
+          <option value="all">Todos</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="button" class="btn btn-primary btn-sm" (click)="create()">
+          <i class="bi bi-plus-lg me-1"></i>Nuevo tipo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger m-3">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card">
+      <thead>
+        <tr>
+          <th appSortHeader="name" [table]="table">Tipo de cita</th>
+          <th appSortHeader="description" [table]="table">Descripción</th>
+          <th appSortHeader="active" [table]="table">Estado</th>
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="4" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+            </td>
+          </tr>
+        } @else {
+          @for (type of table.rows(); track type.id) {
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <span class="uc-mark" [class.is-warn]="!type.isActive">
+                    <i class="bi bi-tag"></i>
+                  </span>
+                  <span class="fw-semibold">{{ type.name }}</span>
+                </div>
+              </td>
+              <td>
+                @if (type.description) {
+                  <div class="small text-body-secondary text-truncate item-description">
+                    {{ type.description }}
+                  </div>
+                } @else {
+                  <span class="text-body-tertiary">—</span>
+                }
+              </td>
+              <td>
+                @if (type.isActive) {
+                  <span class="uc-tag is-ok"><i class="bi bi-check2-circle"></i>Activo</span>
+                } @else {
+                  <span class="uc-tag is-neutral"><i class="bi bi-pause-circle"></i>Inactivo</span>
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  title="Editar"
+                  (click)="edit(type)"
+                >
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary ms-1"
+                  [title]="type.isActive ? 'Desactivar' : 'Activar'"
+                  (click)="toggle(type)"
+                >
+                  <i class="bi" [class]="type.isActive ? 'bi-toggle-on' : 'bi-toggle-off'"></i>
+                </button>
+                @if (session.isAdmin()) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    title="Eliminar"
+                    (click)="remove(type)"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4">
+                <app-empty-state
+                  icon="bi-tags"
+                  title="No hay tipos de cita con estos filtros"
+                  text="Crea uno nuevo para poder agendar citas"
+                />
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>
