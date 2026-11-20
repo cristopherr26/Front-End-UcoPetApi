@@ -1,0 +1,34 @@
+<app-page-header
+  eyebrow="Procesador Salud"
+  title="Especialidades"
+  subtitle="Especialidades de los veterinarios y verificación de sus certificados"
+>
+  <div class="d-flex align-items-center gap-3">
+    <span class="uc-mark is-grad d-none d-sm-inline-flex"><i class="bi bi-award"></i></span>
+    <ul class="nav nav-pills specialtie-nav" aria-label="Secciones de especialidades">
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          routerLink="/especialidades"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <i class="bi bi-person-badge me-1"></i>Asignaciones
+        </a>
+      </li>
+      @if (session.isAdmin()) {
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/especialidades/verificacion" routerLinkActive="active">
+            <i class="bi bi-patch-check me-1"></i>Verificación
+          </a>
+        </li>
+      }
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/especialidades/catalogo" routerLinkActive="active">
+          <i class="bi bi-journal-medical me-1"></i>Catálogo
+        </a>
+      </li>
+    </ul>
+  </div>
+</app-page-header>
+<router-outlet />

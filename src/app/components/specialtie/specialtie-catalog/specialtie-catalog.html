@@ -1,0 +1,172 @@
+@if (!session.isAdmin()) {
+  <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+    <i class="bi bi-eye"></i>Tu rol puede consultar el catálogo, pero no modificarlo.
+  </div>
+}
+
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-12 col-md">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control"
+            placeholder="Buscar especialidad por nombre"
+            aria-label="Buscar especialidad"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Estado de la especialidad"
+          [value]="activeFilter()"
+          (change)="setActiveFilter($any($event.target).value)"
+        >
+          <option value="ALL">Todas</option>
+          <option value="ACTIVE">Activas</option>
+          <option value="INACTIVE">Inactivas</option>
+        </select>
+      </div>
+      @if (session.isAdmin()) {
+        <div class="col-auto ms-auto">
+          <button type="button" class="btn btn-primary btn-sm text-nowrap" (click)="create()">
+            <i class="bi bi-plus-lg me-1"></i>Nueva especialidad
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 m-3" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card mb-0">
+      <thead>
+        <tr>
+          <th appSortHeader="name" [table]="table">Nombre</th>
+          <th appSortHeader="description" [table]="table">Descripción</th>
+          <th appSortHeader="active" [table]="table">Estado</th>
+          @if (session.isAdmin()) {
+            <th class="text-end"><span class="visually-hidden">Acciones</span></th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="4" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+              <div class="small text-body-secondary mt-2">Cargando catálogo...</div>
+            </td>
+          </tr>
+        } @else {
+          @for (item of table.rows(); track item.id) {
+            <tr>
+              <td class="fw-semibold text-nowrap">{{ item.name }}</td>
+              <td class="text-body-secondary">{{ item.description }}</td>
+              <td>
+                @if (item.active !== false) {
+                  <span class="uc-tag is-ok"><i class="bi bi-check-circle"></i>Activa</span>
+                } @else {
+                  <span class="uc-tag is-neutral"><i class="bi bi-pause-circle"></i>Inactiva</span>
+                }
+              </td>
+              @if (session.isAdmin()) {
+                <td class="text-end text-nowrap">
+                  @if (busyId() === item.id) {
+                    <span class="spinner-border spinner-border-sm text-primary me-2"></span>
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    title="Editar"
+                    aria-label="Editar especialidad"
+                    [disabled]="busyId() !== null"
+                    (click)="edit(item)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  @if (item.active !== false) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger ms-1"
+                      title="Desactivar"
+                      aria-label="Desactivar especialidad"
+                      [disabled]="busyId() !== null"
+                      (click)="toggleActive(item)"
+                    >
+                      <i class="bi bi-toggle-on"></i>
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-success ms-1"
+                      title="Activar"
+                      aria-label="Activar especialidad"
+                      [disabled]="busyId() !== null"
+                      (click)="toggleActive(item)"
+                    >
+                      <i class="bi bi-toggle-off"></i>
+                    </button>
+                  }
+                </td>
+              }
+            </tr>
+          } @empty {
+            @if (!error()) {
+              <tr>
+                <td colspan="4">
+                  @if (hasFilters()) {
+                    <app-empty-state
+                      icon="bi-search"
+                      title="No hay especialidades con ese nombre o estado"
+                      text="Revisa la búsqueda o cambia el filtro de estado."
+                    >
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary btn-sm mt-3"
+                        (click)="clearFilters()"
+                      >
+                        Quitar filtros
+                      </button>
+                    </app-empty-state>
+                  } @else {
+                    <app-empty-state
+                      icon="bi-journal-medical"
+                      title="El catálogo está vacío"
+                      [text]="
+                        session.isAdmin()
+                          ? 'Crea la primera especialidad para poder asignarla a los veterinarios.'
+                          : 'Un administrador debe crear las especialidades.'
+                      "
+                    >
+                      @if (session.isAdmin()) {
+                        <button
+                          type="button"
+                          class="btn btn-primary btn-sm mt-3"
+                          (click)="create()"
+                        >
+                          <i class="bi bi-plus-lg me-1"></i>Nueva especialidad
+                        </button>
+                      }
+                    </app-empty-state>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>

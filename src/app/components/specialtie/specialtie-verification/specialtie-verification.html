@@ -1,0 +1,145 @@
+@if (!session.isAdmin()) {
+  <div class="card">
+    <app-empty-state
+      icon="bi-shield-lock"
+      title="Solo un administrador puede verificar certificados"
+      text="Puedes consultar el estado de tus especialidades en la pestaña Asignaciones."
+    >
+      <a class="btn btn-outline-primary btn-sm mt-3" routerLink="/especialidades">
+        <i class="bi bi-arrow-left me-1"></i>Ir a Asignaciones
+      </a>
+    </app-empty-state>
+  </div>
+} @else if (session.headquarterId() === null) {
+  <div class="alert alert-info d-flex align-items-center gap-2">
+    <i class="bi bi-buildings"></i>Elige una sede en el menú superior para revisar los certificados
+    de sus veterinarios.
+  </div>
+} @else {
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-4">
+      <app-kpi-card
+        label="Pendientes"
+        [value]="loading() ? null : counts().pending"
+        hint="Esperan revisión"
+        tone="warn"
+      />
+    </div>
+    <div class="col-6 col-sm-4">
+      <app-kpi-card
+        label="Verificadas"
+        [value]="loading() ? null : counts().verified"
+        hint="Certificado aprobado"
+        tone="ok"
+      />
+    </div>
+    <div class="col-6 col-sm-4">
+      <app-kpi-card
+        label="Rechazadas"
+        [value]="loading() ? null : counts().rejected"
+        hint="Requieren certificado nuevo"
+        tone="danger"
+      />
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="h5 mb-0">Bandeja de pendientes</h2>
+    @if (!loading() && pending().length > 0) {
+      <span class="uc-tag is-warn">{{ pending().length }} por revisar</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="card">
+      <div class="text-center py-5">
+        <span class="spinner-border text-primary"></span>
+        <div class="small text-body-secondary mt-2">Cargando certificados...</div>
+      </div>
+    </div>
+  } @else if (!error()) {
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+      @for (relation of pending(); track relation.id) {
+        <div class="col">
+          <div class="card h-100 review-card">
+            <div class="card-body d-flex flex-column gap-3">
+              <div class="d-flex align-items-start gap-3">
+                <span class="uc-mark is-warn"><i class="bi bi-hourglass-split"></i></span>
+                <div class="min-w-0">
+                  <div class="fw-bold text-truncate">{{ doctorLabel(relation.doctor) }}</div>
+                  @if (licenseOf(relation.doctor); as license) {
+                    <div class="small text-body-secondary">Tarjeta {{ license }}</div>
+                  }
+                </div>
+              </div>
+              <div>
+                <span class="badge rounded-pill bg-info-subtle text-info-emphasis">{{
+                  specialtieLabel(relation.specialtie)
+                }}</span>
+              </div>
+              @if (relation.certificateNotes) {
+                <p class="small text-body-secondary mb-0 notes">{{ relation.certificateNotes }}</p>
+              }
+              <div class="mt-auto">
+                @if (relation.certificateUrl) {
+                  <a
+                    class="btn btn-outline-secondary btn-sm w-100"
+                    [href]="relation.certificateUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Ver certificado
+                  </a>
+                } @else {
+                  <div class="small text-danger-emphasis">
+                    <i class="bi bi-exclamation-circle me-1"></i>Sin certificado: no se puede
+                    verificar
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="card-footer bg-transparent d-flex gap-2">
+              <button
+                type="button"
+                class="btn btn-success btn-sm flex-fill"
+                [disabled]="busyId() !== null || !relation.certificateUrl"
+                (click)="verify(relation)"
+              >
+                @if (busyId() === relation.id) {
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                } @else {
+                  <i class="bi bi-patch-check me-1"></i>
+                }
+                Verificar
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-danger btn-sm flex-fill"
+                [disabled]="busyId() !== null"
+                (click)="reject(relation)"
+              >
+                <i class="bi bi-x-circle me-1"></i>Rechazar
+              </button>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="col-12">
+          <div class="card">
+            <app-empty-state
+              icon="bi-patch-check"
+              title="No hay certificados pendientes en esta sede"
+              text="Cuando un veterinario registre o cambie un certificado aparecerá aquí."
+            />
+          </div>
+        </div>
+      }
+    </div>
+  }
+}

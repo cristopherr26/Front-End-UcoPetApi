@@ -1,0 +1,95 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    [title]="current() ? 'Editar especialidad' : 'Nueva especialidad'"
+    subtitle="Los campos con * son obligatorios"
+    icon="bi-award"
+    tone="grad"
+    (closed)="modal.dismiss()"
+  >
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label" for="specialtie-name">Nombre *</label>
+        <input
+          id="specialtie-name"
+          class="form-control"
+          formControlName="name"
+          placeholder="Ej. Cardiología"
+          autocomplete="off"
+          ngbAutofocus
+          [class.is-invalid]="invalid('name')"
+        />
+        <div class="invalid-feedback">
+          @if (hasError('name', 'required')) {
+            El nombre es obligatorio
+          } @else {
+            Solo se permiten letras (con tildes y ñ) y espacios
+          }
+        </div>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="specialtie-description">Descripción *</label>
+        <textarea
+          id="specialtie-description"
+          class="form-control"
+          rows="3"
+          formControlName="description"
+          placeholder="Qué atiende esta especialidad"
+          [attr.maxlength]="descriptionMax"
+          [class.is-invalid]="invalid('description')"
+        ></textarea>
+        <div class="d-flex justify-content-between gap-2">
+          <div class="invalid-feedback d-block">
+            @if (invalid('description')) {
+              @if (hasError('description', 'required')) {
+                La descripción es obligatoria
+              } @else if (hasError('description', 'descriptionLength')) {
+                Debe tener entre {{ descriptionMin }} y {{ descriptionMax }} caracteres
+              } @else {
+                Solo letras, números, espacios y . , ; : ( ) - /
+              }
+            }
+          </div>
+          <small
+            class="text-nowrap mt-1"
+            [class.text-danger]="descriptionLength() > 0 && descriptionLength() < descriptionMin"
+            [class.text-body-secondary]="
+              descriptionLength() === 0 || descriptionLength() >= descriptionMin
+            "
+            >{{ descriptionLength() }}/{{ descriptionMax }}</small
+          >
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="form-check form-switch">
+          <input
+            id="specialtie-active"
+            class="form-check-input"
+            type="checkbox"
+            role="switch"
+            formControlName="active"
+          />
+          <label class="form-check-label" for="specialtie-active">
+            Activa (se puede asignar a los veterinarios)
+          </label>
+        </div>
+      </div>
+    </div>
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" [disabled]="saving()" (click)="modal.dismiss()">
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Guardando...
+        } @else {
+          <i class="bi bi-check2 me-1"></i>Guardar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>

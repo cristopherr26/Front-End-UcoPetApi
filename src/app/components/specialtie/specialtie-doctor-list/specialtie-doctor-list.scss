@@ -1,0 +1,19 @@
+// Notas y motivos largos se recortan; el texto completo queda en el title
+.notes {
+  max-width: 220px;
+}
+
+.reason {
+  max-width: 260px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+// Asignaciones desactivadas: atenuadas
+.row-inactive > td {
+  opacity: 0.6;
+}

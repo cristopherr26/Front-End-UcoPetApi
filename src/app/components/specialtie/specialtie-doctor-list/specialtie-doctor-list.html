@@ -1,0 +1,293 @@
+<div class="card">
+  <div class="card-header py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-12 col-md">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Filtrar por veterinario"
+          [disabled]="session.headquarterId() === null"
+          (change)="setDoctor($any($event.target).value)"
+        >
+          <option value="" [selected]="doctorFilter() === null">Todos los veterinarios</option>
+          @for (option of doctorOptions(); track option.id) {
+            <option [value]="option.id" [selected]="option.id === doctorFilter()">
+              {{ option.label }}
+            </option>
+          }
+        </select>
+      </div>
+      <div class="col-12 col-sm-6 col-md">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Filtrar por especialidad"
+          [disabled]="session.headquarterId() === null"
+          (change)="setSpecialtie($any($event.target).value)"
+        >
+          <option value="" [selected]="specialtieFilter() === null">
+            Todas las especialidades
+          </option>
+          @for (option of specialtieOptions(); track option.id) {
+            <option [value]="option.id" [selected]="option.id === specialtieFilter()">
+              {{ option.label }}
+            </option>
+          }
+        </select>
+      </div>
+      <div class="col-12 col-sm-6 col-md-auto">
+        <select
+          class="form-select form-select-sm"
+          aria-label="Filtrar por estado"
+          [disabled]="onlyVerified() || session.headquarterId() === null"
+          [title]="onlyVerified() ? 'Con «Solo verificadas» el estado ya está fijado' : ''"
+          (change)="setStatus($any($event.target).value)"
+        >
+          <option value="" [selected]="statusFilter() === null">Todos los estados</option>
+          @for (state of states; track state.value) {
+            <option [value]="state.value" [selected]="state.value === statusFilter()">
+              {{ state.label }}
+            </option>
+          }
+        </select>
+      </div>
+      <div class="col-auto">
+        <div class="form-check form-switch mb-0">
+          <input
+            id="only-verified"
+            class="form-check-input"
+            type="checkbox"
+            role="switch"
+            [checked]="onlyVerified()"
+            [disabled]="session.headquarterId() === null"
+            (change)="setOnlyVerified($any($event.target).checked)"
+          />
+          <label class="form-check-label small fw-semibold text-nowrap" for="only-verified">
+            Solo verificadas
+          </label>
+        </div>
+      </div>
+      <div class="col-auto ms-auto">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm text-nowrap"
+          [disabled]="session.headquarterId() === null"
+          [title]="session.headquarterId() === null ? 'Elige una sede primero' : ''"
+          (click)="create()"
+        >
+          <i class="bi bi-plus-lg me-1"></i>Asignar especialidad
+        </button>
+      </div>
+    </div>
+
+    @if (hasFilters() || inactiveCount() > 0) {
+      <div class="d-flex flex-wrap align-items-center gap-3 mt-2 small">
+        @if (hasFilters()) {
+          <button type="button" class="btn btn-link btn-sm p-0" (click)="clearFilters()">
+            <i class="bi bi-x-circle me-1"></i>Quitar filtros
+          </button>
+        }
+        @if (inactiveCount() > 0) {
+          <div class="form-check form-switch mb-0">
+            <input
+              id="show-inactive"
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              [checked]="showInactive()"
+              (change)="showInactive.set($any($event.target).checked)"
+            />
+            <label class="form-check-label text-body-secondary" for="show-inactive">
+              Mostrar desactivadas ({{ inactiveCount() }})
+            </label>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (session.headquarterId() === null) {
+    <div class="alert alert-info d-flex align-items-center gap-2 m-3">
+      <i class="bi bi-buildings"></i>Elige una sede en el menú superior para ver las especialidades
+      de sus veterinarios.
+    </div>
+  }
+
+  @if (error()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 m-3" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>{{ error() }}
+    </div>
+  }
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle table-card mb-0">
+      <thead>
+        <tr>
+          <th appSortHeader="doctor" [table]="table">Veterinario</th>
+          <th appSortHeader="specialtie" [table]="table">Especialidad</th>
+          <th>Certificado</th>
+          <th appSortHeader="status" [table]="table">Estado</th>
+          <th appSortHeader="verifiedAt" [table]="table">Revisión</th>
+          <th class="text-end"><span class="visually-hidden">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr>
+            <td colspan="6" class="text-center py-5">
+              <span class="spinner-border text-primary"></span>
+              <div class="small text-body-secondary mt-2">Cargando asignaciones...</div>
+            </td>
+          </tr>
+        } @else {
+          @for (relation of table.rows(); track relation.id) {
+            <tr [class.row-inactive]="relation.active === false">
+              <td class="fw-semibold">{{ doctorLabel(relation.doctor) }}</td>
+              <td>
+                <span class="badge rounded-pill bg-info-subtle text-info-emphasis">{{
+                  specialtieLabel(relation.specialtie)
+                }}</span>
+              </td>
+              <td>
+                @if (relation.certificateUrl) {
+                  <a
+                    class="small fw-semibold text-nowrap"
+                    [href]="relation.certificateUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    [title]="relation.certificateUrl"
+                  >
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Ver certificado
+                  </a>
+                  @if (relation.certificateNotes) {
+                    <div
+                      class="small text-body-secondary text-truncate notes"
+                      [title]="relation.certificateNotes"
+                    >
+                      {{ relation.certificateNotes }}
+                    </div>
+                  }
+                } @else {
+                  <span class="small text-body-tertiary">Sin certificado</span>
+                }
+              </td>
+              <td>
+                <div class="d-flex flex-wrap gap-1">
+                  <span [class]="'uc-tag ' + statusTag(relation.status)">
+                    <i class="bi" [class]="statusIcon(relation.status)"></i
+                    >{{ statusLabel(relation.status) }}
+                  </span>
+                  @if (relation.active === false) {
+                    <span class="uc-tag is-neutral">Desactivada</span>
+                  }
+                </div>
+              </td>
+              <td class="small">
+                @if (relation.status === 'PENDING') {
+                  <span class="text-body-tertiary">Sin revisar</span>
+                } @else {
+                  <div class="text-nowrap">
+                    {{ reviewerLabel(relation.verifiedBy) ?? '—' }}
+                  </div>
+                  @if (relation.verifiedAt) {
+                    <div class="text-body-secondary text-nowrap">
+                      {{ relation.verifiedAt | date: 'dd/MM/yyyy HH:mm' }}
+                    </div>
+                  }
+                  @if (relation.status === 'REJECTED' && relation.rejectionReason) {
+                    <div
+                      class="text-danger-emphasis reason mt-1"
+                      [title]="relation.rejectionReason"
+                    >
+                      <i class="bi bi-chat-left-text me-1"></i>{{ relation.rejectionReason }}
+                    </div>
+                  }
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                @if (relation.active !== false) {
+                  @if (busyId() === relation.id) {
+                    <span class="spinner-border spinner-border-sm text-primary me-2"></span>
+                  }
+                  @if (canReview(relation)) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-success"
+                      title="Verificar certificado"
+                      aria-label="Verificar certificado"
+                      [disabled]="busyId() !== null"
+                      (click)="verify(relation)"
+                    >
+                      <i class="bi bi-patch-check"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-warning ms-1"
+                      title="Rechazar certificado"
+                      aria-label="Rechazar certificado"
+                      [disabled]="busyId() !== null"
+                      (click)="reject(relation)"
+                    >
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary ms-1"
+                    title="Editar"
+                    aria-label="Editar asignación"
+                    [disabled]="busyId() !== null"
+                    (click)="edit(relation)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger ms-1"
+                    title="Desactivar"
+                    aria-label="Desactivar asignación"
+                    [disabled]="busyId() !== null"
+                    (click)="deactivate(relation)"
+                  >
+                    <i class="bi bi-slash-circle"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            @if (session.headquarterId() !== null && !error()) {
+              <tr>
+                <td colspan="6">
+                  @if (hasFilters()) {
+                    <app-empty-state
+                      icon="bi-funnel"
+                      title="Ninguna asignación coincide con estos filtros"
+                      text="Prueba con otro veterinario, especialidad o estado."
+                    >
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary btn-sm mt-3"
+                        (click)="clearFilters()"
+                      >
+                        Quitar filtros
+                      </button>
+                    </app-empty-state>
+                  } @else {
+                    <app-empty-state
+                      icon="bi-award"
+                      title="Aún no hay especialidades asignadas en esta sede"
+                      text="Asigna una especialidad a un veterinario adjuntando la URL de su certificado."
+                    >
+                      <button type="button" class="btn btn-primary btn-sm mt-3" (click)="create()">
+                        <i class="bi bi-plus-lg me-1"></i>Asignar especialidad
+                      </button>
+                    </app-empty-state>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+  <app-table-pager [total]="table.total()" [(page)]="table.page" [(pageSize)]="table.pageSize" />
+</div>

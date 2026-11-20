@@ -1,0 +1,17 @@
+.review-card {
+  border-radius: 1rem;
+  border-color: var(--uc-line);
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+// Notas largas: máximo tres líneas
+.notes {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

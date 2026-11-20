@@ -1,0 +1,22 @@
+// Mismas pestañas tipo píldora que Catálogo y Egresos
+.specialtie-nav {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid var(--uc-line);
+  border-radius: 999px;
+  padding: 0.25rem;
+
+  .nav-link {
+    border-radius: 999px;
+    color: var(--uc-ink);
+    font-weight: 700;
+    padding: 0.4rem 0.95rem;
+    white-space: nowrap;
+  }
+
+  .nav-link.active {
+    color: #fff;
+    background: var(--uc-grad);
+  }
+}

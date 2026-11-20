@@ -1,0 +1,74 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <app-modal-frame
+    title="Rechazar certificado"
+    subtitle="El veterinario verá el motivo y podrá subir un certificado nuevo"
+    icon="bi-x-octagon"
+    tone="danger"
+    (closed)="modal.dismiss()"
+  >
+    @if (error()) {
+      <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+      </div>
+    }
+
+    @if (relation(); as item) {
+      <div class="border rounded-3 p-3 mb-3 bg-body-tertiary">
+        <div class="fw-bold">{{ doctorName() }}</div>
+        <div class="small text-body-secondary mb-2">{{ specialtieName() }}</div>
+        @if (item.certificateUrl) {
+          <a
+            class="small fw-semibold"
+            [href]="item.certificateUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i class="bi bi-box-arrow-up-right me-1"></i>Ver certificado
+          </a>
+        }
+      </div>
+    }
+
+    <label class="form-label" for="reject-reason">Motivo del rechazo *</label>
+    <textarea
+      id="reject-reason"
+      class="form-control"
+      rows="4"
+      formControlName="reason"
+      placeholder="Ej. El certificado está vencido o no corresponde a la especialidad"
+      ngbAutofocus
+      [attr.maxlength]="reasonMax"
+      [class.is-invalid]="invalid()"
+    ></textarea>
+    <div class="d-flex justify-content-between gap-2">
+      <div class="invalid-feedback d-block">
+        @if (invalid()) {
+          @if (form.controls.reason.hasError('required')) {
+            Escribe el motivo del rechazo
+          } @else {
+            Máximo {{ reasonMax }} caracteres
+          }
+        }
+      </div>
+      <small
+        class="text-nowrap mt-1"
+        [class.text-danger]="reasonLength() > reasonMax"
+        [class.text-body-secondary]="reasonLength() <= reasonMax"
+        >{{ reasonLength() }}/{{ reasonMax }}</small
+      >
+    </div>
+
+    <ng-container modalFooter>
+      <button type="button" class="btn btn-light" [disabled]="saving()" (click)="modal.dismiss()">
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn-danger" [disabled]="saving()">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Rechazando...
+        } @else {
+          <i class="bi bi-x-circle me-1"></i>Rechazar
+        }
+      </button>
+    </ng-container>
+  </app-modal-frame>
+</form>
